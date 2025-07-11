@@ -1,0 +1,201 @@
+{% extends 'base.html' %}  
+
+
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+   
+<div class="container-fluid main-content">
+    <div class="row">
+        <form method="get" action="{% url 'tasks:team_performance_chart' %}">
+            <div class="col-12">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-6 col-md-3">  Department:{{ form.department }}</div>
+                        <div class="col-6 col-md-3"> Team Name:{{ form.team_name }}</div>
+                        <div class="col-6 col-md-3">  Start date:{{ form.start_date }}</div>
+                        <div class="col-6 col-md-3"> End date:{{ form.end_date }}</div>
+                        <div class="col-6 col-md-3">    <button type="submit" class="btn btn-primary">Filter</button></div>
+                    </div>
+                </div>
+           </div>      
+                  
+        </form>
+
+            <h4 class="text-center mb-2 mt-4" style="color:blue;font-weight: bolder;">
+                Performance for the team:<span style="color:blue"> {{ team_scores.0.team }}, Department:{{ department }}</span></h4>
+            <sapn class="text-center"><a href="{% url 'tasks:employee_performance_chart' %}">GoTo Employee performance</a></sapn>
+           
+            <div class="col-12 col-md-4">
+               
+                <!-- Table Section -->
+                <div class="table-container mt-4">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>                                                       
+                                <th>Date</th>                              
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for score in team_scores %}
+                                <tr>                                                           
+                                    <td>{{ score.created_at }}</td>                                 
+                                    <td>{{ score.score|floatformat:'2' }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="4">No performance data available.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    <!-- Pagination Controls -->
+                    <div class="pagination">
+                        <span class="step-links">
+                            {% if page_obj.has_previous %}
+                                <a href="?page=1">&laquo; first</a>
+                                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                            {% endif %}
+
+                            <span class="current">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                            </span>
+
+                            {% if page_obj.has_next %}
+                                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-8">
+                <div class="container">                   
+                    <div class="row">
+                            <!-- line Chart -->
+                        <div class="col-12 bg-light">   
+                            {% if has_data %}                           
+                            <canvas id="lineChart"></canvas>
+                            {% else %}
+                            <span style="color:rgb(242, 6, 6);font-weight: bold;">No data found. Pls select team, start_date and end_date</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Bar Chart -->
+                        <!-- <div class="col-6">                               
+                            <canvas id="barChart"></canvas>
+                        </div> -->
+                    </div>
+                </div>
+                
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+
+
+    <script>
+        window.onload = function () {
+            const evaluationData = JSON.parse('{{ chart_data|safe|escapejs }}');
+    
+            // Ensure there is data to process
+            if (evaluationData.length === 0) {
+                console.warn("No performance data available.");
+                return;
+            }
+    
+            // Extract unique teams (for potential multiple teams in the future)
+            const teamNames = [...new Set(evaluationData.map(item => item.team))];
+            const teamData = {};
+    
+            // Group data by teams
+            teamNames.forEach(team => {
+                teamData[team] = evaluationData
+                    .filter(item => item.team === team)
+                    .map(({ created_at, score }) => ({ date: created_at, score }));
+            });
+    
+            // Assume single team for now (can be enhanced for multi-team scenarios)
+            const selectedTeam = teamNames[0];
+            const selectedTeamData = teamData[selectedTeam];
+    
+            // Prepare data for the charts
+            const labels = selectedTeamData.map(item => item.date);
+            const scores = selectedTeamData.map(item => item.score);
+            
+            // Calculate the max y-axis value
+            const maxYValue = Math.max(
+                    ...scores,       
+                ) * 1.2;
+
+            // Line Chart
+            const lineCtx = document.getElementById('lineChart').getContext('2d');
+            const lineChart = new Chart(lineCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Performance Score - ${selectedTeam} (Line)`,
+                        data: scores,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension:.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    spanGaps: true,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: 'Score' }, beginAtZero: true ,max:maxYValue}
+                    }
+                }
+            });
+    
+            // Bar Chart
+            const barCtx = document.getElementById('barChart').getContext('2d');
+            const barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `Performance Score - ${selectedTeam} (Bar)`,
+                        data: scores,
+                        backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Date' } },
+                        y: { title: { display: true, text: 'Score' }, beginAtZero: true,maxYValue }
+                    }
+                }
+            });
+        };
+    </script>
+    
+
+
+
+{% endblock %}

@@ -1,0 +1,116 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+  <div class="row justify-content-center">
+      <div class="col-12 col-md-6">
+        <div class="card shadow-lg border-0 rounded-lg">
+             <!-- Card Header -->
+             <div class="card-header bg-primary text-white text-center">
+                <h3 class="mb-0"> Manager's evaluation</h3>
+            </div>
+              <div class="card-body">
+                  <h4 class="card-title text-center mb-4">
+                      <span style="color:rgb(0, 11, 128);font-weight: bold; font-size: 20px;">Qualitative Evaluation for {{ employee.name }} - Task: {{ task.title }}</span><br>
+                      <span style="color:green;font-weight: bold; font-size: 16px;">Assigned quantitative number for this Task was:{{ task.assigned_number }}</span><br>
+                      <span style="color:green;font-weight: bold; font-size: 16px;">As per progress, obtained number is:{{ task.obtained_number|floatformat:'2' }}</span><br>
+                      <span style="color:rgb(22, 3, 236);font-weight: bold; font-size: 14px;">Task name: {{ task.title }}:Team name/Single member: {{ task.assigned_to_team.name}}/NA</span><br>
+                      <span style="color:rgb(5, 24, 239);font-weight: bold; font-size: 14px;">Member: {% for member in task.assigned_to_team.members.all %}
+                        {{member.member.name}},                        
+                        {% endfor %}
+                        /{{ task.assigned_to_employee }}
+                      </span>
+                  </h4>
+                  <form method="POST" class="p-4">
+                      {% csrf_token %}
+                      <div class="mb-3">
+                        <label for="work_quality_score" class="form-label">Task Title</label>
+                        {{ form.task }}
+                    </div>
+
+                      <div class="mb-3">
+                        <label for="work_quality_score" class="form-label">Quantitative evaluation by manager( 1 to {{ task.assigned_number }})</label>
+                        {{ form.manager_given_quantitative_number }}
+                    </div>
+                    <h4 class="text-center">Qualitative evaluation</h4>
+                      <div class="mb-3">
+                          <label for="work_quality_score" class="form-label">Work Quality (1-5)</label>
+                          {{ form.work_quality_score }}
+                      </div>
+                      <div class="mb-3">
+                          <label for="communication_quality_score" class="form-label">Communication Quality (1-5)</label>
+                          {{ form.communication_quality_score }}
+                      </div>
+                      <div class="mb-3">
+                          <label for="teamwork_score" class="form-label">Teamwork (1-5)</label>
+                          {{ form.teamwork_score }}
+                      </div>
+                      <div class="mb-3">
+                          <label for="initiative_score" class="form-label">Initiative (1-5)</label>
+                          {{ form.initiative_score }}
+                      </div>
+                      <div class="mb-3">
+                          <label for="punctuality_score" class="form-label">Punctuality (1-5)</label>
+                          {{ form.punctuality_score }}
+                      </div>
+                      <div class="mb-3">
+                          <label for="feedback" class="form-label">Feedback</label>
+                          {{ form.feedback }}
+                      </div>
+                      <div class="d-flex justify-content-center">
+                          <button type="submit" class="btn btn-primary btn-lg">Submit Evaluation</button>
+                      </div>
+                  </form>
+              </div>
+          </div>
+      </div>
+  </div>
+  <h4 style="height:10px"></h4>
+</div>
+
+
+
+
+  
+  <script>
+      $(document).ready(function() {
+          $('#id_product,#id_category').select2({
+              width: '50%',
+              placeholder: 'Search ...',
+              allowClear: true,
+              ajax: {
+                  url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                  dataType: 'json',
+                  delay: 250,
+                  data: function(params) {
+                      return {
+                          q: params.term
+                      };
+                  },
+                  processResults: function(data) {
+                      return {
+                          results: $.map(data.results, function(item) {
+                              return {
+                                  id: item.id,
+                                  text: item.text
+                              };
+                          })
+                      };
+                  },
+                  cache: true
+              },
+              minimumInputLength: 1,
+              placeholder: 'Search',
+              allowClear: true
+          });
+      });
+  
+  
+</script>
+  
+{% endblock %}

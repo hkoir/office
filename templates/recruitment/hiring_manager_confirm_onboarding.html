@@ -1,0 +1,50 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">   
+
+    <!-- Candidate and Interview Details Card -->
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-4">
+
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="candidate_id" value="{{ candidate.id }}">
+                <h4>Are you sure you want to confirm onboarding for {{ candidate.full_name }}?</h4>
+                <button type="submit" class="btn btn-success">Confirm</button>
+            </form>
+            
+        </div>
+        <div class="col-12 col-md-8">
+            <div class="card shadow-lg border-0 rounded-3" style="background-color: #f9fbfd;">
+                <div class="card-body p-4">
+                    <h3 class="text-center fw-bold mb-4">Candidate's info</h3>
+                    <h6 class="mb-3">
+                        <strong>Candidate:</strong> {{ candidate.full_name}}
+                        {% if candidate.resume.url %}
+                        <a href="{{ candidate.resume.url }}" target = '_blank'>                       
+                        Submitted CV</a>:
+                        {% else %}
+                        <img src="{{ candidate.resume.url}}"
+                        style="width:40px;height:40px;">
+                        {% endif %}
+                    <a href="{% url 'recruitment:candidate_details' candidate.id %}">CV Screening Result</a>
+                    </h6>
+                    <h6 class="mb-3">
+                        <strong>Job Title:</strong> {{ candidate.applied_job.title }}
+                    </h6>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+
+{% endblock %}

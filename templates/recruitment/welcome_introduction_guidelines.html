@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{ employee.company.name }} - Onboarding Instructions</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+
+    <h2 style="color: #2c3e50;">Welcome to {{ employee.company.name }}, {{ employee.full_name }}!</h2>
+
+    <p>We are thrilled to welcome you to the team as our new <strong>{{ employee.job_title }}</strong>. Your skills and experience will be a valuable asset to our company.</p>
+
+    <h3 style="color: #3498db;">Your Joining Details</h3>
+    <ul>
+        <li><strong>Joining Date:</strong> {{ employee.joining_date }}</li>
+        <li><strong>Office Location:</strong> {{ employee.work_location }}</li>
+        <li><strong>Reporting To:</strong> {{ employee.reporting_manager }}</li>
+        <li><strong>Working Hours:</strong> {{ employee.working_hours }}</li>
+    </ul>
+
+    <h3 style="color: #3498db;">Pre-Joining Requirements</h3>
+    <p>To ensure a smooth onboarding experience, please complete the following tasks before your first day:</p>
+    <ul>
+        <li>Submit the required documents (ID proof, address verification, educational certificates, etc.).</li>
+        <li>Sign and return the offer letter and employment agreement.</li>
+        <li>Complete the onboarding forms via our HR portal.</li>
+    </ul>
+
+    <h3 style="color: #3498db;">Your First Day Agenda</h3>
+    <p>Your first day at <strong>{{ employee.company.name }}</strong> will include:</p>
+    <ul>
+        <li>Welcome session with the HR team</li>
+        <li>Introduction to your team and reporting manager</li>
+        <li>IT setup and access to company tools</li>
+        <li>Company policies and compliance training</li>
+        <li>Q&A session and expectations discussion</li>
+    </ul>
+
+    <h3 style="color: #3498db;">Key Contacts</h3>
+    <p>If you have any questions before joining, feel free to reach out to:</p>
+    <ul>
+        <li><strong>HR Representative:</strong> {{ employee.hr_contact_name }} ({{ employee.hr_contact_email }})</li>
+        <li><strong>IT Support:</strong> {{ employee.it_contact_name }} ({{ employee.it_contact_email }})</li>
+        <li><strong>Reporting Manager:</strong> {{ employee.reporting_manager }} ({{ employee.manager_email }})</li>
+    </ul>
+
+    <p>We can't wait to welcome you aboard! If you have any questions, feel free to reach out. See you soon at <strong>{{ employee.company.name }}</strong>!</p>
+
+    <p>Best regards,</p>
+    <p><strong>{{ employee.hr_contact_name }}</strong><br>
+    HR Team, {{ employee.company.name }}<br>
+    <a href="mailto:{{ employee.hr_contact_email }}">{{ employee.hr_contact_email }}</a> | ☎ {{ employee.hr_contact_phone }}</p>
+
+</body>
+</html>

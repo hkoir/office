@@ -1,0 +1,147 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+{% load static %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <h4 class="text-center text-white mb-3 fw-bold">Warehouse Transaction Report</h4>
+    <div class="row">
+        <div class="col-12 col-md-3">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                 <!-- Card Header -->
+                 <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Filters</h3>
+                </div> 
+                <div class="card-body">                    
+                    <form method="get" enctype="multipart/form-data" action="" id="add_category">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">Submit</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+        <div class="col-12 table-responsive col-md-3">
+            {% if transaction_type %}
+            <h5>Type:{{transaction_type}}</h5>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.transaction_date_only|date:"Y-m-d" }}</td>
+                            <td>{{ transaction.product__name }}</td>
+                            <td>{{ transaction.total_quantity }}</td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center">No transactions found.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+          
+        </div>
+        <div class="col-12 col-md-6 bg-light">
+            <canvas id="transactionChart" width="400" height="200"></canvas>
+        </div>
+        {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    const chartData = JSON.parse('{{ chart_data|safe }}');
+
+    const ctx = document.getElementById('transactionChart').getContext('2d');
+
+    const staticDataPoint1 = 2000;
+    const staticDataPoint2 = 2500;
+    const staticLabel1 = '2025-05';
+    const staticLabel2 = '2026-06';
+
+    chartData.labels.push(staticLabel1, staticLabel2);  
+    chartData.datasets[0].data.push(staticDataPoint1, staticDataPoint2);  
+
+    const colors = [
+        'rgba(255, 99, 132, 1)', // Red
+        'rgba(54, 162, 235, 1)', // Blue
+        'rgba(75, 192, 192, 1)', // Teal
+        'rgba(255, 206, 86, 1)', // Yellow
+        'rgba(153, 102, 255, 1)', // Purple
+        'rgba(255, 159, 64, 1)', // Orange
+    ];
+
+    chartData.datasets.forEach((dataset, index) => {
+        const borderColor = colors[index % colors.length]; 
+        const backgroundColor = borderColor.replace('1)', '0.6)'); 
+        dataset.borderColor = borderColor; 
+        dataset.backgroundColor = backgroundColor; 
+    });
+
+    // Create the chart
+    new Chart(ctx, {
+        type: 'line',
+        data: chartData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                title: { display: true, text: 'Inventory Transaction Report Over Time' },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            return `${context.dataset.label}: ${context.parsed.y} units`;
+                        },
+                    },
+                },
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: 'Date' },
+                },
+                y: {
+                    title: { display: true, text: 'Quantity' },
+                    beginAtZero: true,
+                },
+            },
+            elements: {
+                line: {
+                    tension: 0.3, // Smooth the line
+                },
+                point: {
+                    radius: 4,
+                    hoverRadius: 6,
+                    borderWidth: 2,
+                },
+            },
+        },
+    });
+</script>
+
+
+{% endblock %}
+
+
+
+
+
+
+

@@ -1,0 +1,175 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<div class="container-fluid main-content">
+    
+    <div class="row">
+        <form method="get" action="{% url 'tasks:employee_performance_chart' %}">
+       
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-4">  Department:{{ form.department }}</div>
+                    <div class="col-4"> Employee name:{{ form.employee_name }}</div>
+                    <div class="col-4">  Start date:{{ form.start_date }}</div>
+                    <div class="col-4"> End date:{{ form.end_date }}</div>
+                    <div class="col-4">    <button type="submit" class="btn btn-primary">Filter</button></div>
+                </div>
+            </div>
+       </div>      
+              
+    </form>
+    <h4 class="text-center mt-4" style="color:blue;font-weight: bolder;"> Performance Trend for:{{ employee }}-Department:{{ department }}</h4>
+    <h6 Class="text-center"><a class="text-center" href="{% url 'tasks:team_performance_chart' %}">Go To Team Performance</a></h6>
+
+
+
+
+        <div class="col-3">          
+           
+           {% if employee_scores %}
+                <h6 class="m-2">Performance for {{ employee_scores.0.employee_name }}</h6>
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                          
+                            <th>Date</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for score in page_obj %}
+                            <tr>
+                               
+                                <td>{{ score.created_at }}</td>
+                                <td>{{ score.total_score|floatformat:'2' }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No data available for the given employee name.</p>
+            {% endif %}
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="col-9">
+            <div class="container">
+                <div class="row">
+                    {% if has_data %}
+                    <div class="col-5 bg-light">
+                        <canvas id="performanceBarChart"></canvas>
+                    </div>
+                    <div class="col-7 bg-light">                       
+                        <canvas id="performanceLineChart"></canvas>                       
+                    </div>
+                    {% else %}
+                    <span style="color:rgb(242, 6, 6);font-weight: bold;">No data found. Pls select employee, start_date and end_date</span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    window.onload = function() {
+        const evaluationData = JSON.parse('{{ chart_data|safe|escapejs }}');
+        const labels = evaluationData.map(item => item.created_at);
+        const scores = evaluationData.map(item => item.total_score);
+
+        const maxYValue = Math.max(
+                ...scores,       
+            ) * 1.4;
+
+ 
+        const ctxBar = document.getElementById('performanceBarChart').getContext('2d');
+        const performanceBarChart = new Chart(ctxBar, {
+            type: 'bar',  
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Score (Bar)',
+                    data: scores,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',  // Bar color
+                    borderColor: 'rgba(75, 192, 192, 1)',  // Bar border color
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        ticks:{
+                            callback: function(value, index, values) { 
+                        return value.toFixed(2);                     }
+                        },
+                        beginAtZero: true,
+                        max:maxYValue
+                    }
+                }
+            }
+        });
+
+        const ctxLine = document.getElementById('performanceLineChart').getContext('2d');
+        const performanceLineChart = new Chart(ctxLine, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Score (Line)',
+                    data: scores,
+                    borderColor: "rgba(240, 128, 128, 1)", 
+                    backgroundColor:  "rgba(255, 159, 64, .6)",
+                    fill: false,  
+                    borderWidth: 2,
+                    tension: 0.4,
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        ticks:{
+                            callback: function(value, index, values) { 
+                        return value.toFixed(2);                     }
+                        },
+                        beginAtZero: true,
+                        max:maxYValue
+                    }
+                }
+            }
+        });
+    };
+</script>
+
+
+
+
+
+{% endblock %}

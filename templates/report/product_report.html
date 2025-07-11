@@ -1,0 +1,481 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h4 class="text-center" style="color:blue;margin-bottom:20px;"><strong>DOPS Inventory management system</strong></h6>   
+            {% if warehouse_data %}
+            <div class="col-12">  
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col"></div>
+                        <div class="col-12 table-responsive">
+                            <table class="table table-hover">
+                              
+                                <h4 style="color:blue">Product: {{ product.name }}:
+                                    <span style="color:rgb(9, 109, 30);font-weight: bold;font-size: 24px;">
+                                        Current stock value: {{ grand_total_stock|add_commas }}
+                                    </span></h4>
+                                    <thead class="table-dark">                                
+                                    <tr class="bg-primary text-white">
+                                        <th>Warehouse</th>
+                                        <th>Total inventory</th>                                     
+                                        <th>Total Purchased</th>
+                                        <th>Total Existing</th>
+                                        <th>Total Manufacture in</th>
+                                        <th>Total Manufacture out</th>
+                                        <th>Transfer IN</th>
+                                        <th>Total Sold</th>
+                                        <th>Operations Out</th>
+                                        <th>Total refund</th>
+                                        <th>Transfer OUT</th>
+                                        <th>Total Scrapped in</th>
+                                        <th>Total scrapped OUT</th>
+                                        <th>Available Quantity</th>
+                                        <th>Stock value</th>
+                                      
+                                      
+                                        
+                                      
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for warehouse in warehouse_data %}
+                                    <tr>
+                                        <td>{{ warehouse.warehouse_name }}</td>
+                                        <td>{{ warehouse.total_stock}}</td>
+                                        <td>{{ warehouse.total_purchased }}</td>
+                                        <td>{{ warehouse.total_existing_in }}</td>
+                                        <td>{{ warehouse.total_manufacture_in }}</td>
+                                        <td>{{ warehouse.total_manufacture_out }}</td>
+                                        <td>{{ warehouse.total_incoming }}</td>
+                                        <td>{{ warehouse.total_sold }}</td>
+                                        <td>{{ warehouse.total_operations_out }}</td>
+                                        <td>{{ warehouse.total_refund }}</td>                                     
+                                        <td>{{ warehouse.total_outgoing }}</td>
+
+                                        <td>{{ warehouse.total_scrapped_in }}</td>                                     
+                                        <td>{{ warehouse.total_scrapped_out }}</td>
+
+
+                                        <td>{{ warehouse.total_available }}</td>
+                                        <td>{{ warehouse.total_stock_value|add_commas }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No data available for this product in any warehouse.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    <div class="col"></div>
+                </div>
+            </div>            
+        </div>
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-8">
+                        <div class="bg-light">
+                            <!-- Canvas for the bar chart -->
+                            <canvas id="warehouseBarChart" width="600" height="300"></canvas>
+                        </div>
+            
+                    </div>
+                    <div class="col-4">
+                        <div class="bg-light">      
+                            <!-- Canvas for the doughnut chart -->
+                            <canvas id="warehouseDoughnutChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+        <div style="height:50px"></div>
+        {% else %}
+        <h4 class="text-center">No record found</h4>
+        {% endif %}
+    </div>
+</div>
+
+
+<!-- Chart.js library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<script>
+    document.getElementById("columnDropdown").addEventListener("click", function () {
+    let dropdown = new bootstrap.Dropdown(this);
+    dropdown.show();
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const batchFilter = document.getElementById("batchFilter");
+        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+        const selectAllBtn = document.getElementById("selectAll");
+        const deselectAllBtn = document.getElementById("deselectAll");
+
+        // Hide all columns initially
+        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
+
+        // Show selected columns
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const columnClass = this.value;
+                const isChecked = this.checked;
+                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
+            });
+        });
+
+        // Select All
+        selectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
+            });
+        });
+
+        // Deselect All
+        deselectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
+            });
+        });
+
+        // Batch Filter
+        batchFilter.addEventListener("change", function () {
+            const selectedBatch = batchFilter.value;
+            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
+                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    // Parse the JSON data passed from the view
+    const warehouseData = JSON.parse('{{ warehouse_data_json|escapejs }}');
+
+    // Data for the bar chart
+
+    const labels = warehouseData.map(data => data.warehouse_name);
+    const totalStock = warehouseData.map(data => data.total_stock);   
+    const totalPurchased = warehouseData.map(data => data.total_purchased);
+    const totalExistingIn = warehouseData.map(data => data.total_existing_in);
+    const incomingTransfers = warehouseData.map(data => data.total_incoming);
+    const totalManufactureIn = warehouseData.map(data => data.total_manufacture_in);
+    const totalManufactureOut = warehouseData.map(data => data.total_manufacture_out);
+
+    const totalSold = warehouseData.map(data => data.total_sold); 
+    const totalOperationsOut = warehouseData.map(data => data.total_operations_out); 
+    const outgoingTransfers = warehouseData.map(data => data.total_outgoing);
+    const totalRefundIn = warehouseData.map(data => data.total_refund_in);  
+    const totalRefundOut = warehouseData.map(data => data.total_refund_out);  
+
+    const totalScrappedIn = warehouseData.map(data => data.total_scrapped_in);  
+    const totalScrappedOut = warehouseData.map(data => data.total_scrapped_out); 
+
+    const totalAvailable = warehouseData.map(data => data.total_available);
+    const totalStockValue = warehouseData.map(data => data.total_stock_value);
+
+    const reorderValue = warehouseData.map(data => data.reorder_level);
+
+    // Bar Chart Configuration
+    const barCtx = document.getElementById('warehouseBarChart').getContext('2d');
+    const warehouseBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                    {
+                        label: 'Total Inventory',
+                        data: totalStock,
+                        backgroundColor: 'rgba(76, 175, 80, 0.5)',  // Green
+                        borderColor: 'rgba(76, 175, 80, 1)',        // Dark Green
+                        borderWidth: 1
+                    },
+                   
+                    {
+                        label: 'Total Purchased',
+                        data: totalPurchased,
+                        backgroundColor: 'rgba(33, 150, 243, 0.5)', // Blue
+                        borderColor: 'rgba(33, 150, 243, 1)',       // Dark Blue
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Available Quantity',
+                        data: totalAvailable,
+                        backgroundColor: 'rgba(0, 80, 0, 1)',  
+                        borderColor: 'rgba(0, 80, 0, 1)',        
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Reorder Level',
+                        data: reorderValue,
+                        backgroundColor: 'rgba(255, 10, 0, 1)',  
+                        borderColor: 'rgba(255, 10, 0, 1)',        
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Total Sold',
+                        data: totalSold,
+                        backgroundColor: 'rgba(233, 30, 99, 0.5)',  // Pink
+                        borderColor: 'rgba(233, 30, 99, 1)',        // Dark Pink
+                        borderWidth: 1
+                    },
+                   
+                    {
+                        label: 'Production_in',
+                        data: totalExistingIn,
+                        backgroundColor: 'rgba(33, 150, 243, 0.5)', // Blue
+                        borderColor: 'rgba(33, 150, 243, 1)',       // Dark Blue
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Production_out',
+                        data: totalManufactureOut,
+                        backgroundColor: 'rgba(0, 188, 212, 0.5)', // Teal
+                        borderColor: 'rgba(0, 188, 212, 1)',       // Dark Teal
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'OutgoingTransfers',
+                        data: outgoingTransfers,
+                        backgroundColor: 'rgba(0, 188, 212, 0.5)', // Teal
+                        borderColor: 'rgba(0, 188, 212, 1)',       // Dark Teal
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Incoming Transfers',
+                        data: incomingTransfers,
+                        backgroundColor: 'rgba(0, 188, 212, 0.5)', // Teal
+                        borderColor: 'rgba(0, 188, 212, 1)',       // Dark Teal
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Outgoing Transfers',
+                        data: outgoingTransfers,
+                        backgroundColor: 'rgba(255, 152, 0, 0.5)',  // Orange
+                        borderColor: 'rgba(255, 152, 0, 1)',        // Dark Orange
+                        borderWidth: 1
+                    },
+                   
+                    {
+                        label: 'Operations out',
+                        data: totalOperationsOut,
+                        backgroundColor: '#00BCD4',  // Pink
+                        borderColor:'#00BCD4',        // Dark Pink
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Total Refund in',
+                        data: totalRefundIn,
+                        backgroundColor: 'rgba(255, 87, 34, 0.5)',  // Deep Orange
+                        borderColor: 'rgba(255, 87, 34, 1)',        // Dark Deep Orange
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Total Refund out',
+                        data: totalRefundOut,
+                        backgroundColor: 'rgba(255, 87, 34, 0.5)',  // Deep Orange
+                        borderColor: 'rgba(255, 87, 34, 1)',        // Dark Deep Orange
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Total scrapped out',
+                        data: totalScrappedOut,
+                        backgroundColor: 'rgba(255, 87, 34, 0.5)',  // Deep Orange
+                        borderColor: 'rgba(255, 87, 34, 1)',        // Dark Deep Orange
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Total scrapped in',
+                        data: totalScrappedIn,
+                        backgroundColor: 'rgba(255, 87, 34, 08)',  // Deep Orange
+                        borderColor: 'rgba(255, 87, 34, 1)',        // Dark Deep Orange
+                        borderWidth: 1
+                    },
+                  
+                  
+                ]
+
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                
+            },
+            scales: {
+                x: {
+                    stacked: false,
+                    ticks:{
+                        font:{
+                            size:16,
+                        }
+
+                    }
+                },
+                y: {
+                beginAtZero: true,
+                stacked: false,
+                min: 0, // Set minimum value for y-axis
+                max: Math.max( ...totalPurchased,...totalStock,...totalExistingIn, ...totalSold, ...incomingTransfers, ...outgoingTransfers) * 1.3, // Adjust max to create space above the highest bar
+                ticks: {
+                    stepSize: 1// You can also adjust the step size as needed
+                }
+            }
+        }
+    }
+});
+
+
+// Doughnut Chart Configuration
+const doughnutCtx = document.getElementById('warehouseDoughnutChart').getContext('2d');
+const totalStockSum = totalStock.reduce((a, b) => a + b, 0);
+const totalPurchasedSum = totalPurchased.reduce((a, b) => a + b, 0);
+const totalExistingInSum = totalExistingIn.reduce((a, b) => a + b, 0);
+
+const totalManufactureInSum = totalManufactureIn.reduce((a, b) => a + b, 0);
+const totalManufactureOutSum = totalManufactureOut.reduce((a, b) => a + b, 0);
+
+
+const totalSoldSum = totalSold.reduce((a, b) => a + b, 0);
+const totalOperationsOutSum = totalOperationsOut.reduce((a, b) => a + b, 0);
+
+const totalRefundInSum = totalRefundIn.reduce((a, b) => a + b, 0);
+const totalRefundOutSum = totalRefundOut.reduce((a, b) => a + b, 0);
+
+const outgoingSum = outgoingTransfers.reduce((a, b) => a + b, 0);
+const incomingSum = incomingTransfers.reduce((a, b) => a + b, 0);
+
+const totalScrappedInSum = totalScrappedIn.reduce((a, b) => a + b, 0);
+const totalScrappedOutSum = totalScrappedOut.reduce((a, b) => a + b, 0);
+
+const totalAvailableSum = totalAvailable.reduce((a, b) => a + b, 0);
+
+const warehouseDoughnutChart = new Chart(doughnutCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            'Total Inventory',
+            'Total Purchased',
+            'Total Sold',
+
+            'Total existing_in',
+            'Operations Out',
+
+            'Total Production_in',
+            'Total Production_out',                    
+           
+            'Outgoing Transfers',    
+            'Incoming Transfers',    
+
+            'Total Refund in',
+            'Total Refund out',
+
+            
+            'Total Scrapped in',
+            'Total Scrapped out',
+
+            'Available Quantity'
+        ],
+        datasets: [{
+            data: [
+                totalStockSum,
+                totalPurchasedSum,
+                totalSoldSum,
+
+                totalExistingInSum,
+                totalOperationsOutSum,
+
+                totalManufactureInSum,
+                totalManufactureOutSum,               
+                              
+                outgoingSum,
+                incomingSum,
+
+                totalRefundInSum,
+                totalRefundOutSum,
+                totalScrappedInSum,
+                totalScrappedOutSum,
+
+                totalAvailableSum
+            ],
+            backgroundColor: [
+                '#4CAF50', // Green for "Total Inventory"
+                '#2196F3', // Blue for "Total Purchased"
+                '#00BCD4',  // Teal for existing
+                '#FF9800', // Orange for "Total Production"
+                '#FFC107', // Yellow for "Incoming Transfers"
+                '#E91E63', // Pink for "Total Sold"
+                '#00BCD4',  // Teal for "Operations Quantity"
+                '#9C27B0', // Purple for "Outgoing Transfers"
+                '#607D8B', // Gray for "Total Refund"
+                '#004e99',  
+                '#004e00',  // Teal for "Available Quantity"
+                '#FF9855', 
+
+                '#004e57',  // Teal for "Available Quantity"
+                '#FF9807', 
+            ],
+            borderColor: [
+                '#388E3C', // Darker Green
+                '#1976D2', // Darker Blue
+                '#00BCD4',  // Teal for existing
+                '#F57C00', // Darker Orange
+                '#FFA000', // Darker Yellow
+                '#C2185B', // Darker Pink
+                '#00BCD4',  // Teal for "Available Quantity"
+                '#7B1FA2', // Darker Purple
+                '#004e99', 
+                '#004e00',  // Darker Teal
+                '#FF9855', 
+                '#004e57',  // Teal for "Available Quantity"
+                '#FF9807', 
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    font: {
+                        size: 14
+                    },
+                    color: '#333' // Ensures label text is readable
+                }
+            }
+        }
+    }
+});
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,536 @@
+{% extends 'public_portal_base.html' %}  
+
+
+{% load static %}
+{% block extra_head %}
+<style>
+    
+    ul.custom-arrow-list li::before {
+        content: "\21D2";  
+        color: blue;  
+        font-size: 1rem;  
+        margin-right: 10px; 
+        font-weight: bold; 
+    }
+    
+    ul.custom-arrow-list li {
+        margin-bottom: 5px; 
+        font-family: Arial, sans-serif; 
+        font-size: 1rem; 
+        color: #333333; 
+    }
+    
+    
+    
+    .module-icon {
+            font-size: 40px;
+            color: #007bff;
+        }
+    .feature-section {
+            padding: 60px 0;
+            background-color: white;
+        }
+    .cta-section {
+            background-color: #007bff;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+    .cta-section a {
+            color: white;
+        }
+    
+    
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+        overflow: hidden; /* Needed for inner shadow effect */
+        left: 0;
+        width:100%;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px); /* Move card up slightly */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+        left: 0;
+        width:100%
+    }
+    
+    .module-card::before { /* Inner shadow on hover */
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0); /* Transparent initially */
+        transition: background-color 0.3s ease;
+        pointer-events: none; /* Allows clicks to pass through */
+    }
+    
+    
+    .module-card:hover::before {
+      background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent black on hover */
+    }
+    .module-card .card-body {
+        transition: transform 0.3s ease; /* Smooth transitions for content */
+    }
+    
+    .module-card:hover .card-body {
+        transform: scale(1.02); /* Slightly scale up the content */
+    }
+    
+    
+    
+    /* Optional: Change button color on hover */
+    .module-card:hover .btn-outline-primary {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    
+    .feature-box,.price_card {
+        padding: 20px; /* Add some padding around the content */
+        border: 1px solid #eee; /* Light border */
+        border-radius: 8px; /* Rounded corners */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+      
+       
+    }
+    
+    
+    .feature-box:hover,.price_card:hover {
+        transform: translateY(-5px); /* Move box up slightly */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Subtler shadow */
+        border-color: #ddd; /* Slightly darker border on hover */
+        background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent black on hover */
+       
+    }
+    
+    
+    
+    .feature-box h4 {
+        margin-bottom: 10px; /* Space between title and text */
+    }
+    
+    
+    
+    
+    @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+           }
+       
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+       }
+    
+    
+    .live_demo_box {
+        padding: 20px; /* Add some padding around the content */
+        border: 1px solid #eee; /* Light border */
+        border-radius: 8px; /* Rounded corners */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+        cursor: pointer;
+        animation: shake 5s ease-in-out infinite;
+    }
+    
+    .live_demo_box:hover {
+        transform: translateY(-5px); /* Move box up slightly */
+        box-shadow: 0 8px 16px rgba(166, 238, 238, 0.15); /* Subtler shadow */
+        border-color: #ddd; /* Slightly darker border on hover */
+        background-color: rgba(157, 243, 239, 0.5); /* Semi-transparent black on hover */
+        
+    }
+    
+    
+    
+    
+    
+    </style>
+    
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">
+        
+        <div class="container text-center">
+            <h1>Business Process Automation Platform</h1>
+            <p>Streamline Your Operations with Smart Integrated Solutions</p>
+            <a href="#free_trial" class="btn btn-primary btn-lg">Start Free Trial</a>
+        </div>
+
+            <!-- Modules Showcase -->
+            <div class="container-fluid mt-4">
+                <div class="row"> <!-- Bootstrap gutter spacing -->
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Supply Chain Management Automation</h5>
+                                <p class="card-text">Gain real-time insights into your entire supply chain, from procurement to delivery, instant stock valuation and more...</p>
+                                <a href="#scm_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>             
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-cogs fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Core HR Management</h5>
+                                <p class="card-text">Automate Core HR management, Maintain employee database, generate multiple documents on demand...</p>
+                                <a href="#core_hr_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Recruitment Process Automation</h5>
+                                <p class="card-text"><strong style="color:green">Say Goodbye to paper-based recruitment.</strong> Automate the entire process starting from job posting till candidate onboarding...</p>
+                                <a href="#recruitment_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>   
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Employee Task / Ticket based appraisal process automation</h5>
+                                    <p class="card-text">Automate entire process of employee performance appraisal,fair, unbiased and more accurate appraisal process....</p>
+                                      <a href="#appraisal_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>    
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-file-signature fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Leave management automation.</h5>
+                                    <p class="card-text">Track and efficiently maintain leave management process, automate leave approval and update leave database as per company policy.... </p>
+                                      <a href="#leave_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                   
+                                </div>
+                            </div>
+                        </div>    
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-bus fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Transport pool management system.</h5>
+                                    <p class="card-text">Track and monitor entire pool transport system efficiently, maintain transport log, fuel consumtion and daily expenses.... </p>
+                                      <a href="#transport_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>   
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Customer portal and Job portal</h5>
+                                    <p class="card-text">Provide customers and suppliers easy communication access through customer portal. Provide Job portral for easy communication with candidate for faster and easy hiring process.... </p>
+                                      <a href="#portal_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>    
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-cogs fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Task based KPI performance measurement</h5>
+                                    <p class="card-text">Create Task, assigned task to employee or team, monitor task progress, automate task scoring, instant performance evaluation for each task.... </p>
+                                      <a href="#integration_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>             
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-cogs fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Business process integration</h5>
+                                    <p class="card-text">Integrate Supply chain,Employee performance, leave management, transport pool management, recruitment process, 
+                                        save time, reduce operational cost, get errorless data driven reports </p>
+                                      <a href="#integration_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>                                                               
+                </div>
+            </div>   
+            
+            <div class="container-fluid" style=" background-color: #16213e;;">
+                <div class="row">
+                <div class="col-md-4 p-4">
+                <div class="card shadow text-center live_demo_box" style="border-radius: 50%; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <div class="card-body p-3 d-flex align-items-center justify-content-center">
+                        <h4 class="text-dark fw-bold">
+                            <a href="{% url 'clients:demo_request' %}" class="text-decoration-none text-dark">
+                                Start Free Trial
+                            </a>
+                        </h4>
+                    </div>
+                </div>
+                </div>
+                <div class="col-md-4 p-4">
+                    <div class="card shadow text-center live_demo_box" style="border-radius: 50%; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-center">
+                            <h4 class="text-dark fw-bold">
+                                <a href="{% url 'clients:demo_request' %}" class="text-decoration-none text-dark">
+                                    Request Live Demo
+                                </a>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 p-4">
+                    <div class="card shadow text-center live_demo_box" style="border-radius: 50%; width: 200px; height: 200px; display: flex; align-items: center; justify-content: center;">
+                        <div class="card-body p-3 d-flex align-items-center justify-content-center">
+                            <h4 class="text-dark fw-bold">
+                                <a href="{% url 'clients:demo_request' %}" class="text-decoration-none text-dark">
+                                    24/7 Supports
+                                </a>
+                            </h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            
+
+            <!-- Features Section -->
+            <div class="feature-section ">
+                <div class="container">
+                    <h2 class="text-center mb-5">Key Features</h2>
+                    <div class="row">
+                        <div class="col-md-6 feature-box" id="scm_automation">
+                            <h4>SCM Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>End-to-End Visibility:</strong> Gain real-time insights into your entire supply chain, from procurement to delivery.</li>
+                                <li><strong>Inventory Optimization:</strong> Reduce carrying costs and prevent stockouts with automated inventory management.</li>
+                                <li><strong>Streamlined Logistics:</strong> Optimize transportation routes, manage shipments, and track deliveries for improved efficiency.</li>
+                                <li><strong>Enhanced Collaboration:</strong> Seamlessly connect with suppliers and partners for better communication and collaboration.</li>
+                                <li><strong>Automated Procurement:</strong> Streamline purchasing processes with automated purchase orders and approvals.</li>
+                                <li><strong>Automated sales stock delivery process:</strong> Automate sales approval and delivery goods from warehouse</li>
+                                <li><strong>Goods in and out process:</strong>Automated manufacturing good's delivery process,return-replacement process, scrap management process, transfer process </li>
+                                <li><strong>Automate stock monitoring and reporting:</strong> Instant stock valuation, multiple type reports, low stock product monitoring and auto signaling</li>
+                                <li><strong>Automate complain handling process:</strong> Customer's and supplier's access to platform using isolated customer portal, supplier portal to generate  and update trouble tickets</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Tracking, updating and generating multiple reports for SCM process.</h4>
+                            <a href="{% static 'images/scm/scm_stock.jpg' %}" target="_blank">
+                            <img src="{% static 'images/scm/scm_stock.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="core_hr_automation">
+                            <h4 class="mt-4">HR Core management process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Maintain erroles employee records:</strong> Quickly filter resumes and identify qualified candidates with AI-powered screening.</li>
+                                <li><strong>Generate multiple documents</strong> Automate interview scheduling and send reminders to candidates and interviewers.</li>
+                                <li><strong>Improved Candidate Communication:</strong> Automate email communication and keep candidates engaged throughout the hiring process.</li>
+                                <li><strong>Reduced Time-to-Hire:</strong> Accelerate the hiring process and onboard new employees faster.</li>
+                                <li><strong>Auto generate multiple documents:</strong> Generate employee history report,payslip,salary certificate, experience certificate automatically based on employee updated database.</li>
+                                <li><strong>Data-Driven Insights:</strong> Track key metrics and gain insights each of your employees.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate HR core management process.</h4>
+                            <a href="{% static 'images/core_hr/core_hr.jpg' %}" target="_blank">
+                            <img src="{% static 'images/core_hr/core_hr.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+
+                        <div class="col-md-6 feature-box" id="recruitment_automation">
+                            <h4 class="mt-4">Recruitment process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Automated Candidate Screening:</strong> Quickly filter resumes and identify qualified candidates with AI-powered screening.</li>
+                                <li><strong>Automate exam process:</strong> Automate exam process with predefined questions paper and get instant result of exam.</li>
+                                <li><strong>Streamlined Scheduling:</strong> Automate interview scheduling and send reminders to candidates and interviewers.</li>
+                                <li><strong>Automate candidate selection:</strong> Automate candidate selection process based on CV screening, exam screnning and exam screening result</li>
+                                <li><strong>Improved Candidate Communication:</strong> Automate email communication and keep candidates engaged throughout the hiring process.</li>
+                                <li><strong>Reduced Time-to-Hire:</strong> Accelerate the hiring process and onboard new employees faster.</li>
+                                <li><strong>Enhanced Candidate Experience:</strong> Provide a seamless and positive experience for candidates.</li>
+                                <li><strong>Job seekers access to platform:</strong> Job seeker's access to platform using isolated job portal to search vacancies and apply for job</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate recruitment process.</h4>
+                            <a href="{% static 'images/recruitment/recruitment_summary.jpg' %}" target="_blank">
+                            <img src="{% static 'images/recruitment/recruitment_summary.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="appraisal_automation">
+                            <h4>Performance Evaluation Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Automated Workflows:</strong> Streamline the performance review process with automated workflows and notifications.</li>
+                                <li><strong>Customizable Templates:</strong> Create custom performance review templates tailored to different roles and departments.</li>
+                                <li><strong>360-Degree Feedback:</strong> Gather feedback from multiple sources, including managers, peers, and subordinates.</li>
+                                <li><strong>Goal Setting & Tracking:</strong> Set SMART goals and track employee progress throughout the year.</li>
+                                <li><strong>Performance Insights:</strong> Gain valuable insights into employee performance and identify areas for development.</li>
+                                <li><strong>Automated Reporting:</strong> Generate reports on employee performance and identify trends.</li>
+                                <li><strong>Appraisal budget analysis:</strong> Do appraisal budget analysis and automate employee's increment and promotion selection based on performance score obtained by each employee over time</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate performance appraisal, do appraisal budget anyalysis.</h4>
+                            <a href="{% static 'images/appraisal/appraisal_budget.jpg' %}" target="_blank">
+                            <img src="{% static 'images/appraisal/appraisal_budget.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="leave_automation">
+                            <h4>Leave management Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Self-Service Portal:</strong> Empower employees to request and manage their leave requests online.</li>
+                                <li><strong>Automated Approvals:</strong> Streamline the leave approval process with automated workflows.</li>
+                                <li><strong>Real-Time Tracking:</strong> Track employee leave balances and manage leave requests in real-time.</li>
+                                <li><strong>Reduced Administrative Burden:</strong> Eliminate paperwork and reduce the administrative overhead associated with leave management.</li>
+                                <li><strong>Improved Accuracy:</strong> Reduce errors and ensure compliance with company leave policies.</li>
+                                <li><strong>Integration with Payroll:</strong> Seamlessly integrate leave data with your payroll system.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate leave management process</h4>
+                            <a href="{% static 'images/leave/leave.jpg' %}" target="_blank">
+                            <img src="{% static 'images/leave/leave.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="transport_automation">
+                            <h4>Transport Pool process automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Optimized Routing:</strong> Plan efficient routes for your pool transport vehicles.</li>
+                                <li><strong>Real-Time Tracking:</strong> Track the location of vehicles and monitor driver performance in real-time.</li>
+                                <li><strong>Automated Dispatching:</strong> Dispatch vehicles efficiently and assign rides to drivers automatically.</li>
+                                <li><strong>Improved Communication:</strong> Enhance communication between drivers, riders, and dispatchers.</li>
+                                <li><strong>Cost Savings:</strong> Reduce fuel consumption and optimize resource utilization.</li>
+                                <li><strong>Reporting & Analytics:</strong> Generate reports on transportation costs, vehicle utilization, and other key metrics.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Transport Pool process automation.</h4>
+                            <a href="{% static 'images/transport/transport_view.jpg' %}" target="_blank">
+                            <img src="{% static 'images/transport/transport_view.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+                    </div>
+                    <!-- Repeat similar blocks for other modules -->
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section feature-box"> 
+                <h2>Ready to Transform Your Business?</h2>
+                <a href="#free_trial" class="btn btn-primary btn-lg">Get Started Today</a>
+            </div>
+       
+
+
+        
+       
+        <div class="col-12 mt-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="card-header text-center text-white bg-dark">
+                        <h3 class="fw-bold">Choose your plan</h3>
+                    </div> 
+                    {% for plan in plans %}
+                    <div class="col-6 col-md-4 mt-2" id="free_trial">
+                        <div class="card shadow h-100 price_card"> 
+                            <div class="card-header text-center bg-dark text-white">
+                                <h4>{{ plan.get_duration_display }}</h4>
+                            </div>
+                            <div class="card-body text-center">
+                                <h2 class="card-title">${{ plan.price }}</h2>
+                                <p class="card-text">{{ plan.description }}</p>
+                                <ul class="list-group mb-3">
+                                    {% for feature in plan.features_list %}
+                                    <li class="list-group-item">{{ feature }}</li>
+                                    {% endfor %}
+                                </ul>
+                                <a href="{% url 'clients:apply_for_tenant' %}?plan_id={{ plan.id }}" class="btn btn-success">Subscribe Now</a>
+                                <a href="{% url 'clients:renew_subscription' %}?plan_id={{ plan.id }}" class="btn btn-success">Renew Now</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>                
+        </div>
+        
+    <div class="col-12 box3 my-5">
+        <div class="container-fluid text-center py-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8">
+                    <div class="card shadow-lg border-0 rounded-lg">
+                        <div class="card-body p-4">
+                            <h2 class="text-primary mb-4">Thank You for Choosing Our Application!</h2>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                We appreciate your time and effort in exploring our 
+                                <strong>Process automation web application</strong>. With its advanced features 
+                                designed to streamline operations, improve efficiency, and enable data-driven decision-making, 
+                                we are confident that this application will bring immense value to your organization.
+                            </p>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                If you have any feedback or need further assistance, feel free to reach out. 
+                                Your insights are invaluable to us and help us grow and improve!
+                            </p>
+                            <h4 class="text-success mt-4">Stay Efficient. Stay Productive. See You Again Soon!</h4>
+                            <p class="text-muted mt-3">~ The Development Team</p>
+                            <p style="margin-left:0px">
+                                <img src="{% static 'images/Logo.png' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #007bff;"><br>
+                                    mymeplus Technology <br>
+
+                                    <img src="{% static 'images/my_image2.JPG' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #007bff;">
+                                    Engineer Humayun Kobir(Buet-eee,MBA) <br>
+                                    CTO <br>
+                                    <i class="fas fa-envelope"></i> hkobir1973@gmail.com <br>
+                                    <i class="fas fa-phone">+88-01743-800-705</i>
+                            </p>
+                           
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+   
+</div>
+
+</div>
+
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends 'base.html' %}  
+
+
+{% load static %}
+
+{% block content %}
+<style>
+    
+ul.custom-arrow-list li::before {
+    content: "\21D2";  
+    color: blue;  
+    font-size: 1rem;  
+    margin-right: 10px; 
+    font-weight: bold; 
+}
+
+ul.custom-arrow-list li {
+    margin-bottom: 5px; 
+    font-family: Arial, sans-serif; 
+    font-size: 1rem; 
+    color: #333333; 
+}
+
+
+
+.module-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+    overflow: hidden; /* Needed for inner shadow effect */
+    left: 0;
+    width:100%;
+}
+
+.module-card:hover {
+    transform: translateY(-5px); /* Move card up slightly */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+    left: 0;
+    width:100%
+}
+
+.module-card::before { /* Inner shadow on hover */
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0); /* Transparent initially */
+    transition: background-color 0.3s ease;
+    pointer-events: none; /* Allows clicks to pass through */
+}
+
+
+.module-card:hover::before {
+  background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent black on hover */
+}
+.module-card .card-body {
+    transition: transform 0.3s ease; /* Smooth transitions for content */
+}
+
+.module-card:hover .card-body {
+    transform: scale(1.02); /* Slightly scale up the content */
+}
+
+
+
+/* Optional: Change button color on hover */
+.module-card:hover .btn-outline-primary {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.module-icon {
+        font-size: 40px;
+        color: #007bff;
+    }
+.feature-section {
+        padding: 60px 0;
+        background-color: white;
+    }
+.cta-section {
+        background-color: #007bff;
+        color: white;
+        padding: 40px 0;
+        text-align: center;
+    }
+.cta-section a {
+        color: white;
+    }
+
+
+
+
+
+
+
+</style>
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="co-12">
+            <!-- Hero Section -->
+            <div class="container text-center">
+                <h1>Business Process Automation Platform</h1>
+                <p>Streamline Your Operations with Smart Integrated Solutions</p>
+                <a href="#" class="btn btn-primary btn-lg">Boost efficiency</a>
+            </div>
+
+             <!-- Modules Showcase -->
+             <div class="container-fluid mt-4">
+                <div class="row">
+                    {% for module in modules %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card text-center shadow-sm module-card ">
+                                <div class="card-body">
+                                    <i class="{{ module.icon }} fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">{{ module.name }}</h5>
+                                    <p class="card-text">{{ module.description }}</p>
+                                    {% if module.link %}
+                                        <a href="{% url module.link %}" class="btn btn-outline-primary">Your next steps</a>
+                                    {% else %}
+                                        <button class="btn btn-outline-secondary" disabled>Start</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+                     
+        </div>
+   
+           
+   
+</div>
+
+</div>
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-8">
+
+            <h2>Quality Control Inspection for: {{ sale_dispatch_item.dispatch_item.product.name }}</h2>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5>Order ID: {{ sale_dispatch_item.dispatch_item.sale_order.order_id }}</h5>
+                    <p><strong>Product:</strong> {{ sale_dispatch_item.dispatch_item.product.name }}</p>
+                    <p><strong>Customer:</strong> {{ sale_dispatch_item.dispatch_item.sale_order.customer.name }}</p>
+                    <p><strong>Total Quantity:</strong> {{ sale_dispatch_item.dispatch_item.quantity }}</p>
+                </div>  
+            </div>
+           
+          
+
+            <form method="post" class="mt-4">
+                {% csrf_token %}
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Total Quantity</th>
+                        <td>{{ form.total_quantity.value }}</td>
+                    </tr>
+                    <tr>
+                        <th>Good Quantity</th>
+                        <td>{{ form.good_quantity_by_customer }}</td>
+                    </tr>
+                    <tr>
+                        <th>Bad Quantity</th>
+                        <td>{{ form.bad_quantity_by_customer }}</td>
+                    </tr>
+                    <tr>
+                        <th>Inspection Date</th>
+                        <td>{{ form.inspection_date_by_customer }}</td>
+                    </tr>
+                    <tr>
+                        <th>Comments</th>
+                        <td>{{ form.comments_by_customer }}</td>
+                    </tr>
+                </table>
+
+                <button type="submit" class="btn btn-success">Save QC Results</button>
+                <a href="{% url 'customerportal:customer_qc_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+            </form>
+
+
+        </div>
+        <div class="col-12 col-md-2"></div>
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}

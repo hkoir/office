@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col">
+            <h4 class="text-center mt-4">Shipment Details</h4>
+
+            <!-- Check if purchase orders are available -->
+            {% if purchase_order %}
+                <!-- Purchase Order and Supplier Info -->
+                <div class="purchase-order-section mb-3">
+                    <h5>Purchase Order: {{ purchase_order.order_id }}</h5>
+                    <p>Supplier: {{ purchase_order.supplier.name }}</p>
+                    
+                    <!-- Shipment Info -->
+                    {% with shipment=purchase_order.purchase_shipment.first %}
+                        <div class="shipment-info">
+                            {% if shipment %}
+                                <p>Shipment ID: {{ shipment.shipment_id }}</p>
+                                <p>Tracking Number: {{ shipment.tracking_number }}</p>
+                                <p>Estimated Delivery: {{ shipment.estimated_delivery }}</p>
+                            {% else %}
+                                <p>No Shipment Tracking Available</p>
+                            {% endif %}
+                        </div>
+                    {% endwith %}
+                </div>
+
+                <!-- Dispatch Items Table -->
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Quantity Dispatch</th>
+                            <th>Status</th>
+                            <th>Quantity Pending</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchase_order.purchase_order_item.all %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+
+                                <td>
+                                    {% for dispatch_item in item.order_dispatch_item.all %}
+                                        {% with dispatch_schedule=dispatch_item.purchase_dispatch_schedule %}
+                                            {% if dispatch_schedule %}
+                                                <p>{{ dispatch_item.dispatch_quantity }}</p>
+                                            {% else %}
+                                                <p>No Dispatch Schedule Available</p>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% empty %}
+                                        <p>No Dispatch Items Found</p>
+                                    {% endfor %}
+                                </td>
+
+                                <td>stt</td>
+                                <td>lll</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <hr>
+            {% else %}
+                <p class="text-center mt-4">No purchase order found for the entered order number.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

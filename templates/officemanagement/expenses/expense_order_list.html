@@ -1,0 +1,106 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">   
+        <form method="GET">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}">
+            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}">
+    
+            <label>Submission ID:</label>
+            <input type="text" name="submission_id" value="{{ submission_id }}">
+            
+            <button class="btn btn-primary" type="submit">Apply Filter</button>
+        </form>     
+
+        <div class="col-12 table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Submission ID</th>
+                        <th class="text-center p-2">Total submitted amount</th>
+                    
+                        <th class="text-center p-2">Has advance??</th>
+                        <th class="text-center p-2">Advance ref</th>  
+                        <th>Submitted by</th> 
+                        <th>Submission date</th>  
+                        <th>Status</th>  
+                        <th>Approved by</th>   
+                        <th>Approved on</th>   
+                        <th>Manager approval</th>          
+                        
+                    </tr>
+                </thead>
+                <tbody> 
+                    {% for data in page_obj %}
+                        <tr>
+                           <td>{{ data.submission_id }}</td>
+                           <td>
+                            <a href="{% url 'officemanagement:items_submitted' data.id %}">{{ data.total_amount|add_commas }}</a>
+                           </td>
+                           <td>
+                                {% if data.has_advance %}
+                                <span class="text-primary fw-bold">Yes</span>
+                                {% else %}
+                                <span class="text-success fw-bold">No advance</span>
+                                {%endif %}                            
+                            </td>
+
+                           <td>{{ data.advance_ref }}</td>
+                           <td>{{ data.submitted_by }}</td>
+                           <td>{{ data.submission_date }}</td>
+                           <td>{{ data.status }}</td>
+                           <td>{{ data.approved_by}}</td>
+                           <td>{{ data.approved_on }}</td>
+
+                           <td>
+                            {% if data.approved_by %}
+                            <i class="fas fa-check text-success fw-bold">Approved</i>
+                            {% else %}
+                                 <a href="{% url 'officemanagement:expense_approval' data.id %}">Approve</a>
+                                 {% endif %}
+                            </td>
+                            
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No locations available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+        </div>
+    </div>
+
+   
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+  
+<div class="container-fluid main-content">
+    <div class="row">      
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-8">
+        <a href="{% url 'tasks:tasks_list' %}" class="btn btn-primary bg-lg">Back to Task List</a>    
+        <h4 class="text-center">Update Progress for Task:<span style="color:blue;font-weight: bold;"> {{ task.title }}</span></h4>
+        <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+            <span class="text-center" style="color:green;font-weight: bold;"> Enter Task's progress in % </span>
+          <div class="card-body">      
+              <form method="post" enctype="multipart/form-data"  id="add_category">
+                  {% csrf_token %} 
+                  {{ form.as_p }}
+                  <button type="submit" class="btn btn-primary">Update Progress</button>
+              </form>
+          </div>
+        </div>
+    </div>   
+          <div class="col-12 col-md-2"></div>
+       
+    
+    </div>
+  </div>
+
+
+
+
+
+{% endblock %}

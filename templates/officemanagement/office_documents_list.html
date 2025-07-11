@@ -1,0 +1,96 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">       
+        <form method="GET">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}">
+            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}">
+    
+            <label>Title:</label>
+            <input type="text" name="title" value="{{ title }}">
+            <label>Department:</label>
+            <input type="text" name="department" value="{{ department }}">
+            
+            
+            <button class="btn btn-primary" type="submit">Apply Filter</button>
+        </form>     
+        
+        <div class="col-12 col-md-12 table-responsive">   
+            <h4 class="text-center text-primary fw-bold">List of documents uploaded</h4>    
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Title</th>
+                        <th class="text-center p-2">Document Type</th>
+                        <th class="text-center p-2">Company</th>                    
+                        <th class="text-center p-2">Department</th>
+                        <th class="text-center p-2">File</th>       
+                        <th class="text-center p-2">Uploaded by</th>     
+                        <th class="text-center p-2">Upload Date</th>               
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>
+                            <td>{{ data.title}}</td>
+                            <td>{{ data.document_type}}</td>                         
+                            <td class="text-center p-1">{{ data.company}}</td>
+                            <td class="text-center p-1">{{ data.department}}</td>
+                            <td>
+                                {% if data.file%}
+                                <a href="{{ data.file.url }}" target="_blank">
+                                    View Doc                                   
+                                </a>
+                                {% else %}
+                              <img src="{{ data.file.url }}" style="width:30px;height:30px;border-radius: 50%;"> 
+                              {% endif %}
+                            </td>   
+
+                            <td>{{ data.uploaded_by }}</td>                          
+                            <td>{{data.upload_date}}</td>
+                           
+
+                           
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No locations available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+        </div>
+    </div> 
+</div>
+
+
+{% endblock %}

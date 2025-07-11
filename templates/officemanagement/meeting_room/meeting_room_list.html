@@ -1,0 +1,76 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <form method="GET">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}">
+            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}">
+    
+      
+            <label>Name:</label>
+            <input type="text" name="name" value="{{ name}}">
+            
+            <button class="btn btn-primary" type="submit">Apply Filter</button>
+        </form>
+        <div class="col-12 table-responsive">
+
+            <h4>Meeting room list</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>                
+                        <th>Room</th>                       
+                        <th>Capacity</th>    
+                        <td>Location</td>   
+                        <td>Book This room</td>
+                        <td>View booking status</td>           
+                    </tr>
+                </thead>
+                <tbody>     
+        
+                    {% for room in page_obj %}
+                <tr>
+                    <td>{{ room.name }}</td>
+                    <td>{{ room.capacity }}</td>
+                    <td>{{ room.location }}</td>
+                    <td> <a href="{% url 'officemanagement:book_meeting_room' room.id %}">Book This Room</a></td>
+                    <td> <a href="{% url 'officemanagement:meeting_room_calendar' room.id %}">View Calendar</a> |</td>
+                </tr>
+                {% endfor %}
+                
+                </tbody>
+              
+            </table>
+                           
+        </div>
+    </div>
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+</div>
+                        
+              
+                    
+
+{% endblock %}

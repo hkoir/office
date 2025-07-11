@@ -1,0 +1,95 @@
+
+{% extends 'partner_portal_base.html' %}
+{% load static %}
+
+{% block extra_head %}
+
+<style>
+    .hover-zoom {
+    transition: transform 0.3s ease;
+}
+.hover-zoom:hover {
+    transform: scale(1.05);
+}
+
+   </style>
+{% endblock %}
+
+{% block content %}
+
+               
+<div class="container-fluid main-content bg-light">
+    <div class="container">
+        <div class="text-center">
+            <h1 class="fw-bold text-primary">Welcome to Business Collaboration Hub</h1>
+            <p class="lead text-secondary">Seamless collaboration between customers, suppliers, and partners</p>
+        </div>
+
+        <!-- Collaborative Action Cards -->
+        <div class="row g-4">
+            <!-- Orders & Procurement -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 hover-zoom">
+                    <div class="card-body text-center">
+                        <i class="fas fa-box fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title fw-bold">Orders & Procurement</h5>
+                        <p class="card-text text-muted">Track orders, manage procurement, and oversee deliveries in real-time.</p>
+                        <a href="#" class="btn btn-outline-primary btn-sm">Manage Orders</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Supplier Collaboration -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 hover-zoom">
+                    <div class="card-body text-center">
+                        <i class="fas fa-handshake fa-3x text-success mb-3"></i>
+                        <h5 class="card-title fw-bold">Supplier Collaboration</h5>
+                        <p class="card-text text-muted">Work closely with suppliers, streamline sourcing, and maintain transparency.</p>
+                        <a href="#" class="btn btn-outline-success btn-sm">View Suppliers</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support & Issue Tracking -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 hover-zoom">
+                    <div class="card-body text-center">
+                        <i class="fas fa-headset fa-3x text-warning mb-3"></i>
+                        <h5 class="card-title fw-bold">Support & Issue Tracking</h5>
+                        <p class="card-text text-muted">Submit support requests, resolve issues, and get assistance promptly.</p>
+                        <a href="#" class="btn btn-outline-warning btn-sm">Submit Ticket</a>
+                    </div>
+                </div>
+            </div>          
+
+            <!-- Payments & Invoices -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 hover-zoom">
+                    <div class="card-body text-center">
+                        <i class="fas fa-file-invoice-dollar fa-3x text-info mb-3"></i>
+                        <h5 class="card-title fw-bold">Payments & Invoices</h5>
+                        <p class="card-text text-muted">Review payments, manage invoices, and ensure smooth financial transactions.</p>
+                        <a href="#" class="btn btn-outline-info btn-sm">Check Invoices</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Communication Hub -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border-0 hover-zoom">
+                    <div class="card-body text-center">
+                        <i class="fas fa-comments fa-3x text-danger mb-3"></i>
+                        <h5 class="card-title fw-bold">Communication Hub</h5>
+                        <p class="card-text text-muted">Foster smooth communication between customers, suppliers, and your team.</p>
+                        <a href="#" class="btn btn-outline-danger btn-sm">Open Chat</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:20px"></h4>
+</div>
+
+
+{% endblock %}

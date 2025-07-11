@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+{% if exams %}
+{% for exam in exams %}
+    <h3>Job: {{ exam.job }}</h3>
+    <h3>Exam: {{ exam.title }}:<a href="{% url 'recruitment:exam_details' exam.id %}">exam_details</a></h3>
+
+    <table class="table">
+        <thead class="table-dark">
+            <tr>
+                <th>Candidate</th>
+                <th>Email</th>
+              
+                <th>Interview with Panel Members</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for candidate in exam_candidates %}
+                <tr>
+                    <td>
+                        {% if candidate.pp_photo %}
+                        <img src="{{ candidate.pp_photo.url }}"  style="width:40px; height:40px; border-radius: 50%;">
+                        {% endif %}
+                        {{ candidate.full_name }}
+                    </td>
+                    <td>{{ candidate.email }}</td>
+
+                    <td>
+                        {% for panel_member in panel_members %}
+                            <a href="{% url 'recruitment:panel_member_scoring' job.id exam.id candidate.id panel_member.id %}" 
+                               class="btn btn-primary">
+                                Interview with {{ panel_member }}
+                            </a>
+                        {% endfor %}
+                    </td>
+                    
+                    
+                </tr>
+            {% endfor %}
+        </tbody>
+        
+    </table>
+
+{% endfor %}
+{% else %}
+<h3 class="text-center" style="color:yellow;font-weight: bold;">No exam available for interview</h3>
+{% endif %}
+<h4 style="height:10px"></h4>
+</div>
+
+
+{% endblock %}

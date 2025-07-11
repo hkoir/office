@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">        
+
+        <div class="col-12 col-md-4">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0"> Expense advance approval</h4>
+                </div> 
+                <div class="card-body">                       
+                    <form method="post" enctype="multipart/form-data" action="" id="add_customer">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> Submit</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+    </div>
+</div>
+       
+
+{% endblock %}

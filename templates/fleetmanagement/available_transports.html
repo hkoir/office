@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+{% block content %}
+   
+  
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">                                  
+                <form method="get" enctype="multipart/form-data" action="" id="add_customer">
+                    {% csrf_token %}
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6 col-md-3">
+                                Start Date:{{ form.start_date }}   
+                            </div>
+                            <div class="col-6 col-md-3">
+                                End date:{{ form.end_date }}   
+                            </div>
+                            <div class="col-6 col-md-3">
+                                Vehicle Code:{{ form.vehicle_code }}   
+                            </div>
+                            <div class="col-6 col-md-3">
+                                Vehicle number:{{ form.vehicle_registration_number }}   
+                            </div>
+                            <div class="col-6 col-md-3">
+                                Status:{{ form.status }}   
+                            </div>
+                        </div>
+                    </div>
+                                   
+                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>
+                </form>
+        </div>
+        <hr>
+        <h2>Transport Panel: <a href="{% url 'transport:refresh_status' %}">Refresh</a></h2>
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    
+                    <div class="col-6 col-md-3 text-center text-white bg-primary fw-bold">
+                        Total:{{ total_vehicles }}
+                    </div>
+                    <div class="col-6 col-md-3  text-center text-primary bg-info fw-bold">
+                        in use:{{ total_in_service_vehicles }}
+                    </div>
+                    <div class="col-6 col-md-3 text-center text-white fw-bold bg-success">
+                        available:{{ total_available_vehicles }}
+                    </div>
+                    <div class="col-6 col-md-3 text-center text-primary fw-bold bg-warning">
+                        Faulty:{{ total_faulty_vehicles }}
+                    </div>
+                </div>
+            </div>                
+        
+        </div>
+       
+        <div class="col-12 mt-4 mb-4">
+            <div class="container-fluid">
+                <div class="row g-3"> <!-- Add g-3 for consistent spacing -->
+                    {% for transport in page_obj %}
+                        <div class="col-4 col-md-2"> <!-- Responsive column sizes -->
+                            <div class="card shadow-lg h-100" style="background-color: aliceblue;"> <!-- Add h-100 for uniform height -->
+                                <!-- Card Header -->
+                                <div class="card-header text-center">
+                                    <h6 class="mb-0">
+                                        <span class="text-success fw-bold">Code: {{ transport.vehicle_code }}</span><br>
+                                        <span class="text-primary fw-bold">{{ transport.vehicle_registration_number }}</span>
+                                    </h6>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="container-fluid">
+                                        <div class="row">
+                                            <!-- Vehicle Image -->
+                                            <div class="col-12 text-center">
+                                                {% if transport.vehicle_image.url %}
+                                                    <a href="{{ transport.vehicle_image.url }}" target="_blank">
+                                                        <img src="{{ transport.vehicle_image.url }}" 
+                                                             alt="Vehicle Image" 
+                                                             style="width:60px; height:60px; border: 5px solid green; border-radius: 50%;">
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                            <!-- Vehicle Details -->
+                                            <div class="col-12 text-center">
+                                                <a href="{% url 'transport:vehicle_booking_calendar' transport.id %}">
+                                                    <span style="color:blue; font-weight: bold;">
+                                                        {{ transport.get_vehicle_brand_name_display }}<br>All schedules
+                                                    </span>
+                                                </a><br>
+                                                {% if transport.status == 'AVAILABLE' %}
+                                                    <i class="fas fa-check text-success fw-bold">{{ transport.get_status_display }}</i><br>
+                                                    <a href="{% url 'transport:create_transport_request_id' transport.id %}">Book now</a>
+                                                {% elif transport.status == 'BOOKED' %}
+                                                    <i class="fas fa-check text-warning fw-bold">{{ transport.get_status_display }}</i><br>
+                                                    <a href="{% url 'transport:create_transport_request_id' transport.id %}">Book now</a>
+                                                {% elif transport.status == 'IN-USE' %}
+                                                    <i class="fas fa-truck text-primary fw-bold">&nbsp;{{ transport.get_status_display }}</i><br>
+                                                    <a href="{% url 'transport:create_transport_request_id' transport.id %}">Book now</a>
+                                                {% elif transport.status == 'PENALIZED' %}
+                                                    <i class="fas fa-truck text-danger fw-bold">&nbsp;{{ transport.get_status_display }}</i><br>
+                                                    <a href="{% url 'transport:create_transport_request_id' transport.id %}">Book now</a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+
+    </div>
+</div>
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title text-success fw-bold" style="text-align: center;" id="taskDetailsModalLabel">Transport Details</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="margin-left: 20px;">
+          <p><strong>Vehicle Code:</strong> <span id="vehicle_code"></span></p>
+          <p><strong>Transport type:</strong> <span id="transport_type"></span></p>
+          <p><strong>Registration number:</strong> <span id="vehicle_registration_number"></span></p>
+          <p><strong>Registration date:</strong> <span id="vehicle_registration_date"></span></p>                
+          <p><strong>Capacity:</strong> <span id="capacity"></span></p>
+          <p><strong>Vehicle description:</strong> <span id="vehicle_description"></span></p>
+          <p><strong>Joining Date:</strong> <span id="joining_date"></span></p>
+          <p><strong>Location:</strong> <span id="location"></span></p>
+          <p><strong>Last maintenance date:</strong> <span id="last_maintenance_date"></span></p>
+          <p><strong>Vehicle mileage:</strong> <span id="vehicle_mileage"></span></p>
+          <p><strong>Status:</strong> <span id="status"></span></p>
+
+          <p><strong>Driver name:</strong> <span id="driver_name"></span></p>
+          <p><strong>Driver phone</strong> <span id="driver_phone"></span></p>
+          <p><strong>Supervisor name:</strong> <span id="supervisor_name"></span></p>
+          <p><strong>Supervisor phone:</strong> <span id="supervisor_phone"></span></p>
+          <p><strong>Transport Ownership:</strong> <span id="vehicle_ownership"></span></p>
+          
+          
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.view-task-details').forEach(function(link) {
+          link.addEventListener('click', function(event) {
+              event.preventDefault();
+              const transportId = this.dataset.transportId; 
+                            
+              fetch(`/transport/transport_details/${transportId}/`)
+                  .then((response) => response.json())
+                  .then((data) => {
+                      if (data.error) {
+                          console.error('Error:', data.error);
+                      } else {               
+                          console.log(data);                            
+                          document.getElementById('vehicle_code').textContent = data.vehicle_code;
+                          document.getElementById('vehicle_registration_number').textContent = data.vehicle_registration_number;
+                          document.getElementById('vehicle_registration_date').textContent = data.vehicle_registration_date;
+                          document.getElementById('vehicle_description').textContent = data.vehicle_description;
+                       
+                          document.getElementById('capacity').textContent = data.capacity;
+                          document.getElementById('location').textContent = data.location;
+                          document.getElementById('vehicle_mileage').textContent = data.vehicle_mileage;
+                          document.getElementById('status').textContent = data.status;
+                          document.getElementById('last_maintenance_date').textContent = data.last_maintenance_date;
+
+                          document.getElementById('driver_name').textContent = data.driver_name;
+                          document.getElementById('driver_phone').textContent = data.driver_phone;
+                          document.getElementById('supervisor_name').textContent = data.supervisor_name;
+                          document.getElementById('supervisor_phone').textContent = data.supervisor_phone;
+                          document.getElementById('vehicle_ownership').textContent = data.vehicle_ownership;
+                          document.getElementById('joining_date').textContent = data.joining_date;
+
+
+                         }
+                  })
+                  .catch((error) => {
+                      console.error("Error fetching task details:", error);
+                      alert("An error occurred while fetching task details.");
+                  });
+          });
+      });
+  });
+  
+</script>  
+
+
+
+  
+{% endblock %}

@@ -1,0 +1,425 @@
+{% extends 'base.html' %}  
+{% load custom_filters %}
+
+
+{% block extra_head %}
+
+<style>
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 200px;
+        box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+        padding: 10px;
+        z-index:1;
+    }  
+    
+    .dropdown:hover > .dropdown-menu {
+        display: block;
+        background-color: #2d2d2d; 
+        color: #ffffff; 
+    }
+    
+    .dropdown-menu {
+        color: white !important; 
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        text-decoration: none;
+        font-family: 'Poppins', 'Roboto', sans-serif !important; 
+        background-color: #2c3e50; 
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dropdown-menu :hover {
+        background-color: #34495e; 
+        color: #f1c40f !important; 
+    }
+    
+    
+    
+    
+    </style>
+
+
+{% endblock %}
+
+
+
+{% block content %}
+
+
+<div class="container-fluid">
+    <div class="row">
+        <h2>Batch-wise Product Status</h2>
+
+            <!-- Product Filter Form -->
+            <form method="GET" action="{% url 'reporting:batchwise_product_status' %}">
+                <label for="product">Select Product:</label>
+                <select name="product" id="product" onchange="this.form.submit()">
+                    <option value="">-- Select a Product --</option>
+                    {% for product in products %}
+                        <option value="{{ product.id }}" {% if product.id|stringformat:"s" == selected_product_id %}selected{% endif %}>
+                            {{ product.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form> 
+           
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 col-md-6">
+                        <h4 class="mt-4">Batch Stock</h4>
+                        <H6 class="text-primary fw-bold">Total product purchase:{{total_remaining_stock_value|add_commas }}
+                      <span class="text-success fw-bold"> Total product remaining:{{ total_purchase_stock_value|add_commas }}</span></h6>
+                        
+                        <canvas id="batchChart"></canvas>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <h4>Price trend</h4>
+                        <canvas id="batchPriceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">              
+                <h3>Batch-wise Product Details</h3>
+                <div class="col-6">
+                <!-- Batch Number Dropdown -->
+                <label for="batchFilter"  class="text-success fw-bold">Filter by Batch:</label>
+                <select id="batchFilter" class="form-select">
+                    <option value="">All Batches</option>
+                    {% for batch in batch_data %}
+                        <option value="{{ batch.batch }}">{{ batch.batch }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+                
+               
+                <div class="col-6">
+                    <!-- Column Selection Dropdown (Better UI) -->
+                    <div class="dropdown d-grid mt-4">
+                        <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="columnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Select Columns
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="columnDropdown">
+                            <li><button class="btn btn-sm btn-primary" id="selectAll">Select All</button></li>
+                            <li><button class="btn btn-sm btn-danger" id="deselectAll">Deselect All</button></li>
+                            <li><input type="checkbox" class="column-checkbox" value="batch"> Batch Number</li>
+                            <li><input type="checkbox" class="column-checkbox" value="inbound"> Purchase Qty</li>
+                            <li><input type="checkbox" class="column-checkbox" value="outbound"> Sold Qty</li>
+                            <li><input type="checkbox" class="column-checkbox" value="manufacture_in"> Manufacture In</li>
+                            <li><input type="checkbox" class="column-checkbox" value="manufacture_out"> Manufacture Out</li>
+                            <li><input type="checkbox" class="column-checkbox" value="replacement_in"> Replacement In</li>
+                            <li><input type="checkbox" class="column-checkbox" value="replacement_out"> Replacement Out</li>
+                            <li><input type="checkbox" class="column-checkbox" value="operations_out"> Operations Out</li>
+                            <li><input type="checkbox" class="column-checkbox" value="transfer_in"> Transfer In</li>
+                            <li><input type="checkbox" class="column-checkbox" value="transfer_out"> Transfer Out</li>
+                            <li><input type="checkbox" class="column-checkbox" value="scrapped_out"> Scrapped Out</li>
+                            <li><input type="checkbox" class="column-checkbox" value="remaining"> Remaining Quantity</li>
+                            <li><hr class="dropdown-divider"></li>
+                        
+                        </ul>
+                    </div>
+                </div>
+             </div>
+            </div>          
+          
+        </div>
+        
+
+        <div class="col-12 table-responsive mt-2">
+            <table class="table table-hover" id="batchTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="batch">Batch Number</th>                       
+                        <th class="inbound">Purchase Qty</th>
+                        <th class="outbound">Sold Qty</th>
+                        <th class="manufacture_in">Manufacture In</th>
+                        <th class="manufacture_out">Manufacture Out</th>
+                        <th class="replacement_in">Replacement In</th>
+                        <th class="replacement_out">Replacement Out</th>
+                        <th class="operations_out">Operations Out</th>
+                        <th class="transfer_in">Transfer IN</th>
+                        <th class="transfer_out">Transfer Out</th>
+                        <th class="scrapped_out">Scrapped Out</th>
+                        <th class="remaining">Remaining Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for batch in batch_data %}
+                    <tr data-batch="{{ batch.batch }}">
+
+                        <td class="batch">
+                          
+                            <a href="#" class="batch-link" data-batch-id="{{ batch.batch_id }}">
+                                {{ batch.batch }}
+                            </a>
+                         
+                       
+                        </td>
+                        <td class="inbound">{{ batch.inbound }}</td>
+                        <td class="outbound">{{ batch.outbound }}</td>
+                        <td class="manufacture_in">{{ batch.manufacture_in }}</td>
+                        <td class="manufacture_out">{{ batch.manufacture_out }}</td>
+                        <td class="replacement_in">{{ batch.replacement_in }}</td>
+                        <td class="replacement_out">{{ batch.replacement_out }}</td>
+                        <td class="operations_out">{{ batch.operations_out }}</td>
+                        <td class="transfer_in">{{ batch.transfer_in }}</td>
+                        <td class="transfer_out">{{ batch.transfer_out }}</td>
+                        <td class="scrapped_out">{{ batch.scrapped_out }}</td>
+                        <td class="remaining">{{ batch.remaining }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+    </div>
+</div>
+
+
+
+<div class="modal fade" id="batchWarehouseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Warehouse Details</h5>
+                 <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Warehouse</th>
+                            <th>Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="warehouse-details"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+$(document).ready(function () {
+    $(".batch-link").click(function (e) {
+        e.preventDefault();
+
+        var batchId = $(this).data("batch-id"); 
+
+        if (!batchId) {
+            console.log("Batch ID is missing!");  
+            return;  // Stop execution if batchId is missing
+        }
+
+        $.ajax({
+            url: "{% url 'reporting:get_batch_warehouse_data' %}",
+            type: "GET",
+            data: { batch_id: batchId },
+            success: function (data) {
+                console.log("AJAX Response:", data); // Debugging
+
+                var tableBody = $("#warehouse-details");
+                tableBody.empty();
+
+                if (data.length > 0) {
+                    data.forEach(function (item) {
+                    tableBody.append(
+                        `<tr>
+                            <td>${item.warehouse__name}</td>  
+                            <td>${item.quantity}</td>
+                        </tr>`
+                    );
+                });
+
+                } else {
+                    tableBody.append("<tr><td colspan='2'>No data found</td></tr>");
+                }
+
+                $("#batchWarehouseModal").modal("show"); 
+            },
+            error: function (xhr, status, error) {
+                console.log("AJAX Error:", error);
+            }
+        });
+    });
+});
+
+    
+</script>
+
+
+
+<script>
+    document.getElementById("columnDropdown").addEventListener("click", function () {
+    let dropdown = new bootstrap.Dropdown(this);
+    dropdown.show();
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const batchFilter = document.getElementById("batchFilter");
+        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+        const selectAllBtn = document.getElementById("selectAll");
+        const deselectAllBtn = document.getElementById("deselectAll");
+
+        // Hide all columns initially
+        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
+
+        // Show selected columns
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const columnClass = this.value;
+                const isChecked = this.checked;
+                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
+            });
+        });
+
+        // Select All
+        selectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
+            });
+        });
+
+        // Deselect All
+        deselectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
+            });
+        });
+
+        // Batch Filter
+        batchFilter.addEventListener("change", function () {
+            const selectedBatch = batchFilter.value;
+            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
+                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+
+
+    <script>
+        const batchData = JSON.parse('{{ batch_data_json|escapejs }}');
+        
+
+        const labels = batchData.map(item => item.batch);
+        const inboundData = batchData.map(item => item.inbound);
+        const outboundData = batchData.map(item => item.outbound);
+        const manufactureInData = batchData.map(item => item.manufacture_in);
+        const manufactureOutData = batchData.map(item => item.manufacture_out);
+        const remainingData = batchData.map(item => item.remaining);
+
+        var ctx = document.getElementById('batchChart').getContext('2d');
+        var batchChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Inbound',
+                        data: inboundData,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Outbound',
+                        data: outboundData,
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Manufacture In',
+                        data: manufactureInData,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Manufacture Out',
+                        data: manufactureOutData,
+                        backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                        borderColor: 'rgba(255, 159, 64, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Remaining Stock',
+                        data: remainingData,
+                        backgroundColor: 'rgba(0, 200, 83, 0.6)',
+                        borderColor: 'rgba(0, 200, 83, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const batchPriceData = JSON.parse('{{ batch_price_data|escapejs }}');
+
+        const labels = batchPriceData.map(batch => batch.created_at);
+        const prices = batchPriceData.map(batch => batch.unit_price);
+
+        const ctx = document.getElementById('batchPriceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Batch Purchase Price Over Time',
+                    data: prices,
+                    borderColor: 'blue',
+                    backgroundColor: 'rgba(0, 0, 255, 0.2)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: "Date" }
+                    },
+                    y: {
+                        title: { display: true, text: "Unit Price" }
+                    }
+                }
+            }
+        });
+    });
+</script>
+
+{% endblock %}

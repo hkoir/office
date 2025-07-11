@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+
+    <h2 class="mb-4 text-center">Meeting Room Report</h2>
+    <h3>Total Meeting Rooms:&nbsp;{{  total_Number_of_meeting_rooms }}</h3>
+
+
+
+    <div class="row">
+        <div class="col-md-9">           
+            <canvas id="meetingRoomBarChart" height="80%"></canvas>
+        </div>
+        <div class="col-md-3">          
+            <canvas id="meetingRoomPieChart" width="40%"></canvas>
+        </div>
+    </div>
+
+
+    <!-- Rooms Currently in Use -->
+    <h4 class="text-danger">Rooms Currently in Use</h4>
+    <table class="table table-bordered table-striped">
+        <thead class="table-danger">
+            <tr>
+                <th>#</th>
+                <th>Room Name</th>
+                <th>Capacity</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in in_use_rooms %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ room.name }}</td>
+                    <td>{{ room.capacity }}</td>
+                    <td>{{ room.location|default:"N/A" }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No rooms are currently in use.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Rooms That Will Be Free in 30 Minutes -->
+    <h4 class="text-success mt-4">Rooms That Will Be Free in 30 Minutes</h4>
+    <table class="table table-bordered table-striped">
+        <thead class="table-success">
+            <tr>
+                <th>#</th>
+                <th>Room Name</th>
+                <th>Capacity</th>
+                <th>Location</th>
+                <th>Book This room ?</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in free_soon_rooms %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ room.name }}</td>
+                    <td>{{ room.capacity }}</td>
+                    <td>{{ room.location|default:"N/A" }}</td>
+                    <td><a  href="{% url 'officemanagement:book_meeting_room' room.id %}">Book Now</a></td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No rooms will be free in the next 30 minutes.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {            
+            let totalRooms = JSON.parse('{{ total_Number_of_meeting_rooms|safe }}');
+            let inUseRooms = JSON.parse('{{ in_use_rooms|length|safe }}');
+            let freeSoonRooms = JSON.parse('{{ free_soon_rooms|length|safe }}');
+
+            let colors = ['#FF6384', '#36A2EB', '#FFCE56'];
+
+            // Bar Chart
+            let barCtx = document.getElementById('meetingRoomBarChart').getContext('2d');
+            new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Meeting Rooms'], // Single group label
+                    datasets: [
+                        {
+                            label: 'Total Rooms',
+                            data: [totalRooms],
+                            backgroundColor: colors[0]
+                        },
+                        {
+                            label: 'In Use Rooms',
+                            data: [inUseRooms],
+                            backgroundColor: colors[1]
+                        },
+                        {
+                            label: 'Free Soon Rooms',
+                            data: [freeSoonRooms],
+                            backgroundColor: colors[2]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+                        });
+
+            // Pie Chart
+            let pieCtx = document.getElementById('meetingRoomPieChart').getContext('2d');
+            new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['In Use Rooms', 'Free Soon Rooms'],
+                    datasets: [{
+                        data: [inUseRooms, freeSoonRooms],
+                        backgroundColor: colors.slice(1)
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        });
+    </script>
+
+
+{% endblock %}

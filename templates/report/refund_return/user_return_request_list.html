@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 table-responsive">
+
+
+                <h2>Return/Refund Requests</h2>
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Qty</th>
+                            <th>Customer</th>
+                            <th>Return Reason</th>
+                            <th>Status</th>
+                            <th>Refund Type</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for return in page_obj %}
+                        <tr>
+                            <td>{{ return.sale.product.product_name }}</td>
+                            <td>{{ return.quantity_refund }}</td>
+                            <td>{{ return.customer.customer_name }}</td>
+                            <td>{{ return.get_return_reason_display }}</td>
+                            <td>{{ return.get_status_display }}</td>
+                            <td>{{ return.get_refund_type_display }}</td>
+                            <td>
+                                <a href="{% url 'report:manage_return_request' return.id %}" class="btn btn-secondary btn-sm">Manage</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+              <!-- Pagination Controls -->
+              <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

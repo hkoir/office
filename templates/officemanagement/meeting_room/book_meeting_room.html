@@ -1,0 +1,18 @@
+
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+<h2>Book meeting room:&nbsp; {{ room.name }}</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Book Room</button>
+</form>
+
+
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">      
+
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 col-md-4"></div>
+                    <div class="col-12 col-md-4">
+                        <div class="card shadow-lg" style="background-color: aliceblue;">
+                            <!-- Card Header -->
+                            <div class="card-header bg-primary text-white text-center">
+                            <h3 class="mb-0"> User feedback</h3>
+                        </div> 
+                        <div class="card-body">                                   
+                            <form method="post" enctype="multipart/form-data" action="" id="add_category">
+                                {% csrf_token %} 
+                                {{ form.as_p }}
+                                <div class="d-grid">
+                                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> Submit</button>
+                                </div>
+                            </form>
+                            </div>
+                        </div>   
+                        </div>
+                        <div class="col-12 col-md-4"></div>
+                    
+                    </div>
+                </div>
+            </div>
+
+    </div>
+    <div style="height:50px"></div>
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_order_id').select2({
+            width: '70%',
+            placeholder: 'Search sale order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale order',
+            allowClear: true
+        });
+    });
+
+
+   
+    </script>
+    
+
+
+<script>
+    $(document).ready(function () {
+     function toggleFields() {
+         var entityType = $('#id_is_work_completed').val();
+ 
+         if (entityType === 'False') {
+             $('#id_work_quality_score').closest('p').hide(); 
+             $('#id_communication_quality_score').closest('p').hide(); 
+             $('#id_timely_completion_score').closest('p').hide(); 
+             $('#id_behavoiural_quality_score').closest('p').hide(); 
+             $('#id_product_quality').closest('p').hide(); 
+                            
+         } else {
+            $('#id_work_quality_score').closest('p').show(); 
+             $('#id_communication_quality_score').closest('p').show(); 
+             $('#id_timely_completion_score').closest('p').show(); 
+             $('#id_behavoiural_quality_score').closest('p').show(); 
+             $('#id_product_quality').closest('p').show(); 
+             $('#id_progress').closest('p').hide(); 
+         }
+     }
+ 
+     toggleFields(); // Initial call
+     $('#id_is_work_completed').change(function () {
+         toggleFields(); // Update fields on change
+     });
+ });
+ 
+ </script>
+
+
+
+
+
+
+
+{% endblock %}

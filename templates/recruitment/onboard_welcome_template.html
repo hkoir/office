@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to {{ employee.company }} - Your Official Onboarding Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #2c3e50;
+        }
+        p {
+            font-size: 16px;
+            color: #333;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #27ae60;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-content">
+        <h2>Welcome to {{ employee.company }}, {{ employee.full_name }}!</h2>
+        
+        <p>Dear {{ employee.full_name }},</p>
+        
+        <p>We are delighted to officially welcome you as part of our team! Below are your employment details:</p>
+
+        <ul>
+            <li><strong>Employee ID:</strong> {{ employee.employee_id }}</li>
+            <li><strong>Designation:</strong> {{ employee.position }}</li>
+            <li><strong>Department:</strong> {{ employee.department }}</li>
+            <li><strong>Location:</strong> {{ employee.location }}</li>
+            <li><strong>Reporting Manager:</strong> {{ employee.reporting_manager }}</li>
+            <li><strong>Official Joining Date:</strong> {{ employee.joining_date }}</li>
+        </ul>
+
+        <p>Attached to this email, you will find:</p>
+        <ul>
+            <li>Your official **Offer Letter & Employment Contract**</li>
+            <li>The **Employee Handbook** outlining company policies</li>
+            <li>Other important HR documents for your reference</li>
+        </ul>
+
+        <p>📌 <strong>Next Steps:</strong></p>
+        <ul>
+            <li>Report to <strong>{{ employee.location }}</strong> on <strong>{{ employee.joining_date }}</strong>.</li>
+            <li>Meet with your hiring manager <strong>{{ employee.reporting_manager }}</strong> for an onboarding briefing.</li>
+            <li>Complete any pending HR formalities on the first day.</li>
+            <li>Familiarize yourself with the **Employee Portal**.</li>
+        </ul>
+
+        <p>If you have any questions, feel free to reach out to HR at <a href="mailto:hr@yourcompany.com">hr@yourcompany.com</a>.</p>
+
+        <p>We are excited to have you onboard and look forward to working together!</p>
+
+        <p>Best regards,</p>
+        <p><strong>HR Team</strong><br>{{ employee.company }}</p>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

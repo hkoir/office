@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+
+
+
+<div class="container fluid main-content">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">            
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                    <h4 class="card-title text-center"><strong style="color:blue">Repaired Feedback for: {{ faulty_product.sale.product.product_name }}</strong> </h4>
+                    <form method="post">
+                        {% csrf_token %}                       
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Submit feedback</button>
+                    </form>
+                 </div>
+            </div>            
+        </div>
+        <div class="col-3"></div>
+
+    </div>
+</div>
+
+
+
+{% endblock %}

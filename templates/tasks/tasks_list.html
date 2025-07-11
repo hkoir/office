@@ -1,0 +1,445 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+
+{% load static %}
+
+{% block content %}
+
+
+   
+
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row"> 
+        <div class="col">            
+            <div class="container">
+                <form method="GET">
+                    {% csrf_token %}  
+                <div class="row">  
+                                                   
+                    <div class="col-md-3">
+                        Start date{{ form.start_date }}
+                    </div>
+                    <div class="col-md-3">
+                    End date{{ form.end_date }}
+                    </div>
+                    <div class="col-md-3">
+                        Department{{ form.department}}
+                        </div>
+                    <div class="col-md-3 mt-2">
+                        <button type="submit" class="btn btn-primary">Filter Report</button>
+                    </div>
+             
+                 </div>
+                </form>
+            </div>
+        </div>
+       
+        <div class="col-12 table-responsive">      
+                         
+            <h4>Tasks List</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                      
+                        <th>Assign task</th>
+                        <th>Chat</th>
+                        <th>Task ID</th>
+                   
+                        <th>Task Title</th>
+                        <th>Ticket</th>
+                        <th>Priority</th>
+                        <th>Assigned Date</th>
+
+                        <th>Due date</th>
+                        <th>Extended date</th>
+                        <th>Assigned to</th>
+                        <th>Progress</th>
+                   
+                        <th>Update task Progress</th>
+                        <th>Time extension Request</th>
+                        <th>Time extension Approval</th>
+                                          
+                        <th>Manager's Final evaluation</th>
+                        <th>Remarks</th>  
+                        <th>Updated</th>
+
+                        <th>Assigned quantitative number</th>
+                        <th>Obtained quantitative number</th>
+                        <th>Given quantitative number</th>
+                        <th>Obtained quantitative score</th>   
+                        <th>Given quantitative score</th>                                                                                    
+
+                        <th>Assigned Qualitative number</th>                       
+                        <th>Obtained Qualitative Number</th>
+                        <th>Obtained Qualitative Score</th>
+
+                        <th>Total assigned number</th>
+                        <th>Total obtained number</th>
+                        <th>Total given number</th>
+                        <th>Final obtained score</th>
+                        <th>Final given score</th>
+                        
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in page_obj %}
+                    <tr>
+                        <td>
+                            {% if not task.assigned_datetime %}
+                            <a href="{% url 'tasks:assigned_task' task.id %}"
+                            style="color:darkred">Assign task</a>
+                            {% else %}
+                            <span><i class="fas fa-check text-warning"></i></span>
+                            {% endif %}
+                        </td>
+                        <td style="white-space: nowrap;">
+                            <a href="{% url 'tasks:chat' task.id %}" style="text-decoration:none;">
+                                {% if unread_messages|dict_key:task.id %}
+                                    <i class="fa fa-exclamation-circle">
+                                        {{ unread_messages|dict_key:task.id|length }}
+                                    </i>
+                                {% else %}
+                                    <i class="fa fa-envelope" style="color:darkgreen"></i>
+                                {% endif %}
+                            </a>                       
+                        </td>                                    
+                                
+                        <td>
+                            {{task.task_id}}
+                        </td>
+                        <!-- <td>
+                            <a href="#" 
+                               class="view-task-details" 
+                               data-task-id="{{ task.id }}" 
+                               data-bs-toggle="modal" 
+                               data-bs-target="#taskDetailsModal">
+                               {{task.task_id}}
+                            </a>
+                        </td> -->
+                        
+                    
+                        <td>
+                            {% if task.task_type == 'TICKET' %}
+                            <span>Ticket</span>
+                            {% else %}
+                            {{ task.title }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.ticket %}
+                            {{ task.ticket.ticket_id }}
+                            {% else %}
+                            <span>No Ticket</span>
+                            {% endif %}
+                        </td>
+
+                        
+                        {% if task.priority|item_list:'HIGH,CRITICAL' %}
+                        <td class="bg-warning">{{ task.get_priority_display }} </td>
+                        {% else %}
+                        <td class="bg-info">{{ task.get_priority_display }} </td>
+                        {% endif %}
+
+                        <td>{{ task.assigned_datetime|date:'d M,h:i' }}</td>
+                        <td>{{ task.due_datetime|date:'d M,h:i' }}</td>
+
+                        <td>
+                            {% if task.extended_due_datetime %}
+                            {{ task.extended_due_datetime|date:'d M,h:i' }}
+                            {% else %}
+                            <span style="color:blue;font-weight: bold;">No extension</span>
+                            {% endif %}
+                        </td>
+                        
+                        <td>
+                            {% if task.assigned_to_employee %}
+                                {{ task.assigned_to_employee }}
+                            {% else %}
+                            <a href="{% url 'tasks:view_team_members' task.id %}">  {{ task.assigned_to_team }}</a>
+                              
+                            {% endif %}
+                        </td>   
+                       
+                        <td>
+                
+                        {% if task.progress >= 20.0 and task.progress < 30.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                </div>
+                            {% elif task.progress >= 30.0 and task.progress < 40.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                </div>
+                            {% elif task.progress >= 40.0 and task.progress < 50.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">40%</div>
+                                </div>
+                            {% elif task.progress >= 50.0 and task.progress < 60.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+                                </div>
+                            {% elif task.progress >= 60.0 and task.progress < 70.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                </div>
+                            {% elif ticket.progress_by_user >= 70.0 and ticket.progress_by_user < 80.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                                </div>
+                            {% elif task.progress >= 80.0 and task.progress < 90.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                </div>
+                            {% elif task.progress >= 90.0 and task.progress < 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">90%</div>
+                                </div>
+                            {% elif task.progress == 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                                </div>
+                            {% else %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                            {% endif %}
+                        </td>
+                                        
+                
+                        <!-- Update tasks -->
+                        <td>
+                            {% if task.task_qualitative_evaluations.first and task.status != 'COMPLETED' %}
+                                <span class="bg-warning"> Task ended by manager</span>
+                            {% else %}
+                                {% if task.status == 'COMPLETED' %}
+                                    <i class="fas fa-check" style="color:blue;font-weight: bold;">Completed</i>
+                                {% else %}
+                                    <a href="{% url 'tasks:update_task_progress' task.id %}" class="btn btn-sm btn-primary">Update</a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        
+                        
+                        <!-- request time extension button -->
+                        <td>
+                            {% if task.task_qualitative_evaluations.first and task.status != 'COMPLETED' %}
+                                <span class="bg-warning">Task ended by manager</span>
+                            {% else %}
+                                {% if task.status == 'COMPLETED' %}
+                                    <i class="fas fa-check" style="color:rgb(245, 11, 46); font-weight: bold;">Task completed</i>
+                                {% elif task.status == 'TIME_EXTENSION' %}
+                                    {% if not task.time_extension_requests.first.is_approved %}
+                                        <span class="bg-warning">Approval Pending</span>
+                                    {% else %}
+                                        <a href="{% url 'tasks:request_extension' task.id %}" class="btn btn-sm btn-primary">Apply</a>
+                                    {% endif %}
+                                {% else %}
+                                    <a href="{% url 'tasks:request_extension' task.id %}" class="btn btn-sm btn-primary">Apply</a>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                        
+                        
+
+                        <!-- time extension approval button -->
+                        <td>
+                            {% if task.status == 'TIME_EXTENSION' %}
+                                {% if not task.time_extension_requests.first.is_approved %}
+                                    <a href="{% url 'tasks:approve_extension' task.id %}" class="btn btn-sm btn-success">Approve Extension</a>
+                                {% else %}
+                                    <span><i class="fas fa-check" style="color:blue;font-weight: bolder;">Approved</i></span>
+                                {% endif %}
+                                {% else %}
+                                <i class="fas fa-check" style="color:rgb(0, 17, 255);font-weight: bolder;"></i>
+                            {% endif %}
+                        </td>
+                        
+                        
+                                        
+                                    
+                        <!-- manager's evaluation button -->
+                            <td>
+                                {% if task.task_qualitative_evaluations.first and task.status != 'COMPLETED' %}
+                                    <i class="fas fa-check" style="color:rgb(233, 14, 79);font-weight: bold;">Task early ended</i>
+                                {% elif task.status == 'COMPLETED' and not task.task_qualitative_evaluations.first %}
+                                    <a href="{% url 'tasks:qualitative_evaluation' task.id %}" class="btn btn-sm btn-primary">Evaluate</a>
+                                {% elif task.task_qualitative_evaluations.first and task.status == 'COMPLETED' %}
+                                    <i class="fas fa-check" style="color:blue;font-weight: bold;">Completed</i>
+                                {% else %}
+                                <a href="{% url 'tasks:qualitative_evaluation' task.id %}" class="btn btn-sm btn-primary">Evaluate</a>
+                                {% endif %}
+                            </td>
+                            
+                        <td>{{ task.remarks }}</td>
+
+                        <td>{{ task.updated_at|date:'d M,h:i' }}</td>
+                      
+
+                        <td>{{ task.assigned_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.obtained_quantitative_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.given_quantitative_number|floatformat:'2'}}</td>
+                        <td>{{ task.task_ev.first.obtained_quantitative_score|floatformat:'2' }}%</td>
+                        <td>{{ task.task_ev.first.given_quantitative_score|floatformat:'2' }}%</td>
+
+                                           
+                        <td>{{ task.task_ev.first.assigned_qualitative_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.obtained_qualitative_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.obtained_qualitative_score|floatformat:'2' }}%</td>
+
+                        <td>{{ task.task_ev.first.total_assigned_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.total_obtained_number|floatformat:'2' }}</td>
+                        <td>{{ task.task_ev.first.total_given_number|floatformat:'2' }}</td>
+                        <td class="bg-success">{{ task.task_ev.first.total_obtained_score|floatformat:'2'}}%</td>
+                        <td class="bg-info">{{ task.task_ev.first.total_given_score|floatformat:'2'}}%</td>
+                       
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="31" style="text-align: center;">No records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                    
+                </table>
+            </div>  
+            
+        </div>
+
+
+
+    <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+</div>
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="taskDetailsModal" tabindex="-1" aria-labelledby="taskDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="taskDetailsModalLabel">Task Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Task ID:</strong> <span id="task-id"></span></p>
+          <p><strong>Description:</strong> <span id="task-description"></span></p>
+          <p><strong>Status:</strong> <span id="task-status"></span></p>
+          <p><strong>Assigned To:</strong> <span id="task-assigned"></span></p>
+          <p><strong>Due Date:</strong> <span id="task-due-date"></span></p>
+          <p><strong>Ticket subject:</strong> <span id="ticket_subject"></span></p>
+          <p><strong>Ticket Description:</strong> <span id="ticket_description"></span></p>
+          <p><strong>Ticket raised by:</strong> <span id="ticket_raised_by"></span></p>
+          <p><strong>Ticket origin date:</strong> <span id="ticket_origin_date"></span></p>
+          <p><strong>Ticket resolution date:</strong> <span id="ticket_resolution_date"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.view-task-details').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                const taskId = this.dataset.taskId;  
+    
+                console.log("Task ID clicked:", taskId);  // Debugging
+    
+                fetch(`/tasks/task_details/${taskId}/`)
+                    .then((response) => response.json())
+                    .then((data) => {
+                        if (data.error) {
+                            console.error('Error:', data.error);
+                        } else {
+                            console.log("Fetched data:", data);
+    
+                            document.getElementById('task-id').textContent = data.task_id || 'N/A';
+                            document.getElementById('task-description').textContent = data.description || 'N/A';
+                            document.getElementById('task-status').textContent = data.status || 'N/A';
+                            document.getElementById('task-assigned').textContent = data.assigned_to || 'N/A';
+                            document.getElementById('task-due-date').textContent = data.due_datetime || 'N/A';
+                            document.getElementById('ticket_subject').textContent = data.ticket_subject || 'N/A';
+                            document.getElementById('ticket_description').textContent = data.ticket_description || 'N/A';
+                            document.getElementById('ticket_raised_by').textContent = data.ticket_raised_by || 'N/A';
+                            document.getElementById('ticket_origin_date').textContent = data.ticket_origin_date || 'N/A';
+                            document.getElementById('ticket_resolution_date').textContent = data.ticket_resolution_date || 'N/A';
+    
+                            // Ensure modal opens after data is set
+                            var modal = new bootstrap.Modal(document.getElementById('taskDetailsModal'));
+                            modal.show();
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error fetching task details:", error);
+                        alert("An error occurred while fetching task details.");
+                    });
+            });
+        });
+    });
+    </script>
+    
+
+<script>
+    $(document).ready(function() {
+        $('#id_employee_name').select2({
+            width: '100%',
+            placeholder: 'Search employee...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for employee',
+            allowClear: true
+        });
+    });
+    </script>
+    
+
+{% endblock %}

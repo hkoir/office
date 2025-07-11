@@ -1,0 +1,46 @@
+
+{% extends 'base.html' %}
+
+{% load custom_filters %}
+{% block content %}
+
+
+
+   
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col">
+            <h2>Warehouse Transfer Report</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr class="bg-primary text-white">
+                        <th>Product</th>
+                        <th>Quantity Transferred</th>
+                        <th>Source Warehouse</th>
+                        <th>Target Warehouse</th>
+                        <th>Transfer date</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transfer in transfer_data %}
+                    <tr>
+                        <td>{{ transfer.product_name }}</td>
+                        <td>{{ transfer.quantity_transferred }}</td>
+                        <td>{{ transfer.source_warehouse }}</td>
+                        <td>{{ transfer.target_warehouse }}</td>
+                        <td>{{ transfer.updated_at }}</td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No transfer data available.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+ 
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        
+        <div class="col-12 col-md-auto">
+
+            {% if order_instance %}
+            <table class="table table-hover">
+                <thead class="table-dark">                       
+                    <h4>Items requested</h4>
+                        <tr>
+                            <th>Product</th>
+                            <th>Category</th>       
+                            <th>Batch</th>                        
+                            <th style="white-space: nowrap;">Quantity</th>
+                            <th style="white-space: nowrap;" >Unit Price</th>                       
+                       
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_instance.usage_order.all %}
+                        <tr>
+                            <td style="white-space: nowrap;">{{ item.stationary_product.name }}</td>  
+                            <td style="white-space: nowrap;">{{ item.stationary_category.name }}</td>                          
+                            <td style="white-space: nowrap;">{{ item.batch.batch_number }}</td>
+                            <td style="white-space: nowrap;">{{ item.quantity }}</td>
+                            <td style="white-space: nowrap;">{{ item.batch.unit_price }}</td>
+                        
+                            
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+                <a href="{% url 'officemanagement:usage_request_list' %}">Back to list</a>
+        
+                
+        </div>
+
+    </div>
+</div>
+
+
+
+{% endblock %}

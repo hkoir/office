@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid main-content">
+    <div class="row">    
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-auto">        
+
+            <div class="card my-4">
+                <div class="card-body" style="background-color: beige;">
+                    <h5 class="card-title">Preview</h5>
+                    <div>
+                        <!-- Embed the PDF with full width and increased height -->
+                        <embed src="data:application/pdf;base64,{{ pdf_preview }}" width="600px" height="500px" />
+                    </div>
+                </div>
+            </div> 
+        </div>
+        <div class="col-12 col-md-2"></div>     
+        
+    </div>
+    
+</div>
+   
+
+
+
+
+{% endblock %}

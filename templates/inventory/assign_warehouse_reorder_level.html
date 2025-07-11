@@ -1,0 +1,125 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+
+
+<div class="container-fluid main-content my-3"> 
+    <div class="row">
+        <div class="col-12 col-md-4">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                 <!-- Card Header -->
+                 <div class="card-header bg-primary text-white text-center">
+                    <h4>Assign Warehouse Reorder Level</h4>
+                </div> 
+                <div class="card-body">                    
+                    <form method="post" enctype="multipart/form-data" action="" id="add_category">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">Submit</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+        <div class="col-12 col-md-8 table-responsive">
+            
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr class="bg-primary text-white">
+
+                        <th>Warehouse Name</th>
+                        <th>Product name</th>
+                        <th>Reorder Level</th>
+                        <th>Current stock</th>
+                        <td>Actions</td>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if page_obj %}
+                  
+                    {% for data in page_obj %}
+                    <tr>
+                        <td>{{ data.warehouse }}</td>
+                        <td>{{ data.product}}</td>
+                        <td>{{ data.reorder_level }}</td>
+                        <td>{{ data.quantity }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'inventory:create_warehouse_reorder_level' %}" class="btn btn-sm btn-info">Add</a>
+                            <a href="{% url 'inventory:update_warehouse_reorder_level' data.id %}" class="btn btn-sm btn-info">Edit</a>
+                           
+                            <a href="#" 
+                                class="btn btn-danger btn-sm" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal" 
+                                data-id="{{ data.id }}" 
+                                data-name="{{ data.score }}">
+                                    Delete
+                                </a>
+                           
+                        </td>
+                        
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-warning">No records available for this warehouse.</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-warning">No records found for this warehouse. </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+ <!-- Delete Confirmation Modal -->
+ <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the transport record: <strong id="modal-entity-name"></strong>?
+            </div>
+            <div class="modal-footer">
+                <form method="post" id="delete-form">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/inventory/delete_warehouse_reorder_level/${entityId}/`;
+    });
+</script>
+
+
+{% endblock %}

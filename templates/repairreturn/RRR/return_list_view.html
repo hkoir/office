@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<table class="table table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Product</th>
+            <th>Customer</th>
+            <th>Order No.</th>
+            <th>Qty return</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for return in return_requests %}
+        <tr>
+            <td>{{ return.product.product_name }}</td>
+            <td>{{ return.customer.customer_name }}</td>
+            <td>{{ return.sale.sale_order.sale_order_id }}</td>
+            <td>{{ return.quantity_returned }}</td>
+            <td>{{ return.repair_status }}</td>
+            <td>
+                <a href="{% url 'repairreturn:return_detail' pk=return.pk %}">Details</a>
+                <!-- You can add other actions like inspect, repair links -->
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

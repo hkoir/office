@@ -1,0 +1,21 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+  
+
+
+<div class="container main-content">
+    <h4>Are you sure you want to delete the team "{{ team.name }}"?</h4>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        <a href="{% url 'tasks:tasks_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+
+
+{% endblock %}

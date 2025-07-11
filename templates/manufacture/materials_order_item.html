@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+       
+       <div class="container-fluid main-content">
+    <div class="row">
+        <div class="col">
+         
+
+            <div class="container mt-4">
+                <h1 class="mb-4">Materials Order Items</h1>
+        
+                <!-- Search Form -->
+                <form method="get" class="mb-4">
+                    <div class="row">
+                        <div class="col-md-4">
+                            {{ form.order_number.label_tag }}
+                            {{ form.order_number }}
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary mt-4">Search</button>
+                        </div>
+                    </div>
+                </form>
+        
+                <!-- Display Results -->
+                {% if materials_orders %}
+                    <div class="accordion" id="materialsOrdersAccordion">
+                        {% for order in materials_orders %}
+                            <div class="accordion-item">
+                                <h2 class="accordion-header" id="heading{{ order.id }}">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ order.id }}" aria-expanded="true" aria-controls="collapse{{ order.id }}">
+                                        Order Number: {{ order.order_id }} - {{ order.order_date }}
+                                    </button>
+                                </h2>
+                                <div id="collapse{{ order.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ order.id }}" data-bs-parent="#materialsOrdersAccordion">
+                                    <div class="accordion-body">
+                                        <h5>Requested Items</h5>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Product Name</th>
+                                                    <th>Quantity</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in order.material_request_order_for_item.all %}
+                                                    <tr>
+                                                        <td>{{ item.product.name }}</td>
+                                                        <td>{{ item.quantity }}</td>
+                                                        <td>{{ item.status }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr>
+                                                        <td colspan="3" class="text-center">No requested items found.</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+        
+                                        <h5 class="mt-4">Delivery Items</h5>
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Product Name</th>
+                                                    <th>Quantity Delivered</th>
+                                                    <th>Warehouse</th>
+                                                    <th>Location</th>
+                                                    <th>Delivery Date</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for delivery in order.materials_request_delivery.all %}
+                                                    <tr>
+                                                        <td>{{ delivery.product.name }}</td>
+                                                        <td>{{ delivery.quantity }}</td>
+                                                        <td>{{ delivery.warehouse.name }}</td>
+                                                        <td>{{ delivery.location.name }}</td>
+                                                        <td>{{ delivery.delivery_date }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr>
+                                                        <td colspan="5" class="text-center">No delivery items found.</td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">No orders found. Please refine your search.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}

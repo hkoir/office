@@ -1,0 +1,122 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">  
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:product_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-cubes menu-icon"></i>
+                    <div class="menu-title">Product Reports</div>
+                </div>
+            </a>
+        </div>     
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:batchwise_product_status' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-cubes menu-icon"></i>
+                    <div class="menu-title">Batchwise report</div>
+                </div>
+            </a>
+        </div>      
+
+
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'inventory:inventory_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-bar menu-icon"></i>
+                    <div class="menu-title">Inventory report</div>
+                </div>
+            </a>
+        </div> 
+
+     
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'inventory:inventory_aggregate_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-area menu-icon"></i>
+                    <div class="menu-title">Aggregate Inventory</div>
+                </div>
+            </a>
+        </div> 
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:warehouse_report' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-area menu-icon"></i>
+                    <div class="menu-title">All Products report</div>
+                </div>
+            </a>
+        </div>  
+       
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'inventory:inventory_executive_sum' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-area menu-icon"></i>
+                    <div class="menu-title">Inventory summary</div>
+                </div>
+            </a>
+        </div>      
+        
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:calculate_product_wise_revenue' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-area menu-icon"></i>
+                    <div class="menu-title">Details revenue</div>
+                </div>
+            </a>
+        </div>      
+
+          
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:Calculate_sales_profit' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-area menu-icon"></i>
+                    <div class="menu-title">Revenue Summary</div>
+                </div>
+            </a>
+        </div>   
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'inventory:inventory_transaction_report' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-line menu-icon"></i>
+                    <div class="menu-title">Transaction Report</div>
+                </div>
+            </a>
+        </div>       
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:monitor_inventory_status' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-box menu-icon"></i>
+                    <div class="menu-title">Low stock monitor</div>
+                </div>
+            </a>
+        </div>    
+       
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'reporting:notification_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-envelope menu-icon"></i>
+                    <div class="menu-title">Notifications</div>
+                </div>
+            </a>
+        </div>  
+       
+       
+
+    </div>
+</div>
+
+
+
+    {% endblock %}
+
+ 

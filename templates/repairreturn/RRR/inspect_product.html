@@ -1,0 +1,38 @@
+
+
+{% extends "base.html" %}
+
+{% block content %}
+
+       
+    </style>
+
+
+
+<div class="container fluid main-content">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-6">          
+       
+            <div class="card" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                    <h4 class="text-center">Inspection report for: {{ return_instance.product.product_name }}</h4>
+                   
+                    <form method="post">
+                        {% csrf_token %}                       
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Confirm</button>
+                    </form>
+                 </div>
+            </div>          
+            
+        </div>
+        <div class="col-3"></div>
+
+    </div>
+</div>
+
+
+
+
+{% endblock %}

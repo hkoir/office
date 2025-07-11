@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <h2 class="mb-4">Employee Advance and Expense Reconciliation Report</h2>
+    <div class="col-12 mb-4">
+        <div class="row">
+            <div class="col-4" style="background-color: aqua;text-align: center;font-weight:bold;">
+                Total advance disburse:{{ total_advance_taken }}
+            </div>
+            <div class="col-4" style="background-color: bisque;text-align: center;font-weight:bold;">
+                Total expense submitted:{{ total_expenses_submitted}}
+            </div>
+            <div class="col-4" style="background-color: rgb(195, 229, 162);text-align: center;font-weight:bold;">
+                Yet to reimburse:{{ total_balance}}
+            </div>
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <form method="GET" action="{% url 'officemanagement:advance_reconcilation_report' %}"
+        class="my-3">
+            <input type="text" name="search" placeholder="Search Employee" value="{{ search_query }}">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+        {% if page_obj %}
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Employee Name</th>
+                    <th>Advance Taken ($)</th>
+                    <th>Expenses Submitted ($)</th>
+                    <th>Balance ($)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in page_obj %}
+                <tr>
+                    <td>{{ data.name }}</td>
+                    <td >{{ data.total_advance_taken|floatformat:2|add_commas }}</td>
+                    <td >{{ data.total_expenses_submitted|floatformat:2|add_commas }}</td>
+                    <td class="
+                        {% if data.balance < 0 %}text-danger{% elif data.balance > 0 %}text-success{% endif %}">
+                        {{ data.balance|floatformat:2|add_commas }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center">No data available</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div>
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Previous</a>
+            {% endif %}
+    
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}">Last</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <p>No records found.</p>
+    {% endif %}
+    </div>
+</div>
+{% endblock %}

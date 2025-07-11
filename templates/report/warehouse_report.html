@@ -1,0 +1,378 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">    
+        <h4 class="text-center mb-5"><strong>DOPS Inventory management system</strong></h6>             
+        <div class="col-12">   
+                        
+            <form method="GET" action="{% url 'reporting:warehouse_report' %}">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Warehouse Name: {{ form.warehouse_name }}
+                        </div> 
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Product Name: {{ form.product_name }}
+                        </div> 
+                        <div class="col-md-6 col-sm-6 mt-2">
+                            <button type="submit" class="btn btn-primary">Generate Data</button> 
+                            <span>  Data for
+                                {% if days %}
+                                    the last {{ days }} days
+                                {% elif start_date and end_date %}
+                                    from: {{ start_date }} to {{ end_date }}
+                                {% endif %} </span>                    
+                        
+                        </div>
+                    </div>
+                </div>                    
+            </form>
+           
+        </div>
+
+     
+        <div class="col-12 bg-light my-3">  
+            <h4 style="color:blue;font-weight: bold;">
+                {% if warehouse_name %}
+                Stocks in {{ warehouse_name }}
+                {% else %}
+                All Stocks
+                {% endif %}      
+            </h4> 
+            <div class="chart-container">
+                <canvas id="barChart" style="height:250px"></canvas>
+            </div>
+                                                
+        </div>
+        
+     
+        <div class="col-12">    
+            <h4 style="color:blue;font-weight: bold;">
+                {% if warehouse_name %}
+                Stocks in {{ warehouse_name }}
+                {% else %}
+                All Stocks
+                {% endif %}
+                </h4>
+             <!-- Column Selection Dropdown (Better UI) -->
+             <div class="dropdown mt-4">
+                <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="columnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Columns
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="columnDropdown">
+                    <li><button class="btn btn-sm btn-primary" id="selectAll">Select All</button></li>
+                    <li><button class="btn btn-sm btn-danger" id="deselectAll">Deselect All</button></li>
+                    <li><input type="checkbox" class="column-checkbox" value="batch"> Purchase Order Number</li>
+                    <li><input type="checkbox" class="column-checkbox" value="inbound"> Request Order number</li>
+                    <li><input type="checkbox" class="column-checkbox" value="outbound"> Total amount Due</li>
+                    <li><input type="checkbox" class="column-checkbox" value="manufacture_in"> Total amount Paid</li>
+                    <li><input type="checkbox" class="column-checkbox" value="manufacture_out"> Status</li>
+                    <li><input type="checkbox" class="column-checkbox" value="replacement_in"> Submission</li>
+                    <li><input type="checkbox" class="column-checkbox" value="replacement_out"> Review</li>
+                    <li><input type="checkbox" class="column-checkbox" value="operations_out"> Approval</li>
+                    <li><input type="checkbox" class="column-checkbox" value="transfer_in"> Create parent Schedule</li>
+                    <li><input type="checkbox" class="column-checkbox" value="transfer_out"> Add child schedule</li>
+                    <li><input type="checkbox" class="column-checkbox" value="scrapped_out"> Scrapped Out</li>
+                    <li><input type="checkbox" class="column-checkbox" value="remaining"> Remaining Quantity</li>
+                    <li><hr class="dropdown-divider"></li>
+                
+                </ul>
+            </div>   
+        </div>
+        <div class="col-12 table-responsive">                     
+            <table class="table table-hover">
+                <thead class="table-dark">
+                   
+                    <tr>
+                        <th>Product Name</th>
+
+                        <th>Total Available</th>
+                        <th>Total Purchased</th>
+                        <th>Total existing IN</th>
+                        <th>Total Sold</th>
+
+                        <th>Total replacement IN</th>
+                        <th>Total replacement Out</th>
+                        <th>Transfers IN</th>
+                        <th>Transfers OUT</th>
+
+                        <th>Total Manufacture  IN</th>
+                        <th>Total Manufacture Out</th>
+                        <th>Total Operations used</th>                       
+
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                    {% for product in product_data %}
+                        <tr>
+                            <td>{{ product.product_name }}</td>
+
+                            <td>{{ product.total_available }}</td>
+                            <td>{{ product.total_purchased }}</td>
+                            <td>{{ product.total_existing_product }}</td>
+                            <td>{{ product.total_sold }}</td>
+
+                            <td>{{ product.total_replacement_in }}</td>
+                            <td>{{ product.total_replacement_out }}</td>
+                            <td>{{ product.total_transfer_in }}</td>
+                            <td>{{ product.total_transfer_out }}</td>
+
+                            <td>{{ product.total_manufacture_in }}</td>
+                            <td>{{ product.total_manufacture_out }}</td>
+                            <td>{{ product.total_operation_used }}</td>
+                        </tr>
+                        {% endfor %}
+                        
+                </tbody>
+            </table>
+               
+        </div>
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">previous</a>
+                    {% endif %}
+            
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+            
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+            
+    </div>
+</div>
+
+
+
+
+<script>
+    document.getElementById("columnDropdown").addEventListener("click", function () {
+    let dropdown = new bootstrap.Dropdown(this);
+    dropdown.show();
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const batchFilter = document.getElementById("batchFilter");
+        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+        const selectAllBtn = document.getElementById("selectAll");
+        const deselectAllBtn = document.getElementById("deselectAll");
+
+        // Hide all columns initially
+        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
+
+        // Show selected columns
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const columnClass = this.value;
+                const isChecked = this.checked;
+                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
+            });
+        });
+
+        // Select All
+        selectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
+            });
+        });
+
+        // Deselect All
+        deselectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
+            });
+        });
+
+        // Batch Filter
+        batchFilter.addEventListener("change", function () {
+            const selectedBatch = batchFilter.value;
+            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
+                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+    const productData = JSON.parse('{{ product_json|escapejs }}');  
+    
+        const ctxBar = document.getElementById(`barChart`).getContext('2d');                
+
+        const productNames = productData.map(product => product.product_name);
+        const totalAvailable = productData.map(product => product.total_available);
+        const totalPurchased = productData.map(product => product.total_purchased);
+        const totalSold = productData.map(product => product.total_sold);
+        const totalTransferIn = productData.map(product => product.total_transfer_in);
+        const totalTransferOut = productData.map(product => product.total_transfer_out);
+        const totalReplacementIn = productData.map(product => product.total_replacement_in);
+        const totalReplacementOut = productData.map(product => product.total_replacement_out);
+        const reorderLevel = productData.map(product => product.reorder_level);
+        const totalExistingProduct = productData.map(product => product.total_existing_product);
+        const totalOperationUsed = productData.map(product => product.total_operation_used);
+        const totalManufactureIn = productData.map(product => product.total_manufacture_in);
+        const totalManufactureOut = productData.map(product => product.total_manufacture_out);
+    
+
+        // Bar Chart
+        new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: productNames,
+                datasets: [
+                    {
+                        label: 'Available',
+                        data: totalAvailable,
+                        backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        
+                        
+                    },
+                    {
+                        label: 'Purchased',
+                        data: totalPurchased,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Existing product',
+                        data: totalExistingProduct,
+                        backgroundColor: 'rgba(0, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Operations used',
+                        data: totalOperationUsed,
+                        backgroundColor: 'rgba(0, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Sold',
+                        data: totalSold,
+                        backgroundColor: 'rgba(100, 209, 132, 0.6)',
+                        backgroundColor: 'rgba(100, 209, 132, 0.6)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'reorder Level',
+                        data: reorderLevel,
+                        backgroundColor: 'rgba(255, 0, 10, 0.6)',
+                        borderColor: 'rgba(255, 0, 10, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Replacement in',
+                        data: totalReplacementIn,                     
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Replacement out',
+                        data: totalReplacementOut,                     
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Manufacture in',
+                        data: totalManufactureIn,                     
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    },
+
+                    {
+                        label: 'Manufacture out',
+                        data: totalManufactureOut,                     
+                        backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Incoming Transfers',
+                        data: totalTransferIn,
+                        backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Outgoing Transfers',
+                        data: totalTransferOut,
+                        backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                        borderColor: 'rgba(255, 206, 86, 1)',
+                        borderWidth: 1
+                    }
+                    
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: Math.max(...[...totalAvailable, ...totalPurchased, ...totalSold,...totalReplacementIn]) * 1.2,
+                    }
+                },
+                responsive: true,
+                maintainAspectRatio: false,  
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            },
+                            color: '#333' 
+                        }
+                    }
+                }
+               
+                
+                
+            }
+        });
+
+      
+       
+    
+</script>
+
+
+
+
+
+
+{% endblock %}

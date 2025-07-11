@@ -1,0 +1,247 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h4 class="text-center text-primary fw-bold">Applicant's CV screening</h4>
+      <!-- First Column for Form -->
+       <div class="col-12">
+        <div class="container-fluid">
+            <div class="row">        
+            
+                <div class="col-12 col-md-4">
+                    <div class="card shadow-lg" style="background-color: aliceblue;">
+                    <!-- Card Header -->
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0"> CV Screening</h3>
+                    </div>
+                    <!-- Form -->
+                    <form method="POST" enctype="multipart/form-data" class="p-4">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg"> Apply</button>
+                        </div>
+                    </form>
+                    </div>
+                </div>
+            
+                <!-- Second Column for Chart -->
+                <div class="col-12 col-md-4 shadow" style="background-color: aliceblue;height:250px" >
+                    <canvas id="interviewChart" style="margin-top:20px; max-width: 100%; max-height: 80%;"></canvas>        
+                </div>
+                
+                <div class="col-12 col-md-4">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body" style="background-color: aqua;">
+                            {% if threshold_score > 0 %}
+                                <h5 class="card-title text-center">Threshold Score: {{ threshold_score }}</h5>
+                                <hr>
+                                <h6 class="card-subtitle text-muted">New Result:</h6>
+                            {% else %}
+                                <h5 class="card-title text-center">Current Result:</h5>
+                                <hr>
+                            {% endif %}
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Total Candidates:
+                                    <span>{{ total_candidates }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Candidates Pass:
+                                    <span>{{ No_of_candidate_pass }}</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    Candidates Fail:
+                                    <span>{{ No_of_candidate_fail }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+
+        </div>
+    </div>
+  
+    <!-- Table and Filtering Section Below -->
+    
+      <div class="col-12 my-5">
+        <h3>Candidate cv Screening result</h3>
+        <form method="get" class="mt-2 mb-2">
+          <div class="container-fluid">
+            <div class="row row-cols-2 row-cols-md-4">
+              <div class="col">
+                <input type="text" name="candidate_name" placeholder="Enter candidate name" class="form-control" value="{{ request.GET.candidate_name }}">
+              </div>
+              <div class="col">
+                <input type="number" name="number_of_top" placeholder="Enter number of top candidates" class="form-control" value="{{ request.GET.number_of_top }}">
+              </div>
+              <div class="col">
+                <button class="btn btn-primary" type="submit">Search</button>
+              </div>
+            </div>
+          </div>
+        </form>
+  
+        <!-- Table -->
+        <table class="table">
+          <thead class="table-dark">
+            <tr>
+              <th>Candidate Name</th>
+              <th>Job Title</th>
+              <th>Exam</th>
+              <th>Status</th>
+              <th>Threshold Score</th>
+              <th>Candidate Score</th>
+              <th>Photo</th>
+              <th>Resume</th>
+              <th>Screening Round</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for history in page_obj %}
+              <tr>
+                <td>{{ history.candidate.full_name }}</td>
+                <td>{{ history.job.title }}</td>
+                <td>{{ history.exam.title }}</td>
+                <td>{{ history.status }}</td>
+                <td>{{ history.threshold_score }}</td>
+                <td>{{ history.candidate.cv_screening_score }}</td>
+                <td>
+                  {% if history.candidate.pp_photo %}
+                  <img src="{{ history.candidate.pp_photo.url }}" class="card-img-top rounded-circle" alt="{{ employee.name }}" style="width:30px;height:30px;">
+                  {% endif %}
+                </td>
+                <td>
+                  {% if history.candidate.resume and history.candidate.resume.url %}
+                    <a href="{{ history.candidate.resume.url }}" target="_blank">
+                     View Resume
+                    </a>
+                    {% else %}
+                    <img src="{{ history.candidate.resume.url }}" class="card-img-top rounded-circle" alt="{{ employee.name }}" style="width:30px;height:30px;">
+                  {% endif %}
+                </td>
+                <td>{{ history.screening_round }}</td>
+                <td>{{ history.created_at|date:"F j, Y, g:i a" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+  
+        <!-- Pagination Controls -->
+        <div class="pagination">
+          <span class="step-links">
+            {% if page_obj.has_previous %}
+              <a href="?page=1">&laquo; first</a>
+              <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+            <span class="current">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}">next</a>
+              <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+    
+  </div>
+  <h4 style="height:10px"></h4>
+</div>
+
+
+
+
+<script>
+  const chartData = JSON.parse('{{ chart_data|escapejs }}');       
+  const ctx = document.getElementById('interviewChart').getContext('2d');   
+
+  const incrementChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+          labels: chartData.labels,
+          datasets: [{
+              label: 'No of candidate',
+              data: chartData.values,
+              backgroundColor: [                   
+            
+                '#00BFFF',  // Deep Sky Blue
+                '#32CD32',  // Lime Green
+                '#FF0000',  // Red     
+                ],
+
+          borderColor: [                
+           
+            '#00BFFF',  // Deep Sky Blue
+            '#32CD32',  // Lime Green
+            '#FF0000',  // Red    
+             
+          ],
+
+              borderWidth: 1,
+          }],
+      },
+      options: {
+          responsive: true,
+          plugins: {
+              legend: {
+                  position: 'top',
+                  labels: {
+                  color: '#333333',  // Set legend text color (e.g., dark gray)
+                  font: {
+                      size: 14,      // Optional: Change font size
+                      family: 'Arial', // Optional: Change font family
+                      weight: 'bold',  // Optional: Change font weight
+                  },
+              },
+              },
+          },
+      },
+  });
+  
+
+</script>
+
+
+
+
+
+
+
+
+<script type="text/javascript">
+    document.addEventListener("DOMContentLoaded", function () {
+        const jobSelect = document.getElementById('id_job_title');
+        const examSelect = document.getElementById('id_exam');
+
+        jobSelect.addEventListener('change', function () {
+            const jobId = jobSelect.value;
+            fetch(`/recruitment/get_exams/${jobId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    examSelect.innerHTML = ''; 
+                    data.exams.forEach(function (exam) {
+                        const option = document.createElement('option');
+                        option.value = exam.id;
+                        option.textContent = exam.name;
+                        examSelect.appendChild(option);
+                    });
+                });
+        });
+    });
+</script>
+
+
+{% endblock %}
+
+

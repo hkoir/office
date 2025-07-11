@@ -1,0 +1,95 @@
+{% extends 'partner_portal_base.html' %}
+
+
+{% load custom_filters %}
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">   
+    <div class="row">
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-8">                  
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                   
+                    <h4 class="text-center" style="color:blue; font-weight: bold;">Sale Order: {{ sale_order.order_id }}</h4>                  
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Create Return/Refund Request</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="container-fluid">
+                                    <div class="row gy-3"> <!-- Added spacing between rows -->
+                                        <!-- Sale Order -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="id_sale_order" class="form-label">Sale Order</label>
+                                                {{ form.sale_order|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <!-- Sold Items -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.sale.id_for_label }}" class="form-label">Sold Items</label>
+                                                {{ form.sale|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <!-- Return Reason -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.return_reason.id_for_label }}" class="form-label">Return Reason</label>
+                                                {{ form.return_reason|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <!-- Refund Type -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.refund_type.id_for_label }}" class="form-label">Refund Type</label>
+                                                {{ form.refund_type|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <!-- Quantity Refund -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.quantity_refund.id_for_label }}" class="form-label">Quantity Refund</label>
+                                                {{ form.quantity_refund|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <!-- Remarks -->
+                                        <div class="col-12 col-md-6 col-lg-4">
+                                            <div class="form-group">
+                                                <label for="{{ form.remarks.id_for_label }}" class="form-label">Remarks</label>
+                                                {{ form.remarks }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-4">
+                                        <!-- Submit Button -->
+                                        <div class="col-12 text-center">
+                                            <button type="submit" class="btn btn-primary btn-lg">
+                                                Submit Request
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                </div>
+            </div>
+          
+        </div>
+        <div class="col-12 col-md-2"></div>
+       
+    </div>
+</div>
+
+
+
+
+{% endblock %}

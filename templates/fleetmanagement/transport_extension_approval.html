@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+
+    
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 col-md-4"></div>
+        <div class="col-12 col-md-4">
+            <div class="card shadow-lg">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Approval</h3>
+                </div> 
+                <div class="card-body">                       
+                    <form method="post" enctype="multipart/form-data" action="" id="add_customer">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg">Submit</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>  
+        </div>
+        <div class="col-12 col-md-4"></div>
+    </div>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        function toggleFields() {
+            var entityTypeValue = $('#id_approval_status').val(); 
+            console.log('Approval Status Value:', entityTypeValue); 
+
+            function toggleField(fieldId, show) {
+                var fieldContainer = $(`#${fieldId}`).closest('p'); 
+                console.log(`Toggling field: ${fieldId}, Show: ${show}`);
+                if (show) {
+                    fieldContainer.show();
+                } else {
+                    fieldContainer.hide();
+                }
+            }
+
+            toggleField('id_cancellation_reason', false);
+
+            if (entityTypeValue === 'CANCELLED') {
+                toggleField('id_cancellation_reason', true);
+            }
+        }
+
+        toggleFields(); // Initial call
+
+             $('#id_approval_status').change(function () {
+            toggleFields();
+        });
+    
+        $('#id_cancellation_reason').change(function () {
+            toggleFields();
+        });
+    });
+</script>
+
+
+<script>
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');       
+    const ctx = document.getElementById('incrementChart').getContext('2d');   
+
+    const incrementChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Amount',
+                data: chartData.values,
+                backgroundColor: [
+               
+                '#FF0000',  // Soft Blue
+                '#FFCE56',  // Soft Yellow
+                '#FF9F40',  // Soft Orange
+
+               
+        
+            ],
+            borderColor: [
+               
+                '#FFFFFF', 
+                '#FFFFFF', 
+                '#FFFFFF', 
+               
+            ],
+
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                    color: '#333333',  // Set legend text color (e.g., dark gray)
+                    font: {
+                        size: 14,      // Optional: Change font size
+                        family: 'Arial', // Optional: Change font family
+                        weight: 'bold',  // Optional: Change font weight
+                    },
+                },
+                },
+            },
+        },
+    });
+    
+  
+</script>
+
+
+
+
+
+
+
+{% endblock %}

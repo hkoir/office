@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+<div class="container main-content">
+    <h4 class="text-center">Confirm request Order</h4>
+
+    <h4>Items requested</h4>
+    {% if basket %}
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr class="bg-primary text-white">
+                <th>Product</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Unit Price</th>
+                <th>Total amount</th>
+                          
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in basket %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_price }}</td>
+                <td>{{ item.total_amount }}</td>
+                          
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Confirm request Order</button>
+    </form>
+    {% else %}
+    <p>No items in the basket to confirm</p>
+    {% endif %}
+</div>
+
+
+
+
+
+{% endblock %}

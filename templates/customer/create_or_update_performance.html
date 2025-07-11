@@ -1,0 +1,37 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+
+
+ 
+
+  <div class="conatiner-fluid">
+    <div class="row">
+      <div class="col-12 col-md-3"></div>
+      <div class="col-12 col-md-6">
+        <div class="card shadow" style="background-color: aliceblue;">
+           <!-- Card Header -->
+           <div class="card-header bg-primary text-white text-center">
+            <h3 class="mb-0">{% if performance %}Update{% else %}Add{% endif %} Customer Performances</h3>
+        </div> 
+          <div class="card-body">    
+            
+            <form method="post" class="m-4">
+              {% csrf_token %}
+              {{ form.as_p }}
+              <div class="d-grid">
+              <button type="submit" class="btn btn-success btn-lg">{% if performance %}Update{% else %}Add{% endif %} Performance</button>
+            </div>
+              <a href="{% url 'customer:customer_performance_list' %}" class="btn btn-danger mt-4">Cancel</a>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-md-3"></div>
+    </div>
+  </div>
+  
+
+
+{% endblock %}

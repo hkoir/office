@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container main-content">
+    <div class="row">
+        <div class="col">
+           
+            <h4 style="margin-top:10px">Chat opens for Task: {{ task.title }}, Ticket Number:{{ task.ticket }}</h4>    
+
+    <div id="chat-messages">
+        {% for message in taskmessages %}
+            <div class="message">
+                <span class="timestamp">{{ message.timestamp|date:"H:i" }}</span>
+                <span class="sender">{{ message.sender }}</span>: {{ message.message }}
+            </div>
+        {% endfor %}
+    </div>
+    <form id="chat-form" method="post" style="margin-top:50px">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button class="btn btn-primary" type="submit" class="btn btn-primary">Send</button>
+    </form>
+
+
+        </div>
+    </div>
+</div>
+
+
+    
+{% endblock %}

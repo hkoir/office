@@ -1,0 +1,175 @@
+{% extends 'base.html' %}  
+
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">    
+        <form method="get">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}">
+            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}">
+    
+            <label>ID:</label>
+            <input type="text" name="ID" value="{{ ID }}">
+
+            <label>Name:</label>
+            <input type="text" name="name" value="{{ name}}">
+            
+            <button class="btn btn-primary" type="submit">Apply Filter</button>
+        </form>     
+        
+        <div class="col table-responsive">       
+
+            <h4>IT support Tickets list</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr class="btn-primary text-white">
+                   
+                        <th class="text-center p-2">User</th>   
+                        <th class="text-center p-2">Ticket Number</th>                      
+                        <th class="text-center p-2">Issue</th>  
+
+                        <th class="text-center p-2">Status</th>      
+                        <th class="text-center p-2">Resolved by</th>              
+                       
+                        <th class="text-center p-2">Action's Date</th>
+                        <th class="text-center p-2">Solution description</th>
+                        <th>Update</th>
+                       
+                    </tr>
+                </thead>
+                <tbody>                
+
+                 {% for data in page_obj %}
+                <tr>
+                 
+                    <td>{{data.user.username }}</td>
+                    <td>{{data.ticket_id }}</td>
+                    <td>{{data.issue  }}</td>
+                    <td>{{data.status  }}</td>
+                    <td>{{data.resolved_by }}</td>
+                    <td>{{data.resolved_date  }}</td>
+                    <td>{{data.solution_description  }}</td>
+                    <td>
+                        {% if data.status == 'Closed' %}
+                        <i class="fas fa-check text-success fw-bold">Completed</i>
+                        {% else %}
+                        <a href="{% url 'officemanagement:update_it_feedback' data.id %}">Update</a>
+                        {% endif %}
+                    </td>
+                    
+                                           
+           
+                    
+                </tr>
+
+                    {% endfor %}
+                </tbody>
+            </table>               
+        </div>
+         
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    </div>
+
+    
+</div>      
+
+
+<!-- Bootstrap Modal for displaying Django message -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="messageModalLabel">Messages</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messagesContainer">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_purchase_request_order_id').select2({
+            width: '50%',
+            placeholder: 'Search id...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for Purchase request order',
+            allowClear: true
+        });
+    });
+
+
+
+    </script>
+    
+
+
+
+
+<script>
+    // Show Django message modal if there are messages
+    document.addEventListener("DOMContentLoaded", function() {
+        const messageModal = document.getElementById('messageModal');
+        if (messageModal && document.getElementById('messagesContainer').children.length > 0) {
+            new bootstrap.Modal(messageModal).show();
+        }
+    });
+
+</script>
+
+
+
+{% endblock %}

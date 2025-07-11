@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <h2 class="text-center fw-bold mb-4">Interview Panel</h2>
+    <!-- Candidate and Interview Details Card -->
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-auto">
+            <div class="card shadow-lg rounded-2" style="background-color: #f9fbfd;border:2px solid green">
+                <div class="card-body rounded-2 p-4 m-2" style="border:2px solid blue">
+                    <h6 class="mb-3">
+                        <strong>Candidate:</strong>{{ score_instance.interview.candidate }}                                          
+                        {% if score_instance.interview.candidate.pp_photo %}   
+                        <img src="{{ score_instance.interview.candidate.pp_photo.url}}"
+                        style="width:40px;height:40px;border-radius: 50%;">
+                        {% endif %}  
+                        {% if score_instance.interview.candidate.resume %}                 
+                        <a href="{{ score_instance.interview.candidate.resume.url }}" target = '_blank'>                        
+                        Submitted CV</a>:
+                        {% endif %}
+                    <a href="{% url 'recruitment:candidate_details' score_instance.interview.candidate.id %}">CV Screening Result</a>
+                    </h6>
+                    <h6 class="mb-3">
+                        <strong>Job Title:</strong> {{ score_instance.interview.job }}
+                    </h6>
+                    <h6 class="mb-3">
+                        <strong>Exam Title:</strong> {{ score_instance.interview.exam }}
+                    </h6>
+                    <h6 class="mb-0 text-center">
+                        <strong>Panel Member:</strong>
+                        {% if score_instance.panel_member.panel_member.employee_photo_ID %}
+                        <img src="{{ score_instance.panel_member.panel_member.employee_photo_ID.url }}" style="width:40px;height:40px; border-radius: 50%;">
+                    {% endif %}
+                    
+                         {{ score_instance.panel_member }},
+                         {{ score_instance.panel_member.panel_member.position }},
+                        {{ score_instance.panel_member.panel_member.department }}
+                    </h6>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Member Score Form -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-12 col-md-6">
+            <div class="card shadow-lg border-0 rounded-3" style="background-color: #f9fbfd;">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4">Panel Member Score</h3>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="communication_skill_score" class="form-label fw-bold">Interview</label>
+                            {{ form.interview|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="managerial_skill_score" class="form-label fw-bold">Panel Member</label>
+                            {{ form.panel_member|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="communication_skill_score" class="form-label fw-bold">Communication Skill</label>
+                            {{ form.communication_skill_score|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="managerial_skill_score" class="form-label fw-bold">Managerial Skill</label>
+                            {{ form.managerial_skill_score|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="interpersonal_skill_score" class="form-label fw-bold">Interpersonal Skill</label>
+                            {{ form.interpersonal_skill_score|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="technical_skill_score" class="form-label fw-bold">Technical Skill</label>
+                            {{ form.technical_skill_score|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="problem_solving_score" class="form-label fw-bold">Problem Solving</label>
+                            {{ form.problem_solving_score|add_class:"form-control" }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="remarks" class="form-label fw-bold">Remarks</label>
+                            {{ form.remarks|add_class:"form-control" }}
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary px-4">Submit Score</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+
+
+{% endblock %}

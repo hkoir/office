@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col">
+
+            <!-- Search Form -->
+            <form method="get" action="">
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+
+            <!-- Results Section -->
+            <h4 class="text-center mt-4">Shipment Details</h4>
+            {% if purchase_orders %}
+                {% for purchase_order in purchase_orders %}      
+                    <div class="purchase-order-section mb-3">
+                        <h5>Purchase Order: {{ purchase_order.order_id }}</h5>
+                        <p>Supplier: {{ purchase_order.supplier.name }}</p>                       
+
+                        {% with shipment=purchase_order.purchase_shipment %}
+                            <div class="shipment-info">
+                                {% if shipment %}
+                                    <p>Shipment ID: {{ shipment.shipment_id }}</p>
+                                    <p>Tracking Number: {{ shipment.tracking_number }}</p>
+                                    <p>Estimated Delivery: {{ shipment.estimated_delivery }}</p>
+                                {% else %}
+                                    <p>No Shipment Tracking Available</p>
+                                {% endif %}
+                            </div>
+                        {% endwith %}
+                    </div>
+			
+		<div class="col table-responsive">
+	                    <!-- Order Items Table -->
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity Ordered</th>
+                                <th>Quantity Dispatched</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in purchase_order.purchase_order_item.all %}
+                                {% if item.order_dispatch_item.all %}
+                                    <!-- Separate row for each dispatch item -->
+                                    {% for dispatch_item in item.order_dispatch_item.all %}
+                                        <tr>
+                                            <td>{{ item.product.name }}</td>
+                                            <td>{{ item.quantity }}</td>
+                                            <td>{{ dispatch_item.dispatch_quantity }}</td>
+                                            <td>{{ dispatch_item.status }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <!-- Row when there is no dispatch data available for this item -->
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td colspan="2">No dispatch data available</td>
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+		</div>
+                    <hr>
+                {% endfor %}
+            {% else %}
+                <p class="text-center mt-4">No purchase order found for the entered order number.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

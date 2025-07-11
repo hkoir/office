@@ -1,0 +1,186 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <h4 class="text-center text-primary fw-bold mb-4">Transport run expense analysis as a whole</h4>
+    <div class="row">
+        <div class="col-12">           
+            <form method="GET" action="{% url 'transport:management_summary_report' %}">
+                <div class="container-fluid">
+                    <div class="row row-cols-1 row-cols-md-5">
+                        <div class="col"> Start Date: {{ form.start_date }} </div>
+                        <div class="col"> End Date: {{ form.end_date }} </div>
+                        <div class="col"> No of days {{ form.days }} </div>
+                        <div class="col"> Vehicle number: {{ form.vehicle_number }} </div>
+                        <div class="col"> Month {{ form.month }} </div>
+                        <div class="col"> Year {{ form.year }} </div>
+                        <div class="col"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                    </div>
+                </div>
+            </form>               
+        </div>
+        <div class="col-12">
+            <div class="container">
+                <div class="row">
+                    <div class="col-12 col-md-4 mt-2">
+                        <div class="card shadow-sm border-0">
+                            Filter applied:
+                            <div class="card-body" style="background-color: aqua;">                              
+                                    
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Start date:<span>{{ Start_date }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                       End date:<span>{{ end_date }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        days:<span>{{ No_of_candidate_fail }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Month:<span>{{ month_name }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Year<span>{{ year }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        Vehicle<span>{{ vehicle_number }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div id="chart-container">
+                            <canvas id="incrementChart"></canvas>
+                        </div>
+                    </div>
+                   
+                </div>
+            </div>
+            
+        </div>
+            
+        
+
+        <!-- Summary Table -->
+        <div class="col-12 table-responsive">
+            <h4>Vehicle OPS performance Summary: Data for
+                {% if days %}
+                    the last {{ days }} days
+                {% elif start_date and end_date %}
+                    from: {{ start_date }} to {{ end_date }}
+                {% endif %}
+            </h4>
+            
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Total Refill pump</th>
+                        <th class="text-center p-2">Total Refill local purchase</th>
+                        <th class="text-center p-2">Total Refill Amount</th>
+                        <th class="text-center p-2">Total Kilometer Run</th>
+                        <th class="text-center p-2">Total Fuel Consumed Run</th>
+                        <th class="text-center p-2">Total Fuel Consumed refill</th>                                
+                        <th class="text-center p-2">Net Fuel balance</th>                            
+                        <th class="text-center p-2">Total kilometer cost CNG</th>
+                        <th class="text-center p-2">Total kilometer cost gasoline</th>
+                        <th class="text-center p-2">Total kilometer cost</th>
+                        <th class="text-center p-2">Num of travel days</th>
+                        <th class="text-center p-2">Vehicle body base rent</th>
+                        <th class="text-center p-2">Total vehicle cost</th>
+                        <th class="text-center p-2">Total fault duration</th>        
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="text-center p-2">{{ data.total_refill_amount_pump }}</td>
+                        <td class="text-center p-2">{{ data.total_refill_amount_local_purchase }}</td>
+                        <td class="text-center p-2">{{ data.total_refill_amount }}</td>  
+                        <td class="text-center p-2">{{ data.total_kilometer_run }}</td>
+                        <td class="text-center p-2">{{ data.total_fuel_consumed|floatformat:'2' }}</td>
+                        <td class="text-center p-2">{{ data.total_fuel_consumed_refill|floatformat:'2' }}</td>  
+                        <td class="text-center p-2">{{ data.net_fuel_balance|floatformat:'2' }}</td>                                          
+                        <td class="text-center p-2">{{ data.day_end_kilometer_cost_CNG|floatformat:'2' }}</td>
+                        <td class="text-center p-2">{{ data.day_end_kilometer_cost_gasoline|floatformat:'2' }}</td>
+                        <td class="text-center p-2">{{ data.total_kilometer_cost|floatformat:'2' }}</td>
+                        <td class="text-center p-2">{{ data.total_travel_days }}</td>                
+                        <td class="text-center p-2">{{ data.total_vehicle_base_rent|floatformat:'2'}}</td>
+                        <td class="text-center p-2">{{ data.total_vehicle_cost|floatformat:'2'}}</td>                                    
+                        <td class="text-center p-2">{{ data.fault_duration|floatformat:'2' }}</td>                                   
+                    </tr>
+                </tbody>       
+            </table>
+        </div>                       
+    </div>
+</div>
+
+
+
+
+<script>
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');       
+    const ctx = document.getElementById('incrementChart').getContext('2d');   
+
+    const incrementChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Amount',
+                data: chartData.values,
+                backgroundColor: [
+               
+                '#00FF00',  // Soft Blue
+                '#F0F00F',  // Soft Yellow
+                '#FF9F40',  // Soft Orange
+
+               
+        
+            ],
+            borderColor: [
+               
+                '#FFFFFF', 
+                '#FFFFFF', 
+                '#FFFFFF', 
+               
+            ],
+
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'left',
+                    labels: {
+                    color: '#333333',  // Set legend text color (e.g., dark gray)
+                    font: {
+                        size: 14,      // Optional: Change font size
+                        family: 'Arial', // Optional: Change font family
+                        weight: 'bold',  // Optional: Change font weight
+                    },
+                },
+                },
+            },
+        },
+    });
+    
+  
+</script>
+
+
+
+
+
+
+
+{% endblock %}

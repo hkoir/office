@@ -1,0 +1,132 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+
+
+{% block content %}
+
+
+    <title>Create Ticket</title>
+   
+   
+<body>
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h6 class="text-center"> filter pump's fuel withdraw. Please insert pump name and select date range</h6>
+        <div class="col-xl-12">
+
+           
+
+            <form method="post">
+                {% csrf_token %}
+            <div class="container-fluid">
+               <div class="row row-cols-2 row-cols-md-4">
+                
+                <div class="col">Pump:{{ form.fuel_pump_name }}</div>
+                <div class="col"> Start date: {{ form.start_date }}</div>
+                <div class="col">End date {{ form.end_date }}</div>
+                <div class="col"> <button class="btn btn-primary" type="submit">Search</button></div>
+                 
+               </div>
+            </div>
+        </form>
+        </div>
+
+     
+
+      <div class="col-xl-12" style="margin-bottom:20px">   
+       
+        <h2 style="margin-top:20px">Results for "{{ fuel_pump_name }}"</h2>
+        
+        <h4>DG Fuel Data</h4>
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>
+
+                    <th class="text-center p-2">Refill Date</th>
+                    <th class="text-center p-2">Fuel Type</th>
+                    <th class="text-center p-2">Refill Amount (Liters)</th>
+                    <th class="text-center p-2">DG number</th>
+                    <th class="text-center p-2">Fuel Cost</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in pg_fuel_data %}
+                    <tr>
+                        <td class="text-center p-2">{{ data.refill_date }}</td>
+                        <td class="text-center p-2">{{ data.fuel_type }}</td>
+                        <td class="text-center p-2">{{ data.refill_amount }}</td>
+                        <td class="text-center p-2">{{ data.pgnumber.PGNumber }}</td>
+                        <td class="text-center p-2">{{ data.fuel_cost }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+      </div>
+
+        <div class="col-xl-12" style="margin-bottom:20px"> 
+        <h4>Vehicle Fuel Data</h4>
+          <table class="bg-light">
+            <thead class="table table-striped">
+                <tr class="bg-primary text-white">
+
+                    <th class="text-center p-2">Refill Date</th>
+                    <th class="text-center p-2">Fuel Type</th>
+                    <th class="text-center p-2">Refill Amount (Liters)</th>
+                    <th class="text-center p-2">Vehicle Number</th>
+                    <th class="text-center p-2">Fuel Cost</th>
+           
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in vehicle_fuel_data %}
+                    <tr>
+                        <td class="text-center p-2">{{ data.refill_date }}</td>
+                        <td class="text-center p-2">{{ data.fuel_type }}</td>
+                        <td class="text-center p-2">{{ data.refill_amount }}</td>
+                        <td class="text-center p-2">{{ data.vehicle.vehicle_registration_number }}</td>
+                        <td class="text-center p-2">{{ data.fuel_cost }}</td>
+                     
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+  
+        </div>
+
+    </div>
+  </div>
+
+
+
+    <script>
+        $(document).ready(function() {
+            $('#id_region_id').change(function() {
+                var selectedRegion = $('#id_region_id option:selected').text();
+                if (selectedRegion) {
+                    $('#id_region_name').val(selectedRegion);
+                }
+            });
+
+            $('#id_region_name').focus(function() {
+                $('#id_region_id').val('');
+            });
+
+            $('#id_zone_id').change(function() {
+                var selectedZone = $('#id_zone_id option:selected').text();
+                if (selectedZone) {
+                    $('#id_zone_name').val(selectedZone);
+                }
+            });
+
+            $('#id_zone_name').focus(function() {
+                $('#id_zone_id').val('');
+            });
+        });
+    </script>
+
+{% endblock %}

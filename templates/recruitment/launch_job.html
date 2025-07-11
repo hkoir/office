@@ -1,0 +1,76 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 col-md-4">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                 <!-- Card Header -->
+                 <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0"> Launch Job</h3>
+                </div>              
+                <form method="POST" action="{% url 'recruitment:launch_job_by_hiring_manager' job_instance.id %}" enctype="multipart/form-data" class="p-2 m-4">
+                    {% csrf_token %}
+                    {{ form.as_p }}   
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg"> Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+  
+        
+
+             <!-- Delete Confirmation Modal -->
+             <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete the transport record: <strong id="modal-entity-name"></strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <form method="post" id="delete-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+    
+</div>
+
+
+
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/recruitment/delete_exam/${entityId}/`;
+    });
+</script>
+
+
+
+
+{% endblock %}

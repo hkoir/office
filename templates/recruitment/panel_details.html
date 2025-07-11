@@ -1,0 +1,108 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <h2 class="mb-3 text-center">Panel Details</h2>
+    <div class="row">
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-8">
+
+    <!-- Panel Information -->
+    <div class="card">
+        <div class="card-body">
+            <h4 class="card-title">Panel name:{{ panel.name }}</h4>
+            <p class="card-text"><strong>Description:</strong> {{ panel.description }}</p>
+            
+            <h5 class="mt-3">Associated Job:</h5>
+            <p>
+                {% if panel.job %}
+                    {{ panel.job.title }}
+                {% else %}
+                    No job assigned to this panel.
+                {% endif %}
+            </p>
+
+            <h5 class="mt-3">Associated Exam:</h5>
+            <p>
+                {% if panel.exam %}
+                  {{ panel.exam.title }}
+                {% else %}
+                    No exam assigned to this panel.
+                {% endif %}
+            </p>
+
+        </div>
+    </div>
+
+    <!-- Panel Members -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h4 class="card-title">Panel Members</h4>
+            {% if panel.panel_members.all %}
+                <ul>
+                    {% for member in panel.panel_members.all %}
+                        <li>{{ member.panel_member.name }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No members assigned to this panel.</p>
+            {% endif %}
+        </div>
+    </div>
+        </div>
+        <div class="col-12 col-md-2"></div>
+ 
+
+</div>
+<h4 style="height:10px"></h4>
+</div>
+
+
+
+
+ <!-- Delete Confirmation Modal -->
+ <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the record: <strong id="modal-entity-name"></strong>?
+            </div>
+            <div class="modal-footer">
+                <form method="post" id="delete-form">
+                    {% csrf_token %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/core/delete_position/${entityId}/`;
+    });
+</script>
+
+
+
+{% endblock %}

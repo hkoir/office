@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 table-responsive">
+
+            <title>Challan - {{ delivery_order.order_number }}</title>   
+            <h4>Challan/Invoice Details for Order: {{ sale_order.order_id }}</h4>
+            <p>Date: {{ sale_order.order_date }}: Customer:{{  sale_order.customer.name}}</p>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Quantity</th>
+                        <th>Product Type</th>
+                        <th>Unit Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in sale_order.sale_order.all %}
+                    <tr>
+                        <td>{{ sale.product.name }}</td>
+                        <td>{{ sale.quantity }}</td>
+                        <td>{{ sale.product.product_type }}</td>
+                        <td>${{ sale.product.unit_price }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="?download=true" style="color:blue">Download PDF Challan</a>
+        </div>
+    </div>
+    <h4 style="height:20px"></h4>
+</div>
+
+
+
+
+    {% endblock %}

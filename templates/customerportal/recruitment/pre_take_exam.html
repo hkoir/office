@@ -1,0 +1,201 @@
+
+{% extends "recruitment_portal.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<style>
+    /* Radio button container styling */
+    .radio-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+        font-size: 16px;
+    }
+    
+    /* Custom radio button styling */
+    .radio-container input[type="radio"] {
+        appearance: none; /* Remove default styles */
+        width: 20px;
+        height: 20px;
+        border: 2px solid #007bff;
+        border-radius: 50%;
+        margin-right: 10px;
+        outline: none;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+    
+    /* Checked radio button */
+    .radio-container input[type="radio"]:checked {
+        background-color: #007bff;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    }
+    
+    /* Hover effect */
+    .radio-container input[type="radio"]:hover {
+        border-color: #0056b3;
+    }
+    
+    /* Label styling */
+    .radio-container label {
+        cursor: pointer;
+        color: #333;
+    }
+
+
+    #countdown-container {
+        height: 100px; /* Adjust height as needed */
+        display: flex;
+        justify-content: center; /* Horizontally center */
+        align-items: center;    /* Vertically center */
+        border-radius: 60%;
+        background-color: aqua;
+        width:350px;
+       
+        }
+
+
+
+#exam-start-countdown, #exam-end-countdown {
+        margin: 0; /* Remove extra spacing */
+         }
+
+.pre_take_exam {
+    color: red;  
+    animation: spin 10s infinite;
+ 
+}
+
+    </style>
+
+<div class="container-fluid main-content">
+    <div class="row">        
+     
+        <!-- Countdown Start -->
+        <div class="col-4 col-md-4 mt-5">
+            <div class="col" id="countdown-container">
+                <p id="exam-start-countdown" class="text-start"></p> <!-- Left-align the text -->
+            </div>
+        </div>
+        <div class="col-4 col-md-4 mt-5 d-flex justify-content-center" style="height:50px;">
+             <!-- Redirect Button -->
+              {% if exam_start_time <= current_time and exam_end_time >= current_time %}
+            <h4 class="text-center ">
+                <form method="POST" action="{% url 'recruitment:take_exam' exam.id candidate.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">Click to Start</button>
+                </form>
+                {% else %}
+                <span class="text-center fw-bold btn btn-warning pre_take_exam">Waiting</span>
+                {% endif %} 
+
+            </h4> 
+        </div>
+        
+        <!-- Countdown End -->
+        <div class="col-4 col-md-4 mt-5">
+            <div class="col" id="countdown-container">
+                <p id="exam-end-countdown" class="text-end"></p> <!-- Right-align the text -->
+            </div>
+        </div>
+    
+    
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                     <!-- Empty Column -->
+        <div class="col-12 col-md-3"></div>
+        <!-- Candidate Info -->
+        <div class="col-12 col-md-6">
+            <div class="card shadow-lg" style="background-color: #f9f9f9; border-radius: 5px">
+                <div class="card-body m-4" style="border-radius: 5px;background-color: aliceblue;">
+                    <h4 class="card-title text-center" style="font-weight: bold; color: #007bff;">Exam Admit Card</h4>
+                    <ul class="list-group list-group-flush">
+                        <a href="{{ candidate.resume.url }}" target="_blank">
+                            <img src="{{ candidate.pp_photo.url }}" style="width:50px;height:50px;border-radius:50%;">
+                         Resume</a>
+                        
+                        <li class="list-group-item"><strong>Candidate Name:</strong> {{ candidate.full_name }}</li>
+                        <li class="list-group-item"><strong>Email:</strong> {{ candidate.email }}</li>
+                        <li class="list-group-item"><strong>Exam Title:</strong> {{ exam.title }}</li>
+                        
+                        <li class="list-group-item"><strong>Job Title:</strong> {{ exam.job }}</li>
+                        <li class="list-group-item"><strong>Duration:</strong> {{ exam.duration }} minutes</li>
+                        <li class="list-group-item"><strong>Total Marks:</strong> {{ exam.total_marks }}</li>
+                        <li class="list-group-item"><strong>Pass Marks:</strong> {{ exam.pass_marks }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Empty Column -->
+        <div class="col-12 col-md-3"></div>
+
+                </div>
+            </div>
+            
+        </div>
+       
+
+    </div>
+        
+
+</div>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Ensure exam start and end times are parsed correctly
+    const startTime = new Date("{{ exam_start_time }}").getTime();
+    const endTime = new Date("{{ exam_end_time }}").getTime();
+
+    // Assign exam and candidate IDs from the template context
+    const startCountdownElement = document.getElementById("exam-start-countdown");
+    const endCountdownElement = document.getElementById("exam-end-countdown");
+
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const timeUntilStart = startTime - now;
+        const timeUntilEnd = endTime - now;
+
+        // Start countdown: Display until the exam starts
+        if (timeUntilStart > 0) {
+            const startHours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const startMinutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+            const startSeconds = Math.floor((timeUntilStart % (1000 * 60)) / 1000);
+            startCountdownElement.textContent = `Exam starts in: ${startHours}h ${startMinutes}m ${startSeconds}s`;
+        } else {
+            startCountdownElement.textContent = "Exam started!";
+        }
+
+        // End countdown: Display until the exam ends
+        if (timeUntilEnd > 0) {
+            const endHours = Math.floor((timeUntilEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const endMinutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+            const endSeconds = Math.floor((timeUntilEnd % (1000 * 60)) / 1000);
+            endCountdownElement.textContent = `Exam ends in: ${endHours}h ${endMinutes}m ${endSeconds}s`;
+        } else {
+            endCountdownElement.textContent = "Exam ended!";
+        }
+    }
+
+    // Debugging output
+    console.log("Start Time:", new Date(startTime));
+    console.log("End Time:", new Date(endTime));
+
+    // Start the countdown and update every second
+    updateCountdown(); // Initial call
+    setInterval(updateCountdown, 1000);
+});
+
+  </script>
+  
+  
+
+   
+{% endblock %}

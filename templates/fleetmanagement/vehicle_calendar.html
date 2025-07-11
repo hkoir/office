@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% load custom_filters %}
+
+
+{% block extra_head %}
+
+<style>
+    .booked {
+        background-color: #ffcccc; 
+    }
+    .in-use {
+        background-color: #ccffcc; 
+    }
+    .outside-month {
+        background-color: #f0f0f0;
+        color: #ccc;
+    }
+    .calendar .week {
+        display: flex;
+    }
+    .calendar .day {
+        width: 14.28%;
+        text-align: center;
+        padding: 10px;
+        border: 1px solid #ddd;
+        box-sizing: border-box;
+    }
+</style>
+{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">
+            <!-- Color Legend -->
+            <div class="container mb-4">
+                <div class="row">
+                    <div class="col-12 bg-primary text-white fw-bold">COLOR LEGEND:</div>
+                    <div class="col-4 text-center" style="background-color:#ffcccc;">Booked</div>
+                    <div class="col-4 text-center" style="background-color:#ccffcc;">In use</div>
+                    <div class="col-4 text-center" style="background-color:#f0f0f0;">Not in this month</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">                
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                            <th>Sun</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Calendar for each month of the year -->
+                    {% for month, calendar_data in calendar_data_for_year.items %}
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                {% if vehicle.vehicle_image.url %}
+                                <a href="{{ vehicle.vehicle_image.url }}" alt="Image description" target="_blank">
+                                    <img src="{{ vehicle.vehicle_image.url }}" style="width:60px;height:60px;border: 5px solid blue; border-radius: 50%;">    
+                                   
+                               {% endif %}
+                                    <strong>
+                                    {{ vehicle }} - {{ month_names|get_item:month }} {{ year }}
+                                </strong>
+                                </a> 
+                            </td>
+                        </tr>
+                        
+                        <tr>
+                            <td colspan="7">
+                                <div class="calendar">
+                                    {% for week in calendar_data %}
+                                        <div class="week">
+                                            {% for day in week %}
+                                                <div class="day {% if not day.in_month %}outside-month{% endif %} {% if day.is_booked %}booked{% endif %} {% if day.is_in_use %}in-use{% endif %}">
+                                                    {{ day.date.day }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>                  
+               
+                </table>
+            </div>               
+     </div>
+</div>
+
+
+
+
+{% endblock %}

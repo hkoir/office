@@ -1,0 +1,1121 @@
+{% extends 'public_portal_base.html' %}  
+
+
+{% load static %}
+
+
+{% block extra_head %}
+
+
+<style>
+    
+
+    .hero-section {
+        position: relative;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(255, 255, 255, 1)),
+                    url('https://source.unsplash.com/1600x900/?office,teamwork') no-repeat center center/cover;
+        height: 70vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        text-align: center;
+        overflow: hidden;
+        padding: 0 15px;
+        border-bottom: 1px solid #eee; /* Optional: A light border for a clean separation */
+    }
+    
+    
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Darker and more professional */
+            z-index: 1;
+        }
+    
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            margin: 0 auto;
+            text-shadow: 0px 2px 4px rgba(0, 0, 0, 0.6); /* Subtle shadow for contrast */
+            animation: fadeInUp 10s ease-out infinite;
+        }
+    
+        .hero-section h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+    
+        .hero-section p {
+            font-size: 1.3rem;
+            font-weight: 300;
+            opacity: 0.95;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+    
+        /* Optional Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        /* Optional Button */
+        .hero-btn {
+            background-color: #fcb900;
+            color: #333;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+        }
+    
+        .hero-btn:hover {
+            background-color: #f5a623;
+            color: #fff;
+            transform: translateY(-3px);
+        }
+    
+    
+    
+    .custom-shape-divider-bottom-hero {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        overflow: hidden;
+        line-height: 0;
+        }
+    .custom-shape-divider-bottom-hero svg {
+            position: relative;
+            display: block;
+            width: calc(115% + 1.3px);
+            height: 80px;
+        }
+    .custom-shape-divider-bottom-hero .shape-fill {
+            fill: #ffffff;
+        }
+    
+    
+    
+    
+    
+    
+    ul.custom-arrow-list li::before {
+        content: "\21D2";  
+        color: blue;  
+        font-size: 1rem;  
+        margin-right: 10px; 
+        font-weight: bold; 
+    }
+    
+    ul.custom-arrow-list li {
+        margin-bottom: 5px; 
+        font-family: Arial, sans-serif; 
+        font-size: 1rem; 
+        color: #333333; 
+    }
+    
+    
+    
+    .module-icon {
+            font-size: 40px;
+            color: #007bff;
+        }
+    .feature-section {
+            padding: 60px 0;
+            background-color: white;
+        }
+    
+        
+    .cta-section {
+            background-color: #007bff;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+    
+    
+    
+    .module-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+        overflow: hidden; /* Needed for inner shadow effect */
+        left: 0;
+        width:100%;
+    }
+    
+    .module-card:hover {
+        transform: translateY(-5px); /* Move card up slightly */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+        left: 0;
+        width:100%
+    }
+    
+    .module-card::before { /* Inner shadow on hover */
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0); /* Transparent initially */
+        transition: background-color 0.3s ease;
+        pointer-events: none; /* Allows clicks to pass through */
+    }
+    
+    
+    .module-card:hover::before {
+      background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent black on hover */
+    }
+    .module-card .card-body {
+        transition: transform 0.3s ease; /* Smooth transitions for content */
+    }
+    
+    .module-card:hover .card-body {
+        transform: scale(1.02); /* Slightly scale up the content */
+    }
+    
+    
+    
+    /* Optional: Change button color on hover */
+    .module-card:hover .btn-outline-primary {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    
+    .feature-box,.price_card {
+        padding: 20px; /* Add some padding around the content */
+        border: 1px solid #eee; /* Light border */
+        border-radius: 8px; /* Rounded corners */
+        transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transitions */
+        
+        color: #333 !important; /* Set a visible color */
+      
+       
+    }
+    
+    
+    .feature-box:hover,.price_card:hover{
+        transform: translateY(-5px); /* Move box up slightly */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); /* Subtler shadow */
+        border-color: #ddd; /* Slightly darker border on hover */
+        background-color: rgba(0, 0, 0, 0.1); /* Semi-transparent black on hover */
+        color: #333 !important; /* Set a visible color */
+       
+    }
+    
+    
+    
+    .feature-box h4 {
+        margin-bottom: 10px;
+    }
+    
+    
+    
+    
+    @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+           }
+       
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-5px); }
+       }
+    
+    
+    .live_demo_box {
+        padding: 20px; 
+        border: 1px solid #eee; 
+        border-radius: 8px; 
+        transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        cursor: pointer;
+        animation: shake 5s ease-in-out infinite;
+    }
+    
+    
+    
+    .live_demo_box:hover {
+        transform: translateY(-5px); 
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15); 
+        border-color: #ddd; 
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    
+    
+    
+    .feature-box2{
+        padding: 20px; 
+        border: 1px solid #eee; 
+        border-radius: 8px; 
+        transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        
+        color: #333 !important; 
+      
+       
+    }
+    
+    
+    .feature-box2:hover{
+        transform: translateY(-5px); 
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        border-color: #ddd; 
+        background-color:gray;
+        color: #333 !important;
+       
+    }
+    
+    
+    .circle-card {
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background-color: lightgoldenrodyellow; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease-in-out;
+        cursor: pointer;
+        animation: shake 5s ease-in-out infinite; 
+    }
+    
+    
+    
+    .circle-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        background-color:	#f0f8ff; 
+        color: #000; 
+    }
+    
+    
+    
+    
+    .circle-link {
+        text-decoration: none;
+        color: #333;
+        font-weight: 600;
+        text-align: center;
+        display: block;
+        transition: color 0.3s ease;
+        animation: shake 5s ease-in-out infinite; 
+    }
+    
+    .circle-link:hover {
+        color: #007bff; /* Bootstrap primary color */
+    }
+    
+    
+    
+    h4 {
+        margin: 0;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+    
+    .animate {        
+        animation: shake 5s ease-in-out infinite;         
+           
+        }
+    
+    
+    </style>
+    
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">                 
+      
+        <section class="hero-section">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1>Business Process Automation Platform</h1>
+                <p>Streamline Your Operations with Smart Integrated Solutions</p>
+              
+                <a href="{% url 'clients:demo_request' %}" class="btn btn-primary btn-lg">
+                    <h4><i class="fas fa-laptop-code me-2"></i> Request Live Demo</h4>
+                </a>
+               
+                <a href="#free_trial" class="btn btn-primary btn-lg">
+                    <h4><i class="fas fa-play-circle me-2"></i> Start Free Trial</h4>
+                </a>
+                
+            </div>
+            <div class="custom-shape-divider-bottom-hero">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path d="M0,0V46.29c47.6,15.4,98.5,27.4,150,24.67,49.6-2.6,97.1-20.73,146.6-27.27,64.5-8.53,129.6,1.84,194,9.39,65.1,7.6,130.8,10.9,196.5,2.53,65.8-8.27,128.9-27.47,192.2-31.1,51.5-3,103.7,4.72,155.2,13.11,51.5,8.4,103.2,17.6,155.5,20.44,45.5,2.51,91.3-.53,136.8-5.39V0Z" fill="#ffffff"></path>
+                </svg>
+            </div>
+        </section>
+
+         <div class="col-12">                                           
+            <h3 class=text-center style="color:blue">Business Process Integration</h3>
+            <h4 class="text-center text-primary fw-bold">This application integrate business process of the following  areas. </h4>
+            <div class="container-fluid">
+                <div class="row d-flex justify-content-center align-items-center text-center">
+            
+                    <div class="col-4 col-md-auto animate d-flex bg-info m-2 p-2 align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Supply Chain
+                    </div>
+            
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-warning align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Appraisal
+                    </div>
+            
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-success text-white align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Recruitment
+                    </div>                                
+            
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-primary text-white align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Basic HR Process
+                    </div>
+            
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-danger text-white align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        leave and payroll 
+                    </div>                                
+            
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-secondary text-white align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Transport
+                    </div>
+                    <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-info align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Cash reconcilation
+                        </div>
+                        <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-warning align-items-center justify-content-center text-center"
+                            style="border-radius:10px; height:50px;">
+                            Office supplies
+                            </div>
+                        <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-info align-items-center justify-content-center text-center"
+                        style="border-radius:10px; height:50px;">
+                        Meeting room
+                        </div>
+                        <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-dark text-white align-items-center justify-content-center text-center"
+                            style="border-radius:10px; height:50px;">
+                            IT support Ticketing
+                        </div>
+                        <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-primary text-white align-items-center justify-content-center text-center"
+                            style="border-radius:10px; height:50px;">
+                            Visitor management
+                        </div>
+                        <div class="col-4 col-md-auto animate d-flex m-2 p-2  bg-warning align-items-center justify-content-center text-center"
+                            style="border-radius:10px; height:50px;">
+                            Documentation 
+                        </div>    
+                                                                        
+                   </div>
+                </div>    
+                <div class="" style="max-width: 600px; margin: auto; padding: 20px; border-radius: 10px; background: #f8f9fa; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); text-align: center; font-family: Arial, sans-serif;">
+                    <h2 style="color: #007bff;">🚀 AI-Powered Recruitment Automation</h2>
+                    <p style="color: #333;">Hire top talent faster and smarter with our cutting-edge AI recruitment solution. Reduce hiring time, improve accuracy, and streamline the entire process effortlessly.</p>
+                    
+                    <ul style="list-style-type: none; padding: 0; color: #555; font-weight: bold;">
+                        <li>✅ Intelligent Resume Screening</li>
+                        <li>✅ Automated Candidate Matching</li>
+                        <li>✅ AI-Powered Interview Scheduling</li>
+                        <li>✅ AI-powered Exam processing</li>
+                        <li>✅ Detailed Analytics & Reports</li>
+                    </ul>
+                    
+                    <a href="#free_trial" style="display: inline-block; margin-top: 15px; padding: 12px 20px; font-size: 16px; color: #fff; background: #007bff; text-decoration: none; border-radius: 5px; font-weight: bold;">Try for Free</a>
+                </div>
+                
+                                      
+           </div>               
+                                                                                                  
+               
+
+            <!-- Modules Showcase -->
+            <div class="container-fluid my-5">
+                <div class="row"> <!-- Bootstrap gutter spacing -->
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-truck fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Supply Chain Management Automation</h5>
+                                <p class="card-text">Gain real-time insights into your entire supply chain, from procurement to delivery, instant stock valuation and more...</p>
+                                <a href="#scm_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>             
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-cogs fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Core HR Management</h5>
+                                <p class="card-text">Automate Core HR management, Maintain employee database, generate multiple documents on demand...</p>
+                                <a href="#core_hr_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4" id="{{ module.name|slugify }}">
+                        <div class="card text-center shadow-sm module-card">
+                            <div class="card-body">
+                                <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                                <h5 class="card-title">Recruitment Process Automation</h5>
+                                <p class="card-text"><strong style="color:green">Say Goodbye to paper-based recruitment.</strong> Automate the entire process starting from job posting till candidate onboarding...</p>
+                                <a href="#recruitment_automation" class="btn btn-outline-primary">More ...</a>
+                            </div>
+                        </div>
+                    </div>   
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-chart-line fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Employee Task / Ticket based appraisal process automation</h5>
+                                    <p class="card-text">Automate entire process of employee performance appraisal,fair, unbiased and more accurate appraisal process....</p>
+                                      <a href="#appraisal_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>    
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-file-signature fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Leave management automation.</h5>
+                                    <p class="card-text">Track and efficiently maintain leave management process, automate leave approval and update leave database as per company policy.... </p>
+                                      <a href="#leave_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                   
+                                </div>
+                            </div>
+                        </div>    
+                        <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+                            <div class="card text-center shadow-sm module-card">
+                                <div class="card-body">
+                                    <i class="fas fa-bus fa-3x mb-3 text-primary"></i>
+                                    <h5 class="card-title">Transport pool management system.</h5>
+                                    <p class="card-text">Track and monitor entire pool transport system efficiently, maintain transport log, fuel consumtion and daily expenses.... </p>
+                                      <a href="#transport_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                                     
+                                </div>
+                            </div>
+                        </div>   
+
+
+
+  <!-- Modules Showcase -->
+  <div class="container-fluid mt-4">
+    <div class="row">
+        {% for module in modules %}
+            <div class="col-md-4 mb-4">
+                <div class="card text-center shadow-sm module-card ">
+                    <div class="card-body">
+                        <i class="{{ module.icon }} fa-3x mb-3 text-primary"></i>
+                        <h5 class="card-title">{{ module.name }}</h5>
+                        <p class="card-text">{{ module.description }}</p>
+                        {% if module.link %}
+                            <a href="{% url module.link %}" class="btn btn-outline-primary">Your next steps</a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary" disabled>Start</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="col-md-4"></div>
+
+
+    <div class="col-md-4 mb-4" id="{{ module.name|slugify }}">
+        <div class="card shadow-sm module-card">
+            <div class="card-body">
+                <i class="fas fa-users fa-3x mb-3 text-primary"></i>
+                <h5 class="card-title">Customer portal and Job portal</h5>
+                <p class="card-text">A secure and dedicated portal for customers, suppliers, and job seekers ensures
+                        seamless communication and accessibility. Customers and suppliers can easily connect through this platform, 
+                        streamlining interactions. Additionally, organizations can post job vacancies, allowing job seekers to apply directly
+                        through the portal, enhancing the recruitment process.... </p>
+                    <a href="#portal_automation" class="btn btn-outline-primary">More ...</a>                                   
+                                                    
+            </div>
+        </div>
+    </div>  
+    <div class="col-md-4"></div>  
+    
+           
+           
+          
+   
+<div class="container-fluid py-5">
+    <div class="row justify-content-center text-center">
+        <div class="col-12 col-sm-6 col-md-4 mb-4">
+            <div class="circle-card shadow-lg">
+                <a href="#subscription_plan" class="circle-link">
+                    <h4 id="start_free_trial"><i class="fas fa-play-circle"></i> Start Free Trial</h4>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 mb-4">
+            <div class="circle-card shadow-lg">
+                <a href="{% url 'clients:demo_request' %}" class="circle-link">
+                    <h4><i class="fas fa-laptop-code"></i> Request Live Demo</h4>
+                </a>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-md-4 mb-4">
+            <div class="circle-card shadow-lg">
+                <a href="" class="circle-link">
+                    <h4><i class="fas fa-headset"></i> 24/7 Support</h4>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+            
+            
+            
+
+            <!-- Features Section -->
+            <div class="feature-section ">
+                <div class="container-fluid">
+                    <h2 class="text-center mb-5">Key Features</h2>
+                    <div class="row">
+                        <div class="col-md-5 feature-box" id="scm_automation">
+                            <h4>SCM Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>End-to-End Visibility:</strong> Gain real-time insights into your entire supply chain, from procurement to delivery.</li>
+                                <li><strong>Inventory Optimization:</strong> Reduce carrying costs and prevent stockouts with automated inventory management.</li>
+                                <li><strong>Streamlined Logistics:</strong> Optimize transportation routes, manage shipments, and track deliveries for improved efficiency.</li>
+                                <li><strong>Enhanced Collaboration:</strong> Seamlessly connect with suppliers and partners for better communication and collaboration.</li>
+                                <li><strong>Automated Procurement:</strong> Streamline purchasing processes with automated purchase orders and approvals.</li>
+                                <li><strong>Automated sales stock delivery process:</strong> Automate sales approval and delivery goods from warehouse</li>
+                                <li><strong>Goods in and out process:</strong>Automated manufacturing good's delivery process,return-replacement process, scrap management process, transfer process </li>
+                                <li><strong>Automate stock monitoring and reporting:</strong> Instant stock valuation, multiple type reports, low stock product monitoring and auto signaling</li>
+                                <li><strong>Automate complain handling process:</strong> Customer's and supplier's access to platform using isolated customer portal, supplier portal to generate  and update trouble tickets</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-7 feature-box">
+                            <div class="container-fluid">
+
+                                <div class="row">   
+                                    <div class="col-12">                         
+                                        <h4>Tracking, updating and generating multiple reports for SCM process.</h4>
+                                        <a href="{% static 'images/scm/stock_grand_sum.png' %}" target="_blank">
+                                            <img src="{% static 'images/scm/stock_grand_sum.png' %}"  alt="HR Automation"
+                                            style="object-fit: cover;width:100%">
+                                        </a>
+                                    </div>
+                                    <div class="col-12">                         
+                                        <h4>Tracking, updating and generating multiple reports for SCM process.</h4>
+                                        <a href="{% static 'images/scm/report_scmv2.png' %}" target="_blank">
+                                            <img src="{% static 'images/scm/report_scmv2.png' %}"  alt="HR Automation"
+                                            style="object-fit: cover;width:100%">
+                                        </a>
+                                    </div>
+                                 </div>
+                             </div>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="core_hr_automation">
+                            <h4 class="mt-4">HR Core management process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Maintain erroles employee records:</strong> Quickly filter resumes and identify qualified candidates with AI-powered screening.</li>
+                                <li><strong>Generate multiple documents</strong> Automate interview scheduling and send reminders to candidates and interviewers.</li>
+                                <li><strong>Improved Candidate Communication:</strong> Automate email communication and keep candidates engaged throughout the hiring process.</li>
+                                <li><strong>Reduced Time-to-Hire:</strong> Accelerate the hiring process and onboard new employees faster.</li>
+                                <li><strong>Auto generate multiple documents:</strong> Generate employee history report,payslip,salary certificate, experience certificate automatically based on employee updated database.</li>
+                                <li><strong>Data-Driven Insights:</strong> Track key metrics and gain insights each of your employees.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate HR core management process.</h4>
+                            <a href="{% static 'images/core_hr/core_hr.jpg' %}" target="_blank">
+                            <img src="{% static 'images/core_hr/core_hr.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+
+                        <div class="col-md-6 feature-box" id="recruitment_automation">
+                            <h4 class="mt-4">Recruitment process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Automated Candidate Screening:</strong> Quickly filter resumes and identify qualified candidates with AI-powered screening.</li>
+                                <li><strong>Automate exam process:</strong> Automate exam process with predefined questions paper and get instant result of exam.</li>
+                                <li><strong>Streamlined Scheduling:</strong> Automate interview scheduling and send reminders to candidates and interviewers.</li>
+                                <li><strong>Automate candidate selection:</strong> Automate candidate selection process based on CV screening, exam screnning and exam screening result</li>
+                                <li><strong>Improved Candidate Communication:</strong> Automate email communication and keep candidates engaged throughout the hiring process.</li>
+                                <li><strong>Reduced Time-to-Hire:</strong> Accelerate the hiring process and onboard new employees faster.</li>
+                                <li><strong>Enhanced Candidate Experience:</strong> Provide a seamless and positive experience for candidates.</li>
+                                <li><strong>Job seekers access to platform:</strong> Job seeker's access to platform using isolated job portal to search vacancies and apply for job</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate recruitment process.</h4>
+                            <a href="{% static 'images/recruitment/recruitment_summary.jpg' %}" target="_blank">
+                            <img src="{% static 'images/recruitment/recruitment_summary.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="appraisal_automation">
+                            <h4>Performance Evaluation Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Automated Workflows:</strong> Streamline the performance review process with automated workflows and notifications.</li>
+                                <li><strong>Customizable Templates:</strong> Create custom performance review templates tailored to different roles and departments.</li>
+                                <li><strong>360-Degree Feedback:</strong> Gather feedback from multiple sources, including managers, peers, and subordinates.</li>
+                                <li><strong>Goal Setting & Tracking:</strong> Set SMART goals and track employee progress throughout the year.</li>
+                                <li><strong>Performance Insights:</strong> Gain valuable insights into employee performance and identify areas for development.</li>
+                                <li><strong>Automated Reporting:</strong> Generate reports on employee performance and identify trends.</li>
+                                <li><strong>Appraisal budget analysis:</strong> Do appraisal budget analysis and automate employee's increment and promotion selection based on performance score obtained by each employee over time</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate performance appraisal, do appraisal budget anyalysis.</h4>
+                         <a href="{% static 'images/appraisal/appraisal_budget.jpg' %}" target="_blank">
+                            <img src="{% static 'images/appraisal/appraisal_budget.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="leave_automation">
+                            <h4>Leave management Process Automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Self-Service Portal:</strong> Empower employees to request and manage their leave requests online.</li>
+                                <li><strong>Automated Approvals:</strong> Streamline the leave approval process with automated workflows.</li>
+                                <li><strong>Real-Time Tracking:</strong> Track employee leave balances and manage leave requests in real-time.</li>
+                                <li><strong>Reduced Administrative Burden:</strong> Eliminate paperwork and reduce the administrative overhead associated with leave management.</li>
+                                <li><strong>Improved Accuracy:</strong> Reduce errors and ensure compliance with company leave policies.</li>
+                                <li><strong>Integration with Payroll:</strong> Seamlessly integrate leave data with your payroll system.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Automate leave management process</h4>
+                            <a href="{% static 'images/leave/leave.jpg' %}" target="_blank">
+                            <img src="{% static 'images/leave/leave.jpg' %}"  alt="HR Automation"
+                            style="object-fit: cover;width:100%">
+                        </a>
+                        </div>
+
+                        <div class="col-md-6 feature-box" id="transport_automation">
+                            <h4>Transport Pool process automation</h4>
+                            <ul class="feature-list">
+                                <li><strong>Optimized Routing:</strong> Plan efficient routes for your pool transport vehicles.</li>
+                                <li><strong>Real-Time Tracking:</strong> Track the location of vehicles and monitor driver performance in real-time.</li>
+                                <li><strong>Automated Dispatching:</strong> Dispatch vehicles efficiently and assign rides to drivers automatically.</li>
+                                <li><strong>Improved Communication:</strong> Enhance communication between drivers, riders, and dispatchers.</li>
+                                <li><strong>Cost Savings:</strong> Reduce fuel consumption and optimize resource utilization.</li>
+                                <li><strong>Reporting & Analytics:</strong> Generate reports on transportation costs, vehicle utilization, and other key metrics.</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <p>Transport Pool process automation.</p>
+                            <div class="container-fluid">
+                                <div class="row d-flex justify-content-center align-items-center text-center">
+                                    <div class="col-12 mb-2">
+                                        <a href="{% static 'images/transport/transport_view.jpg' %}" target="_blank">
+                                            <img src="{% static 'images/transport/transport_view.jpg' %}"  alt="Trans Automation"
+                                            style="height:150px;width:80%">
+                                        </a>
+                                    </div>
+                                    <div class="col-12">
+                                        <a href="{% static 'images/transport/transport_sum.PNG' %}" target="_blank">
+                                            <img src="{% static 'images/transport/transport_sum.PNG' %}"  alt="Transport Automation"
+                                            style="height:150px;width:80%">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>                          
+                          
+                        </div>
+
+                        
+                        <div class="col-md-6 feature-box" id="appraisal_automation">
+                            <h4>Office management Process</h4>
+                            <ul class="feature-list">
+                                <li><strong>Office supplies:</strong> Streamline office supplies purchase, usage, approval and generate decision-making report</li>
+                                <li><strong>Cash advance and expense reconcilation:</strong> Advance request, approval process, expense and advance tracking and reconcilation process.</li>
+                                <li><strong>Meeting room booking process:</strong> Meeting room database, meeting room booking process, tracking and reporting</li>
+                                <li><strong>IT support Ticketing:</strong> Raise IT support ticket by users and handle ticket from It support tem.</li>
+                                <li><strong>Visitor management Process:</strong> Keep track of visitors and raise signal for any overdue visitors, frequent visitor etc</li>
+                                <li><strong>Document Management:</strong> Upload, track and search documents</li>
+                               
+                            </ul>
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Office process integration.</h4>
+                            <div class="container-fluid">
+                                <div class="row d-flex justify-content-center align-items-center text-center">
+                                    <div class="col-12">
+                                        <a href="{% static 'images/office/meeting_room.png' %}" target="_blank">
+                                            <img src="{% static 'images/office/meeting_room.png' %}"  alt="Trans Automation"
+                                            style="height:150px;width:80%">
+                                        </a>
+                                    </div>
+                                    <div class="col-12">
+                                        <a href="{% static 'images/office/visitor.png' %}" target="_blank">
+                                            <img src="{% static 'images/office/visitor.png' %}"  alt="Transport Automation"
+                                            style="height:150px;width:80%">
+                                        </a>
+                                    </div>
+                                    <div class="col-12">
+                                        <a href="{% static 'images/office/reconcilation.png' %}" target="_blank">
+                                            <img src="{% static 'images/office/reconcilation.png' %}"  alt="Transport Automation"
+                                            style="height:150px;width:80%">
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>   
+                        </div>
+                    </div>
+                    <!-- Repeat similar blocks for other modules -->
+                </div>
+            </div>
+
+        
+         
+            <!-- CTA Section -->
+            <div class="cta-section feature-box2"> 
+                <h2 style="color:white">Ready to Transform Your Business?</h2>
+                <a href="#free_trial" class="btn btn-primary btn-lg">Get Started Today</a>
+            </div>
+       
+
+
+            <!-- Procee outline  Section -->
+            <div class="feature-section">
+                <div class="container">
+                    <h2 class="text-center mb-5">Automate Software Process outlines</h2>
+                    <div class="row">
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide1.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide2.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide3_2.jpg' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide4.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide5.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>SCM Process Outline</h4>
+                            <img src="{% static 'images/scm_outline/Slide6.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Performance appraisal tracking and evaluation  Process Outline</h4>
+                            <img src="{% static 'images/appraisal_outlines/Slide2.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Performance appraisal tracking and evaluation  Process Outline</h4>
+                            <img src="{% static 'images/appraisal_outlines/Slide3.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+
+                        <div class="col-md-6 feature-box">
+                            <h4>Recruitment Process automation Outline</h4>
+                            <img src="{% static 'images/recruitment_outlines/Slide2.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4>Recruitment Process automation Outline</h4>
+                            <img src="{% static 'images/recruitment_outlines/Slide3.JPG' %}" 
+                                class="img-fluid" 
+                                style="object-fit: cover; width: 100%; height: auto;">
+                        </div>
+                        <div class="col-md-6 feature-box">
+                            <h4 style="color:blue">Leave management Process automation</h4>
+                           <p>
+                            Leave management involves:
+                            <ul>
+                                <li> Managing leave policies and entitlements that vary by employee type and tenure</li>
+                                <li> Fielding leave requests and obtaining approvals</li>
+                                <li>Ensuring adherence to complex absence rules and minimum staffing requirements</li>
+                                <li>Tracking late in and adjusting leave due to frequently late in employee as per policy</li>
+                                <li>Tracking leave accruals, balances and expiration</li>
+                                <li>Integrating leave data with payroll systems</li>
+                                <li>Producing absence analytics and reports</li>
+                            </ul>                 
+                            
+                           </p>
+                        </div>
+
+                        <div class="col-md-6 feature-box">
+                            <h4 style="color:blue">HR Basic process autoation</h4>
+                           <p>
+                            The challenging job for HR is performance appraisal and recruitment process hence we have seperately dealed with these two process. 
+                            Except these two issues, our Core HR module involve:
+                            <ul>
+                                <li> Employee database record maintenance, updating and viewing current status with basic communication attributes as a VCARD view model</li>
+                                <li> Generatting payslip, Salary certificate, Experience certificate and mothly payroll</li>
+                                <li>Creating Company level policies involve Salaray structure policy, leave policy etc.</li>                               
+                                <li>Keep tracking employee record changes over time and analytics employee history</li>
+                            </ul>                 
+                            
+                           </p>
+                        </div>
+
+                        <div class="col-md-6 feature-box">
+                            <h4 style="color:blue">Transport Pool management process</h4>
+                           <p>
+                           Transport Pool management process involve:
+                            <ul>
+                                <li>Creating and updating all transport database</li>
+                                <li> Creating and updating all fuel pump station database</li>
+                                <li>Applying for transport, obtained approval and availing transport</li>   
+                                <li> Keep track of travelling history</li>                            
+                                <li>Keep record of travelling vehicle log, fuel consumption and fault status of transport</li>
+                                <li>Generating vehicle status report, fuel consumption report, overtime report, fuel pump's payment record ects</li>
+                            </ul>                 
+                            
+                           </p>
+                        </div>
+
+                        <div class="col-md-6 feature-box">
+                            <h4 style="color:blue">Conclusion</h4>
+                            This application integrate business process of the following  area. 
+                            <div class="container-fluid">
+                                <div class="row d-flex justify-content-center align-items-center text-center">
+                            
+                                    <div class="col-4 d-flex bg-info my-2 align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Supply Chain
+                                    </div>
+                            
+                                    <div class="col-4 d-flex my-2 bg-warning align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Appraisal
+                                    </div>
+                            
+                                    <div class="col-4 d-flex my-2 bg-success text-white align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                       Automate Recruitment
+                                    </div>                                
+                            
+                                    <div class="col-4 d-flex my-2 bg-primary text-white align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Basic HR 
+                                    </div>
+                            
+                                    <div class="col-4 d-flex my-2 bg-danger text-white align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                       leave and payroll 
+                                    </div>                                
+                            
+                                    <div class="col-4 d-flex m-2 bg-secondary text-white align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Transport pool
+                                    </div>
+                                    <div class="col-4 d-flex my-2 bg-info align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Cash reconcilation
+                                        </div>
+                                        <div class="col-4 d-flex my-2 bg-warning align-items-center justify-content-center text-center"
+                                            style="border-radius:10px; height:50px;">
+                                            Office supplies
+                                         </div>
+                                        <div class="col-4 d-flex my-2 bg-info align-items-center justify-content-center text-center"
+                                        style="border-radius:10px; height:50px;">
+                                        Meeting room 
+                                        </div>
+                                        <div class="col-4 d-flex my-2 bg-dark text-white align-items-center justify-content-center text-center"
+                                            style="border-radius:10px; height:50px;">
+                                            IT support Ticketing
+                                        </div>
+                                        <div class="col-4 d-flex my-2 bg-primary text-white align-items-center justify-content-center text-center"
+                                            style="border-radius:10px; height:50px;">
+                                            Visitor management
+                                        </div>
+                                        <div class="col-4 d-flex my-2 bg-warning align-items-center justify-content-center text-center"
+                                            style="border-radius:10px; height:50px;">
+                                            Documentation 
+                                        </div>
+                            
+                                </div>
+                            </div>                                                       
+                                                       
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+           <!-- CTA Section -->
+           <div class="cta-section feature-box2"> 
+            <h2 style="color:white">Do you need live demo???</h2>
+            <a href="#free_trial" class="btn btn-primary btn-lg">We are here for any assistance</a>
+        </div>
+   
+       
+        <div class="col-12 mt-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="card-header text-center text-white bg-dark">
+                        <h3 class="fw-bold" id="subscription_plan">Choose your plan</h3>
+                    </div> 
+                    {% for plan in plans %}
+                    <div class="col-12 col-md-4 mt-2" id="free_trial">
+                        <div class="card shadow h-100 price_card"> 
+                            <div class="card-header text-center bg-dark text-white">
+                                <h4>{{ plan.get_duration_display }}</h4>
+                            </div>
+                            <div class="card-body text-center">
+                                <h2 class="card-title">${{ plan.price }}/year</h2>
+                                <p class="card-text">{{ plan.description }}</p>
+                                <ul class="list-group mb-3">
+                                    {% for feature in plan.features_list %}
+                                    <li class="list-group-item">{{ feature }}</li>
+                                    {% endfor %}
+                                    <p class="card-text">included&nbsp;{{ plan.base_users }}&nbsp;users for package</p>
+                                    <p class="card-text">${{ plan.price_per_request }}/request>
+				      <p class="card-text">${{ plan.price_per_user }}/additional user/month</p>
+                                </ul>
+
+                                 <!-- Trigger Buttons -->
+                                 <a href="#" class="btn btn-success my-2" data-bs-toggle="modal" data-bs-target="#subscriptionModal">Subscribe Now</a>
+                                 <a href="#" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#subscriptionModal">Renew Now</a>
+ 
+                                <!-- <a href="{% url 'clients:apply_for_tenant' %}?plan_id={{ plan.id }}" class="btn btn-success">Subscribe Now</a>
+                                <a href="{% url 'clients:renew_subscription' %}?plan_id={{ plan.id }}" class="btn btn-success">Renew Now</a> -->
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>    
+            
+
+<!-- Modal -->
+<div class="modal fade" id="subscriptionModal" tabindex="-1" aria-labelledby="subscriptionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        
+        <div class="modal-header">
+          <h5 class="modal-title" id="subscriptionModalLabel">Subscription Required</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <div class="modal-body">
+          Please fill the demo request form, we will show you our service , how to use,if you are ok then you can decide to subscribe your desired plan.
+        </div>
+        
+        <div class="modal-footer">
+          <a href="{% url 'clients:demo_request' %}" class="btn btn-primary">Go to This link</a>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Maybe Later</button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+
+            
+        </div>
+        
+
+
+
+
+
+
+    <div class="col-12 box3 my-5">
+        <div class="container-fluid text-center py-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8">
+                    <div class="card shadow-lg border-0 rounded-lg">
+                        <div class="card-body p-4">
+                            <h2 class="text-primary mb-4">Thank You for Choosing Our Application!</h2>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                We appreciate your time and effort in exploring our 
+                                <strong>Process automation web application</strong>. With its advanced features 
+                                designed to streamline operations, improve efficiency, and enable data-driven decision-making, 
+                                we are confident that this application will bring immense value to your organization.
+                            </p>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                If you have any feedback or need further assistance, feel free to reach out. 
+                                Your insights are invaluable to us and help us grow and improve!
+                            </p>
+                            <h4 class="text-success mt-4">Stay Efficient. Stay Productive. See You Again Soon!</h4>
+                            <p class="text-muted mt-3">~ The Development Team</p>
+                            <p style="margin-left:0px">
+                                <img src="{% static 'images/Logo.png' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #007bff;"><br>
+                                    mymeplus Technology <br>
+
+                                    <img src="{% static 'images/my_image2.JPG' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #007bff;">
+                                    Engineer Humayun Kobir(Buet-eee,MBA) <br>
+                                    CTO <br>
+                                    <i class="fas fa-envelope"></i> hkobir1973@gmail.com <br>
+                                    <i class="fas fa-phone">+88-01743-800-705</i>
+                            </p>
+                           
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+   
+</div>
+
+</div>
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+
+<h4>Sale Order:{{ sale_order.sale_order_id }} </h4>
+<h6> Client: {{ sale_order.customer.name }} </h6>
+<h6>Dated: {{ sale_order.order_date }}</h6>
+
+<h4 style="margin-top:30px">Order Details</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Product Type</th>
+            <th>Unit Price</th>
+            <th>Total price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for sale in sale_order.sale_order.all %}
+        <tr>
+            <td>{{ sale.product.name }}</td>
+            <td>{{ sale.quantity }}</td>
+            <td>{{ sale.product.product_type }}</td>
+            <td>BDT {{ sale.product.unit_price }}</td>
+            <td>BDT {{ sale.total_price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+ 
+</table>
+
+<a href="?download=true">Download CSV</a>
+
+    {% endblock %}

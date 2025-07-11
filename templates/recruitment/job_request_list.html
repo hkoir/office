@@ -1,0 +1,221 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+     
+        <div class="col-12 mt-4 table-responsive">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>     
+                        <th>Requester</th>    
+                        <th>company</th>              
+                        <th>Job Position</th> 
+                        <th>Job Title</th> 
+
+                        <th>Department</th>    
+                        <th>Location</th>  
+                        <th>Reporting Manager</th> 
+                        <th>Hiring Manager</th> 
+                        <th>No of Vacancies</th>   
+
+                        <th>Deadline</th> 
+                        <th>Status</th>
+                        <th>Submission</th> 
+                        <th>Review</th> 
+                        <th>Approval</th> 
+
+                        <th>Job Launched by Hiring manager</th>
+                 
+                                                                                             
+                                                      
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>                          
+                            <td class="text-center p-1">{{ data.requester}}</td> 
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.company.name}}</td>                                              
+                            <td class="text-center p-1">{{ data.position}}</td>  
+                            <td class="text-center p-1">{{ data.title}}</td>  
+
+                            <td class="text-center p-1">{{ data.department}}</td> 
+                            <td class="text-center p-1">{{ data.location}}</td>  
+                            <td class="text-center p-1">{{ data.reporting_manager}}</td> 
+                            <td class="text-center p-1">{{ data.hiring_manager}}</td> 
+                            <td class="text-center p-1">{{ data.no_of_vacancies}}</td>  
+                                                   
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.deadline}}</td>
+                            <td>{{ data.get_status_display }}</td>    
+                            <!-- approval actions -->
+
+                               <!-- Requester Button -->
+                        <td>
+                            {% if data.requester_approval_status == 'SUBMITTED' %}
+                            <strong><i class="fas fa-check" style="color:green">Submitted</i></strong>   
+                        {% else %}
+                        <a href="{% url 'recruitment:process_job_requirement' data.id %}" class="btn btn-primary">Submit Request</a>
+                        {% endif %}
+                        </td>
+
+                        <!-- Reviewer Button -->
+                        <td>
+                            {% if data.requester_approval_status != 'SUBMITTED'  %}   
+                            <button class="btn btn-secondary" disabled>Pending Submission</button>
+                            {% elif data.reviewer_approval_status == 'CANCELLED'  %}  
+                            <strong><i class="fas fa-times" style="color:rgb(236, 17, 6)">Cancelled</i></strong> 
+                        {% elif data.reviewer_approval_status == 'REVIEWED' %}
+                        <strong><i class="fas fa-check" style="color:green">Reviewed</i></strong>  
+                        {% else %}
+                        <a href="{% url 'recruitment:process_job_requirement' data.id %}" class="btn btn-primary">Review Request</a>
+                        {% endif %}
+                        </td>
+
+                        <!-- Approver Button -->
+                        <td>
+                            {% if data.reviewer_approval_status != 'REVIEWED'  %}
+                            <button class="btn btn-secondary" disabled>Pending review</button>
+                        {% elif data.approver_approval_status == 'APPROVED'  %}
+                        <strong><i class="fas fa-check" style="color:green">Approved</i></strong> 
+                        {% elif data.approver_approval_status == 'CANCELLED'  %}
+                        <strong><i class="fas fa-check" style="color:rgb(235, 9, 9)">Cancelled</i></strong> 
+                        {% else %}
+                        <a href="{% url 'recruitment:process_job_requirement' data.id %}" class="btn btn-primary">Approve Request</a>
+                        {% endif %}
+                        </td>  
+
+                        <td>
+                            {% if data.approver_approval_status == 'APPROVED' and not data.is_active %}
+                          <a href="{% url 'recruitment:launch_job_by_hiring_manager' data.id %}" class="btn btn-primary">Update and launch</a>
+                          {% elif data.is_active %}
+                          <i class="fas fa-check fw-bold text-success"></i><span style="color:blue;font-weight: bold;">Recruitment started</span>
+                          {% else %}
+                          <span class="btn btn-secondary ">Approval Pending</span>
+                          {% endif %}
+
+                        </td>                       
+                                                                                                                                     
+                                                                               
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+                    
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
+
+             <!-- Delete Confirmation Modal -->
+             <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete the transport record: <strong id="modal-entity-name"></strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <form method="post" id="delete-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+    
+</div>
+
+
+
+<!-- Panel member Modal -->
+<div class="modal fade" id="jobModal" tabindex="-1" aria-labelledby="jobModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="jobModalLabel">Panel member for this job interview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h4 id="jobTitle"></h4>
+          <!-- <p><strong>Description:</strong> <span id="jobDescription"></span></p>
+          <p><strong>Requirements:</strong> <span id="jobRequirements"></span></p> -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+
+<script>
+    // Add event listener to update modal content when a job button is clicked
+    var jobModal = new bootstrap.Modal(document.getElementById('jobModal')); // Bootstrap 5 Modal initialization
+  
+    document.getElementById('jobModal').addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget; // Button that triggered the modal
+      var title = button.getAttribute('data-bs-title'); // Extract info from data-bs-* attributes
+      var description = button.getAttribute('data-bs-description');
+      var requirements = button.getAttribute('data-bs-requirements');
+  
+      // Update the modal's content
+      var modal = document.getElementById('jobModal');
+      modal.querySelector('#jobTitle').textContent = title;
+      modal.querySelector('#jobDescription').textContent = description;
+      modal.querySelector('#jobRequirements').textContent = requirements;
+    });
+  </script>
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/recruitment/delete_job/${entityId}/`;
+    });
+</script>
+
+
+
+
+{% endblock %}

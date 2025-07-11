@@ -1,0 +1,714 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        
+        <h4 class="text-center mb-4" style="color:blue;font-weight: bold;">DOPS Inventor Summary</h4>
+            
+        <div class="col-12">   
+                       
+            <form method="GET" action="{% url 'inventory:inventory_list' %}">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Warehouse Name: {{ form.warehouse_name }}
+                        </div> 
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Product Name: {{ form.product_name }}
+                        </div> 
+                        <div class="col-md-3 col-sm-6 mt-2">
+                            <button type="submit" class="btn btn-primary">Generate Data</button> 
+                           
+                        </div>
+                    </div>
+                </div>                    
+            </form>                         
+            <form method="GET" action="{% url 'inventory:inventory_list' %}">
+                <label for="valuation_method">Choose Valuation Method:</label>
+                <select name="valuation_method" id="valuation_method" onchange="this.form.submit()">
+                    <option value="FIFO" {% if valuation_method == 'FIFO' %}selected{% endif %}>FIFO</option>
+                    <option value="LIFO" {% if valuation_method == 'LIFO' %}selected{% endif %}>LIFO</option>
+                </select>
+            </form>
+        </div>
+        <h6 class="text-center">  
+               
+            {% if days %}
+              Result for last {{ days }} days
+            {% elif start_date and end_date %}
+                Result data from: {{ start_date }} to {{ end_date }}
+            {% endif %} 
+        </h6>      
+        {% if grouped_data %}
+        <h4 class="text-center" style="color:blue;font-weight: bold;">
+            <span style="font-size: 14px;">
+                <span style="color:rgb(215, 9, 71);font-weight: bold; font-size: 20px;">Current Stock Value: {{ grand_total_stock_value|add_commas }}</span>
+                &nbsp;&nbsp;
+            <a href="{% url 'inventory:inventory_executive_sum' %}" class="btn btn-sm btn-primary">Grand Stock value</a>       
+            <a href="{% url 'inventory:inventory_aggregate_list' %}"class="btn btn-sm btn-primary">Aggregated Product</a>
+        </span>
+        </h4>
+     
+
+
+        <div class="col-12 my-3">   
+            <div class="container-fluid">
+                <div class="row" style="overflow-x: auto">                   
+                    <div id="chart-container" class="col-12 col-md-9 bg-light">
+                        <canvas id="barChart" width="100%"></canvas>
+                    </div>
+                    <div class="col-12 col-md-3 bg-light">                     
+                        <canvas id="warehouseDoughnutChart"></canvas>
+                    </div>
+                </div>
+            </div>        
+        </div>
+        
+                 
+       
+        <div class="col-12 mt-4">                   
+                              
+         
+
+            
+            <h4> Inventory details</h4>
+                <!-- Column Selection Dropdown (Better UI) -->
+                <div class="dropdown mt-4">
+                <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="columnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    Select Columns
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="columnDropdown">
+                    <li><button class="btn btn-sm btn-primary" id="selectAll">Select All</button></li>
+                    <li><button class="btn btn-sm btn-danger" id="deselectAll">Deselect All</button></li>
+
+                    <li><input type="checkbox" class="column-checkbox" value="product">Product</li>
+
+                    <li><input type="checkbox" class="column-checkbox" value="total_stock"> Total Stock</li>
+                    <li><input type="checkbox" class="column-checkbox" value="total_purchase"> Total Purchase</li>
+                    <li><input type="checkbox" class="column-checkbox" value="total_sold"> Total Sold</li>
+                    <li><input type="checkbox" class="column-checkbox" value="total_available"> Total available</li>
+
+                    <li><input type="checkbox" class="column-checkbox" value="manufacture_in"> Manufacture IN</li>
+                    <li><input type="checkbox" class="column-checkbox" value="manufacture_out"> Manufacture Out</li>
+                    <li><input type="checkbox" class="column-checkbox" value="total_existing_in"> Total existing IN</li>
+                    <li><input type="checkbox" class="column-checkbox" value="operations_out"> Total operations out</li>
+
+                    <li><input type="checkbox" class="column-checkbox" value="transfer_in"> Transfer In</li>
+                    <li><input type="checkbox" class="column-checkbox" value="transfer_out"> Transfer Out</li>
+                    <li><input type="checkbox" class="column-checkbox" value="replacement_in"> Replacement IN</li>
+                    <li><input type="checkbox" class="column-checkbox" value="replacement_out"> Replacement Out</li>
+
+
+                    <li><input type="checkbox" class="column-checkbox" value="scrapped_in"> Scrapped IN</li>
+                    <li><input type="checkbox" class="column-checkbox" value="scrapped_out"> Scrapped Out</li>
+                    <li><input type="checkbox" class="column-checkbox" value="stock_value"> Stock valuet</li>
+                    <li><hr class="dropdown-divider"></li>
+                
+                </ul>
+            </div>   
+        </div>
+        
+
+     <div class="col-12 table-responsive mt-4">
+        {% for warehouse, products, warehouse_total_stock_value in grouped_data %}            
+                
+        <h6 style="font-weight: bold; color:blue">Warehouse: {{ warehouse }}</h6>                        
+        <div>
+            <h5 style="color: blue;">Stock Value: {{ warehouse_total_stock_value|add_commas }}</h5>
+            
+        </div>
+        
+        <table class="table table-hover" id="batchTable">
+            <thead class="table-dark">
+                <tr class="bg-primary text-white">
+
+                    <th class="product">Product Name</th>
+
+                    <th class="total_stock">Total stock</th>
+                    <th class="total_purchase">Total Purchase</th>
+                    <th class="total_sold">Total Sold</th>
+                    <th class="total_available">Total Available</th>
+
+                    <th class="manufacture_in">Total Manufacture in</th>
+                    <th class="manufacture_out">Total Manufacture out</th>
+                    <th class="total_existing_in">Total Existing</th>                                  
+                    <th class="operations_out">Total operations out</th>
+
+                    <th class="transfer_in">Total Transfer In</th>
+                    <th class="transfer_out">Total Transfer Out</th>
+                    <th class="replacement_in">Total Replacement in</th>
+                    <th class="replacement_out">Total Replacement out</th>   
+
+                    <th class="scrapped_in">Total Scrapped in</th>
+                    <th class="scrapped_out">Total Scrapped out</th>  
+
+                    <th class="stock_value">Total stock value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if products %}
+                {% for product in products %}
+                <tr>
+                    <td class="product">{{ product.product }}</td>
+
+                    <td class="total_stock">{{ product.total_stock|default:"0" }}</td>
+                    <td class="total_purchase">{{ product.total_purchase|default:"0" }}</td>
+                    <td class="total_sold">{{ product.total_sold|default:"0" }}</td>
+                    <td class="total_available">{{ product.total_available|default:"0" }}</td>
+
+                    <td class="manufacture_in">{{ product.total_manufacture_in|default:"0" }}</td>
+                    <td class="manufacture_out">{{ product.total_manufacture_out|default:"0" }}</td>
+                    <td class="total_existing_in">{{ product.total_existing_in|default:"0" }}</td>                                 
+                    <td class="operations_out">{{ product.total_operations_out|default:"0" }}</td>
+
+                    <td class="transfer_in">{{ product.total_transfer_in|default:"0" }}</td>
+                    <td class="transfer_out">{{ product.total_transfer_out|default:"0" }}</td>
+                    <td class="replacement_in">{{ product.total_replacement_in|default:"0" }}</td>
+                    <td class="replacement_out">{{ product.total_replacement_out|default:"0" }}</td>
+
+                    <td class="scrapped_in">{{ product.total_scrapped_in|default:"0" }}</td>
+                    <td class="scrapped_out">{{ product.total_scrapped_out|default:"0" }}</td>
+                    
+                    <td class="stock_value">{{ product.stock_value|default:"0"|add_commas }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-warning">No products available for this warehouse.</td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center text-warning">No products found for this warehouse. </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+                
+    {% endfor %}
+            
+    {% else %}
+    <div class="col-12 mt-4">
+        <h5 class="text-center" style="color:blue">No inventory data available within specified criteria.Choose filter and  <b>"generate data"</b></h5>
+    </div>
+    {% endif %}     
+
+
+<!-- container row end here -->
+    </div>  
+
+  
+
+
+         <!-- Pagination Controls -->
+         <div class="pagination">
+            <span class="step-links">
+                {% if product_wise_data.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ product_wise_data.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ product_wise_data.number }} of {{ product_wise_data.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ product_wise_data.next_page_number }}">next</a>
+                <a href="?page={{ product_wise_data.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+
+
+</div>
+
+
+
+<script>
+    document.getElementById("columnDropdown").addEventListener("click", function () {
+    let dropdown = new bootstrap.Dropdown(this);
+    dropdown.show();
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const batchFilter = document.getElementById("batchFilter");
+        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+        const selectAllBtn = document.getElementById("selectAll");
+        const deselectAllBtn = document.getElementById("deselectAll");
+
+        // Hide all columns initially
+        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
+
+        // Show selected columns
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const columnClass = this.value;
+                const isChecked = this.checked;
+                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
+            });
+        });
+
+        // Select All
+        selectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
+            });
+        });
+
+        // Deselect All
+        deselectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
+            });
+        });
+
+        // Batch Filter
+        batchFilter.addEventListener("change", function () {
+            const selectedBatch = batchFilter.value;
+            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
+                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+// Parse the JSON data passed from the view
+    const chartData = JSON.parse('{{ warehouse_json|escapejs }}');
+// Initialize arrays for each dataset
+    const totalStock = [];
+    const totalPurchase = [];
+    const totalSold = [];
+    const totalAvailable = [];
+    const reorderLevel = [];
+    const productReorderLevel = [];
+
+    const totalManufactureIn = [];
+    const totalManufactureOut = [];
+    const totalExistingIn = [];
+    const totalOperationsOut = [];    
+ 
+    const totalTransferIn = [];
+    const totalTransferOut = [];
+    const totalReplacementOut = [];
+    const totalReplacementIn = [];
+
+    const totalScrappedOut = [];
+    const totalScrappedIn = [];
+    
+    
+
+    // Populate arrays for each dataset
+    chartData.labels.forEach((label, index) => {
+        totalStock.push(chartData.total_stock[index] || 0);
+        totalPurchase.push(chartData.total_purchase[index] || 0);
+        totalSold.push(chartData.total_sold[index] || 0);
+        totalAvailable.push(chartData.total_available[index] || 0);
+        reorderLevel.push(chartData.reorder_level[index] || 0);
+        productReorderLevel.push(chartData.product_reorder_level[index] || 0);
+
+        totalManufactureIn.push(chartData.total_manufacture_in[index] || 0);
+        totalManufactureOut.push(chartData.total_manufacture_out[index] || 0);
+        totalExistingIn.push(chartData.total_existing_in[index] || 0);
+        totalOperationsOut.push(chartData.total_operations_out[index] || 0);       
+        
+        totalTransferIn.push(chartData.total_transfer_in[index] || 0);
+        totalTransferOut.push(chartData.total_transfer_out[index] || 0);
+        totalReplacementOut.push(chartData.total_replacement_out[index] || 0);
+        totalReplacementIn.push(chartData.total_replacement_in[index] || 0);
+        totalScrappedOut.push(chartData.total_scrapped_out[index] || 0);
+        totalScrappedIn.push(chartData.total_scrapped_in[index] || 0);
+        
+    });
+
+   
+
+
+    
+    const colors = [
+        'rgba(76, 175, 80, 0.5)',  // Green
+        'rgba(255, 87, 34, .8)',  // Deep Orange
+        'rgba(33, 150, 243, 0.5)', // Blue
+        'rgba(255, 193, 7, 0.5)',  // Amber
+        'rgba(76, 175, 80, 0.5)',  // Green
+        'rgba(156, 39, 176, 0.5)', // Purple
+        'rgba(0, 188, 212, 0.5)',  // Teal
+        'rgba(255, 87, 34, 0.5)',  // Deep Orange
+        'rgba(0, 150, 136, 0.5)',  // Sea Green
+        'rgba(255, 152, 0, 0.5)',  // Orange
+        'rgba(0, 188, 212, 0.5)',  // Teal
+        'rgba(233, 30, 99, 0.5)',  // Pink
+        'rgba(0, 150, 136, 0.5)',  // Sea Green
+
+        'rgba(255, 87, 34, 0.8)',  // Deep Orange
+        'rgba(0, 150, 136, 0.8)',  // Sea Green
+    ];
+
+    
+    const maxYValue = Math.max(
+    ...totalPurchase,
+    ...totalSold,
+    ...totalAvailable,
+    ...totalManufactureIn,
+    ...totalTransferIn,
+    ...totalTransferOut,
+    ...totalReplacementOut,
+    ...totalStock,
+    ...reorderLevel
+) * 1.1;
+
+    
+   
+    // Bar chart
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+    
+    const barChart = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+
+                {
+                    label: 'Total Stock',
+                    data: totalStock,
+                     backgroundColor: 'rgba(76, 175, 80, 0.5)',  // Green
+                    borderColor: 'rgba(76, 175, 80, 1)',        // Dark Green
+                    borderWidth: 1,
+                   
+                },  
+
+                {
+                    label: 'Total Purchase',
+                    data: totalPurchase,
+                    backgroundColor: 'rgba(33, 150, 243, 0.5)', // Blue
+                    borderColor: 'rgba(33, 150, 243, 1)',       // Dark Blue
+                    borderWidth: 1,
+                    
+                },
+                {
+                    label: 'Total Available',
+                    data: totalAvailable,
+                    backgroundColor: 'rgba(0, 150, 136, 1)',  // Pink
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Pink
+                    borderWidth: 1,
+                  
+                },  
+
+                {
+                    label: 'Product Reorder Level',
+                    data: productReorderLevel,
+                    backgroundColor: 'rgba(255, 50, 36, 1)',  // Pink
+                    borderColor: 'rgba(255, 50, 36, 1)',        // Dark Pink
+                    borderWidth: 1,
+                   
+                },  
+
+                {
+                    label: 'Warehouse Reorder Level',
+                    data: reorderLevel,
+                    backgroundColor: 'rgba(255, 50, 36, 1)',  // Pink
+                    borderColor: 'rgba(255, 50, 36, 1)',        // Dark Pink
+                    borderWidth: 1,
+                   
+                },  
+                
+                              
+                {
+                    label: 'Total Sold',
+                    data: totalSold,
+                    backgroundColor: 'rgba(255, 87, 34, 0.5)',  // Deep Orange
+                    borderColor: 'rgba(255, 87, 34, 1)',        // Dark Deep Orange
+                    borderWidth: 1,
+                   
+                },              
+              
+
+                {
+                    label: 'Total Existing',
+                    data: totalExistingIn,
+                    backgroundColor: 'rgba(255, 193, 7, 0.5)',  // Amber
+                    borderColor: 'rgba(255, 193, 7, 1)',        // Dark Amber
+                    borderWidth: 1,
+                    
+                },
+                {
+                    label: 'Total Operations Out',
+                    data: totalOperationsOut,
+                    backgroundColor: 'rgba(0, 150, 136, 0.5)',  // Sea Green
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Sea Green
+                    borderWidth: 1,
+                    
+                },
+                {
+                    label: 'Total Manufacture in',
+                    data: totalManufactureIn,
+                    backgroundColor: 'rgba(255, 193, 7, 0.5)',  // Amber
+                    borderColor: 'rgba(255, 193, 7, 1)',        // Dark Amber
+                    borderWidth: 1,
+                   
+                },
+
+                {
+                    label: 'Total Manufacture out',
+                    data: totalManufactureOut,
+                    backgroundColor: 'rgba(255, 193, 7, 0.5)',  // Amber
+                    borderColor: 'rgba(255, 193, 7, 1)',        // Dark Amber
+                    borderWidth: 1,
+                    
+                },
+                {
+                    label: 'Total Transfer In',
+                    data: totalTransferIn,
+                    backgroundColor: 'rgba(0, 188, 212, 0.5)', // Teal
+                    borderColor: 'rgba(0, 188, 212, 1)',       // Dark Teal
+                    borderWidth: 1,
+                    
+                },            
+                               
+                {
+                    label: 'Total Transfer Out',
+                    data: totalTransferOut,
+                    backgroundColor: 'rgba(255, 152, 0, 0.5)',  // Orange
+                    borderColor: 'rgba(255, 152, 0, 1)',        // Dark Orange
+                    borderWidth: 1,
+                    
+                },
+                {
+                    label: 'Total Replacement Out',
+                    data: totalReplacementOut,
+                    backgroundColor: 'rgba(0, 150, 136, 0.5)',  // Sea Green
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Sea Green
+                    borderWidth: 1,
+                    
+                },
+
+                {
+                    label: 'Total Replacement in',
+                    data: totalReplacementIn,
+                    backgroundColor: 'rgba(0, 150, 136, 0.5)',  // Sea Green
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Sea Green
+                    borderWidth: 1,
+                   
+                },
+
+                {
+                    label: 'Total scrapped in',
+                    data: totalScrappedIn,
+                    backgroundColor: 'rgba(0, 150, 136, 0.5)',  // Sea Green
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Sea Green
+                    borderWidth: 1,
+                   
+                },
+
+                {
+                    label: 'Total Scrapped out',
+                    data: totalScrappedOut,
+                    backgroundColor: 'rgba(0, 150, 136, 0.5)',  // Sea Green
+                    borderColor: 'rgba(0, 150, 136, 1)',        // Dark Sea Green
+                    borderWidth: 1,
+                   
+                },
+               
+              
+            ]
+        },
+        options: {
+            datasets: {
+                    bar: {
+                        barThickness: 'flex', // Adjusts automatically based on dataset size
+                        maxBarThickness: 100,  // Increases max width
+                        categoryPercentage: 1, // Controls spacing between bars
+                        barPercentage: 0.9   // Controls individual bar width
+                    
+
+                    }
+                },
+            responsive: true,   
+                
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    type: 'category',
+                    ticks: {
+                        autoSkip: false, // Ensures all labels are displayed
+                        maxRotation: 20, // Reduces label tilt
+                        minRotation: 0,  // Avoids unnecessary rotation
+                    
+                    }
+                },
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            }
+        }
+
+
+    });
+
+   
+// Doughnut Chart Configuration
+const doughnutCtx = document.getElementById('warehouseDoughnutChart').getContext('2d');
+
+const totalStockSum = totalStock.reduce((a, b) => a + b, 0);
+const totalPurchasedSum = totalPurchase.reduce((a, b) => a + b, 0);
+const totalExistingInSum = totalExistingIn.reduce((a, b) => a + b, 0);
+
+const totalManufactureInSum = totalManufactureIn.reduce((a, b) => a + b, 0);
+const totalManufactureOutSum = totalManufactureOut.reduce((a, b) => a + b, 0);
+
+
+const totalSoldSum = totalSold.reduce((a, b) => a + b, 0);
+const totalOperationsOutSum = totalOperationsOut.reduce((a, b) => a + b, 0);
+
+const totalRefundInSum = totalReplacementIn.reduce((a, b) => a + b, 0);
+const totalRefundOutSum = totalReplacementOut.reduce((a, b) => a + b, 0);
+
+const totalTransferOutSum = totalTransferOut.reduce((a, b) => a + b, 0);
+const totalTransferInSum = totalTransferIn.reduce((a, b) => a + b, 0);
+
+const totalScrappedInSum = totalScrappedIn.reduce((a, b) => a + b, 0);
+const totalScrappedOutSum = totalScrappedOut.reduce((a, b) => a + b, 0);
+
+const totalAvailableSum = totalAvailable.reduce((a, b) => a + b, 0);
+const reorderLevelSum = reorderLevel.reduce((a, b) => a + b, 0);
+const productReorderLevelSum = productReorderLevel.reduce((a, b) => a + b, 0);
+
+const warehouseDoughnutChart = new Chart(doughnutCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            'Total stock',
+            'Available Stock',
+            'Reorder level',
+            'Product Reorder level',
+            'Total Purchased',
+            'Total Sold',
+
+            'Total Existing In',
+            'Operations Out',
+            'Total Production In',
+            'Total Production Out',
+
+            'Outgoing Transfers',
+            'Incoming Transfers',
+            'Scrapped In',
+            'Scrapped Out',
+          
+        ],
+        datasets: [{
+            data: [
+                totalStockSum,
+                totalAvailableSum,            
+                reorderLevelSum,
+                productReorderLevelSum,
+                totalPurchasedSum,
+                totalSoldSum,
+
+                totalExistingInSum,
+                totalOperationsOutSum,
+                totalManufactureInSum,
+                totalManufactureOutSum,
+
+                totalTransferOutSum,
+                totalTransferInSum,
+                totalScrappedInSum,
+                totalScrappedOutSum,
+               
+            ],
+            backgroundColor: [
+                'rgba(76, 175, 80, 0.5)',  // Green
+                'rgba(33, 150, 243, 0.5)', // Blue
+                'rgba(255, 08, 2, 0.5)',  // Teal
+                'rgba(156, 39, 176, 0.5)', // Purple
+                'rgba(255, 87, 34, 0.5)',  // Deep Orange
+                'rgba(255, 193, 7, 0.5)',  // Amber
+
+                'rgba(0, 150, 136, 0.5)',  // Sea Green
+                'rgba(233, 30, 99, 0.5)',  // Pink
+                'rgba(156, 39, 176, 0.5)', // Purple
+                'rgba(0, 188, 212, 0.5)',  // Teal
+
+                'rgba(255, 152, 0, 0.5)',  // Orange
+                'rgba(103, 58, 183, 0.5)', // Deep Purple
+                'rgba(121, 85, 72, 0.5)',  // Brown
+                'rgba(63, 81, 181, 0.5)'   // Indigo
+            ],
+            borderColor: [
+                'rgba(76, 175, 80, 1)', 
+                'rgba(33, 150, 243, 1)', 
+                'rgba(255, 8, 212, 0.5)',  // Teal
+                'rgba(255, 87, 34, 1)',                 
+                'rgba(255, 193, 7, 1)', 
+
+                'rgba(0, 150, 136, 1)', 
+                'rgba(233, 30, 99, 1)', 
+                'rgba(156, 39, 176, 1)', 
+                'rgba(0, 188, 212, 1)', 
+
+                'rgba(255, 152, 0, 1)', 
+                'rgba(103, 58, 183, 1)', 
+                'rgba(121, 85, 72, 1)', 
+                'rgba(63, 81, 181, 1)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        return `${label}: ${value.toLocaleString()}`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+</script>
+
+
+
+{% endblock %}
+
+
+
+
+
+
+

@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+<div class="container-fluid main-content">
+    <h4 class="text-center" style="color:rgb(25, 9, 243);font-weight: bolder;">
+        Inventory Low Stock Status
+    </h4>
+
+    <div class="row d-flex flex-wrap">
+        <!-- Total Low Stock Section -->
+        <div class="col-md-6 p-2">
+            <h6 class="mt-4 text-center" style="color:blue;font-weight: bold;">
+                Overall Low Stock Based on Reorder Level
+            </h6>
+            <div class="table-responsive">
+                {% if low_stock_products %}
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Current Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Lead Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in low_stock_products %}
+                        <tr>
+                            <td>{{ item.product }}</td>
+                            <td>{{ item.warehouse }}</td>
+                            <td>{{ item.current_stock }}</td>
+                            <td>{{ item.reorder_level }}</td>
+                            <td>{{ item.lead_time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No low stock products based on product-level reorder levels.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Warehouse-wise Low Stock Section -->
+        <div class="col-md-6 p-2">
+            <h6 class="mt-4 text-center" style="color:blue;font-weight: bold;">
+                Warehouse Low Stock Based on Usage and Reorder Level
+            </h6>
+            <div class="table-responsive">
+                {% if warehouse_wise_low_stock %}
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Average Usage</th>
+                            <th>Current Stock</th>
+                            <th>Required Stock</th>
+                            <th>Reorder Level</th>
+                            <th>Lead Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in warehouse_wise_low_stock %}
+                        <tr>
+                            <td>{{ item.product }}</td>
+                            <td>{{ item.warehouse }}</td>
+                            <td>{{ item.average_usage }}</td>
+                            <td>{{ item.current_stock }}</td>
+                            <td>{{ item.required_stock }}</td>
+                            <td>{{ item.reorder_level }}</td>
+                            <td>{{ item.lead_time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No low stock products based on warehouse-specific reorder levels.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Low Stock Based on Usage and Lead Time -->
+        <div class="col-md-6 p-2">
+            <h6 class="mt-4 text-center" style="color:blue;font-weight: bold;">
+               Overall Low Stock Based on Usage and Lead Time
+            </h6>
+            <div class="table-responsive">
+                {% if low_stock_alerts %}
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Current Stock</th>
+                            <th>Required Stock</th>
+                            <th>Average Usage</th>
+                            <th>Lead Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in low_stock_alerts %}
+                        <tr>
+                            <td>{{ alert.product }}</td>
+                            <td>{{ alert.warehouse }}</td>
+                            <td>{{ alert.current_stock }}</td>
+                            <td>{{ alert.required_stock|floatformat:'2' }}</td>
+                            <td>{{ alert.average_usage|floatformat:'2' }}</td>
+                            <td>{{ alert.lead_time }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No low stock alerts based on lead time.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+    {% endblock %}

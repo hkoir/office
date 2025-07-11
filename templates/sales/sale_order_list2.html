@@ -1,0 +1,75 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">    
+        
+        <div class="col">       
+
+            <h4> Placed sale orders</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                   
+                        <th class="text-center p-2">SaleOrder Number</th>
+                        <th class="text-center p-2">Request Order Number</th>
+                        <th class="text-center p-2">Total amount</th>                       
+                        <th class="text-center p-2">Created at</th>                    
+                        <th class="text-center p-2">Status</th>
+                        <th class="text-center p-2">Prepared by</th>
+                        <th class="text-center p-2">Action</th>
+                        <th class="text-center p-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in sale_orders%}
+                        <tr>
+                         
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.order_id }}</td>
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.sale_request_order.order_id }}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.created_at}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.status}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.user}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                                <a href="{% url 'logistics:create_sale_shipment' order.id %}">Create Shipment</a>
+                            </td>
+                           
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                                <a href="{% url 'finance:create_sale_invoice' order.id %}">Create Invoice</a>
+                            </td>
+                            
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>      
+
+
+
+
+
+{% endblock %}

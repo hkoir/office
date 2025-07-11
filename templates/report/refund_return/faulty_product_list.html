@@ -1,0 +1,63 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 table-responsive">
+
+            <H4> Faulty product list</H4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Sale Order</th>
+                        <th>Product Name</th>
+                        <th>Customer</th>
+                        <th>Refund/Faulty Quantity</th>
+                        <th>Reason</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for return_request in page_obj %}
+                        <tr>
+                            <td>{{ return_request.sale.sale_order.sale_order_id }}</td>
+                            <td>{{ return_request.product.product_name }}</td>
+                            <td>{{ return_request.sale.customer.customer_name }}</td>
+                            <td>{{ return_request.faulty_product_quantity }}</td>
+                            <td>{{ return_request.reason_for_fault }}</td>
+                            <td>{{ return_request.status }}</td>
+                            <td><a href="{% url 'report:repair_faulty_product' return_request.id %}">Update action</a></td>
+                            <td style="white-space: nowrap;"><a href="{% url 'report:return_repaired_product' return_request.id %}">Replacement Action</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+         <!-- Pagination Controls -->
+         <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

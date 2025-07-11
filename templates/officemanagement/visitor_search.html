@@ -1,0 +1,98 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+
+
+
+
+
+<div class="container-fluid main-content">  
+               
+    <div class="row">
+      
+        <div class="col-12 my-3">
+            <div class="container">
+                <form method="GET">
+                <div class="row">                 
+                  
+                    <div class="col-6">
+                        {{ form.query }}
+                    </div>
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+             
+                </div>
+            </form>
+            </div>
+        </div>
+        
+        <div class="col-12 table-responsive">
+
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Company</th>
+                        <th class="text-center p-2">Visitor Type</th>
+                    
+                        <th class="text-center p-2">Visitor Name</th>
+                        <th class="text-center p-2">Designation</th>                       
+                        <th class="text-center p-2">Phone</th>
+                        <th class="text-center p-2">Photo</th>
+                        <td>Check In</td>
+                        <th>Check Out</th>
+                        <td>Address</td>
+                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>
+                            <td class="text-center p-1">{{ data.company.company }}</td>
+                            <td class="text-center p-1">{{ data.visitor_type }}</td>                         
+                            <td class="text-center p-1">{{ data.name}}</td>                          
+                            <td>{{data.designation}}</td>
+                            <td>{{data.phone}}</td>
+                            
+                            <td>
+                                {% if data.photo %}
+                                <a href="{{ data.photo.url }}" target="_blank">
+                                    <img src="{{ data.photo.url }}" style="width:30px;height:30px;border-radius: 50%;">
+                                </a>
+                                {% else %}
+                                No Photo {% endif %}                               
+                            </td>
+            
+                            <td>
+                                {% if data.company %}
+                                {{ data.company.check_in }}
+                                {% else %}
+                                {{ data.check_in }}
+                                {% endif %}
+                            </td>
+            
+                            <td>
+                                {% if data.company %}
+                                {{ data.company.check_out }}
+                                {% else %}
+                                {{ data.check_out }}
+                                {% endif %}
+                            </td>
+            
+            
+                            <td>{{ data.address }}</td>
+                           </tbody>
+                           {% endfor %}
+                           
+            </table>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

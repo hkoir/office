@@ -1,0 +1,94 @@
+
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">    
+        
+        <form method="GET">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}">            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}">                
+            
+            <button class="btn btn-primary" type="submit">Apply Filter</button>
+        </form>  
+
+        <div class="col-12 col-md-8 mt-2">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">User</th>
+                        <th class="text-center p-2">User department</th>
+                        <th class="text-center p-2">Amount</th>                    
+                        <th class="text-center p-2">Purpose</th>
+
+                        <th class="text-center p-2">Estimated reimburse date</th>   
+                        <th>Approval status</th>
+                        <th>Approved</th>                    
+                        <th class="text-center p-2">Approved by</th>                         
+                        <th class="text-center p-2">Approved on</th>    
+                        
+                    </tr>
+                </thead>
+                <tbody> 
+                    {% for data in page_obj %}
+                        <tr>
+                            <td class="text-center p-1">{{ data.user.username }}</td>
+                            <td>{{data.user.user_profile.employee_user_profile.first.department}}</td>
+                            <td class="text-center p-1">{{ data.amount|add_commas}}</td>                         
+                            <td class="text-center p-1">{{ data.purpose}}</td>    
+                                                  
+                            <td>{{data.estimated_reimbursement_date}}</td>
+                            <td>{{ data.status }}</td>
+
+                            <td>
+                                {% if data.status == 'Approved' %}
+                                <i class="fas fa-check text-success fw-bold">Approved</i>
+                                {% else %}
+                                <a href="{% url 'officemanagement:expense_advance_approval' data.id %}">Approve</a>
+                                {% endif %}
+                            </td>
+                            <td>{{data.approved_by}}</td>
+                            <td>{{data.approved_on}}</td>
+                          
+                            
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No locations available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+        </div>
+    </div>
+
+   
+</div>
+
+
+
+{% endblock %}

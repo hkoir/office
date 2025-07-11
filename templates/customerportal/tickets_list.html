@@ -1,0 +1,379 @@
+{% extends 'partner_portal_base.html' %}
+
+{% load static %}
+{% load custom_filters %}
+
+<style>
+    
+    .fas_fa_spin_icon {
+        color: greenyellow;  
+        animation: spin 5s infinite, glow 5s ease-in-out infinite;
+    }
+       
+    </style>
+{% block extra_head %}
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">  
+        <div class="col-12">         
+            
+            <div class="container-fluid">
+                <div class="row">                        
+                    <div class="col-12 col-md-6" >  
+                            <div class="container">
+                                <form method="get">
+                                    {% csrf_token %}
+                                <div class="row">
+                                 
+                                    <div class="col-4">
+                                        Start date:{{ form.start_date }}
+                                    </div>
+                                    <div class="col-4">
+                                        End_date:{{ form.end_date }}
+                                    </div>
+                                    <div class="col-4">
+                                        Ticket ID{{ form.ticket_number }}
+                                    </div>
+                                    <div class="col-4">
+                                        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                                    </div>
+                              
+                                </div>
+                            </form>
+                            </div>                      
+                                                         
+                        </div>
+                        <div class="col-12 col-md-6">  
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <p class="text-center animate">
+                                           Reliable Solutions, Guaranteed Satisfaction
+                                        </p> 
+                                    </div>
+                                    <div class="col-4">
+                                        <p class="text-center animate">
+                                           Exceptional Support, Quality Assured
+                                        </p> 
+                                    </div>
+                                    <div class="col-4">
+                                        <p class="text-center animate">
+                                          Innovating Customer Care Excellence
+                                        </p> 
+                                    </div>
+                                </div>
+                            </div>                          
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 mt-4">        
+                               
+                <h4>Ticket List</h4>
+                {% if page_obj  %}
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Final assessment by Customer</th>
+                            <th>Update</th>
+                            <th>Chat</th>
+                            <th>Ticket ID</th>                                        
+                            <th>Subject</th>
+                            <th>Description</th>
+                            <th>Ticket type</th>
+                            <th>Ticket prority</th>
+                            <th>Status</th>
+                            <th>Progress by customer</th>    
+                            <th>Progress by service provider</th>                                    
+                            <th>Updated at</th>                                      
+                            <th>Created at</th>
+                            <th>Resolution date</th>
+                            <th>Customer comment</th>                        
+                                                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                        
+                        {% for ticket in page_obj %}
+                        <tr>
+
+                            <td>      
+                                {% if ticket.status == 'RESOLVED' %}                                      
+                                <a href="{% url 'customerportal:ticket_customer_feedback' ticket.id %}"
+                                style="color:darkred">Please help to improve</a>
+                                {% elif ticket.ticket_feedback.first %}
+                                <i class="fas fa-handshake-o text-success fw-bold"></i>                                            
+                                {% else %}
+                                <i class="fas fa-hourglass-half fas_fa_spin_icon text-danger fw-bold"></i>
+                                {% endif %}
+                                </td>
+
+                            <td>   
+                            {% if ticket.status == 'RESOLVED' %}     
+                            <i class="fas fa-check fw-bold text-success"></i>  
+                            {% else %}                                      
+                                <a href="{% url 'customerportal:update_ticket' ticket.id %}"
+                                style="color:darkred">Update</a>
+                            {% endif %}
+                            </td>
+                            
+                            <td style="white-space: nowrap;">
+                                {% for task in ticket.task.all %}
+                                    <a href="{% url 'tasks:chat' task.id %}" style="text-decoration:none;">
+                                        {% if unread_messages|dict_key:task.id %}
+                                            <i class="fa fa-exclamation-circle">
+                                                {{ unread_messages|dict_key:task.id|length }}
+                                            </i>
+                                        {% else %}
+                                            <i class="fa fa-envelope" style="color:darkgreen"></i>
+                                        {% endif %}
+                                    </a>
+                                    {% if not forloop.last %}<br>{% endif %} <!-- Add a line break between task links -->
+                                {% endfor %}
+                            </td>                         
+                                                      
+                           
+                            <td>{{ ticket.ticket_id }}</td>
+                            <td>{{ ticket.subject}}</td>
+                            <td>{{ ticket.description}}</td>
+                            <td>{{ ticket.get_ticket_type_display}}</td>
+
+                            {% if ticket.priority|item_list:'HIGH,CRITICAL' %}
+                            <td class="bg-warning">{{ ticket.get_priority_display }} </td>
+                            {% else %}
+                            <td class="bg-info">{{ ticket.get_priority_display }} </td>
+                            {% endif %}                           
+
+                            <td>{{ ticket.get_status_display}}</td> 
+
+                            <td>                                    
+                        
+                            {% if ticket.customer_feedback %}
+                                {% if ticket.customer_feedback == 'PROGRESS-20%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-30%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-40%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">40%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-50%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-60%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-70%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-80%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-90%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">90%</div>
+                                    </div>
+                                {% elif ticket.customer_feedback == 'PROGRESS-100%' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                                    </div>
+                                {% endif %}
+
+                        {% endif %}
+                            </td>                          
+                                                        
+                            <td>
+                                {% if ticket.progress_by_user >= 20.0 and ticket.progress_by_user < 30.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 30.0 and ticket.progress_by_user < 40.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 40.0 and ticket.progress_by_user < 50.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">40%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 50.0 and ticket.progress_by_user < 60.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 60.0 and ticket.progress_by_user < 70.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 70.0 and ticket.progress_by_user < 80.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 80.0 and ticket.progress_by_user < 90.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user >= 90.0 and ticket.progress_by_user < 100.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">90%</div>
+                                    </div>
+                                {% elif ticket.progress_by_user == 100.0 %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                                    </div>
+                                {% else %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                {% endif %}
+                            </td>                           
+                                                                
+                            <td>{{ ticket.updated_at}}</td>  
+                            <td>{{ ticket.created_at }}</td>    
+                            <td>{{ ticket.ticket_resolution_date }}</td>   
+                            <td>{{ ticket.customer_comments }}</td>   
+                                                                
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" style="text-align: center;">No records found.</td>
+                        </tr>
+                        {% endfor %}
+                        
+                    </tbody>
+                </table>
+                
+                
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+
+
+                {% else %}
+                <span>No record found</span>
+                {% endif %}
+
+            </div>
+
+                     
+    </div>
+</div>
+
+          
+
+
+<script>
+    $(document).ready(function () {
+        function toggleFields() {
+            var ticketTypeValue = $('#id_ticket_type').val();           
+
+            // Helper function to hide/show field and label by targeting the <p> wrapping the field
+            function toggleField(fieldId, show) {
+                var fieldContainer = $(`#${fieldId}`).closest('p'); // Find the <p> container
+                if (show) {
+                    fieldContainer.show();
+                } else {
+                    fieldContainer.hide();
+                }
+            }
+
+            // Default: Show appraisal type, hide all others
+            toggleField('id_production', false);
+            toggleField('id_sales', false);
+            toggleField('id_operations', false);
+          
+
+            // Show fields based on the appraisal type value
+            if (ticketTypeValue === 'SALES') {
+                toggleField('id_sales', true);
+            } else if (ticketTypeValue === 'OPERATIONS') {
+                toggleField('id_operations', true);
+            } else if (ticketTypeValue === 'PRODUCTION') {
+                toggleField('id_production', true);
+            }
+        }
+
+        // Initialize the toggle logic on page load
+        toggleFields();
+
+        // Attach the change event to the appraisal type field
+        $('#id_ticket_type').change(function () {
+            toggleFields();
+        });
+
+        // Attach change events to the other fields for future expansion
+        $('#id_sales, #id_operations, #id_production').change(function () {
+            toggleFields();
+        });
+    });
+</script>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_product,#id_category').select2({
+            width: '50%',
+            placeholder: 'Search ...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search',
+            allowClear: true
+        });
+    });
+
+   
+    </script>
+
+
+
+{% endblock %}

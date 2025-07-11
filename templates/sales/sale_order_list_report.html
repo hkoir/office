@@ -1,0 +1,99 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">   
+        <h6 class="text-center mb-2">
+            <form method ="GET" action="">
+                Sale Order {{ form.ID_number }}
+                <button type="Submit" class="btn btn-primary">Search</button>
+                {% if sale_order %}
+                Search result for sale order: <b>{{ sale_order }}</b>
+                {% endif %}
+            </form>    
+          
+            </h6>
+            <hr class="mt-2"> 
+        
+        <div class="col">       
+
+            <h4> Placed Sale orders</h4>
+            <table class="bg-light">
+                <thead class="bg-dark text-white">
+                    <tr>
+                   
+                        <th class="text-center p-2">Request Order Number</th>
+                        <th class="text-center p-2">Sale Order Number</th>                    
+                        <th class="text-center p-2">Total amount</th>                                       
+                        <th class="text-center p-2">Status</th>
+                         <th class="text-center p-2">Items requested</th>                   
+                        <th class="text-center p-2">Dispatch Item</th>
+                        <th class="text-center p-2">Generate chalan pdf</th>
+                        <th class="text-center p-2">Generate challan excel</th>
+                     
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}
+                        <tr>                         
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.sale_request_order.order_id }}</td>
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.order_id }}</td>                            
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>                                               
+                            {% if order.is_full_delivered %}
+                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">Delivered</i></td>
+                            {% else %}
+                            <td>In process</td>
+                            {% endif %}                         
+                                                   
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                              <a href="{% url 'sales:sale_order_items' order.id%}">Requested items</a>
+                            </td>                          
+                                                                                 
+                        <td><a href="{% url 'logistics:sale_dispatch_item_list' order.id %}"
+                            >view dispatch Item</a>
+                        </td>
+                                                                                  
+                        <td><a href="{% url 'reporting:generate_sale_challan' order.id %}"
+                            class="btn btn-sm btn-primary">General_challan pdf</a>
+                        </td>
+                                                                                  
+                        <td><a href="{% url 'reporting:download_sale_delivery_orders' order.id %}"
+                            class="btn btn-sm btn-primary">General challan excel</a>
+                        </td>
+
+                   
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>      
+
+
+
+{% endblock %}

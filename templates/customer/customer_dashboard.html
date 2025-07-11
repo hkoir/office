@@ -1,0 +1,41 @@
+
+    {% extends 'base.html' %}  
+
+    {% block content %}
+   
+    
+    <div class="container-fluid main-content">
+        <div class="row">       
+           
+            <div class="col-6 col-md-3 col-lg-2 p-2">
+                <a href="{% url 'customer:create_customer' %}" class="text-decoration-none">
+                    <div class="menu-card">
+                        <i class="fas fa-plus-square menu-icon"></i>
+                        <div class="menu-title">Create Customer</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3 col-lg-2 p-2">
+                <a href="{% url 'customer:create_location' %}"class="text-decoration-none">
+                    <div class="menu-card">
+                        <i class="fas fa-plus-square menu-icon"></i>
+                        <div class="menu-title">Create Location</div>
+                    </div>
+                </a>
+            </div>      
+    
+            <div class="col-6 col-md-3 col-lg-2 p-2">
+                <a href="{% url 'customer:customer_performance_list' %}"  class="text-decoration-none">
+                    <div class="menu-card">
+                        <i class="fas fa-solid fas fa-chart-line menu-icon"></i>
+                        <div class="menu-title">Customer Performance</div>
+                    </div>
+                </a>
+            </div>       
+        </div>
+    </div>
+    
+ 
+    
+    
+    {% endblock %}

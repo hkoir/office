@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+{% block content %}
+
+<title>View fuel refill</title>
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">       
+        <div class="col-12">
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                   <h3 class="mb-0"> Refill form</h3>
+               </div> 
+               <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="add_category">
+                    {% csrf_token %}
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6 col-md-3 form-group">
+                                Vehicle: {{ form.vehicle }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Refill type: {{ form.refill_type }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Pump: {{ form.pump }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Fuel type: {{ form.fuel_type }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Fuel rate: {{ form.fuel_rate }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Refill amount: {{ form.refill_amount }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Vehicle Reading: {{ form.vehicle_kilometer_reading }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Fuel slip: {{ form.refill_supporting_documents }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Fuel supplier: {{ form.fuel_supplier_name }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Supplier Phone: {{ form.fuel_supplier_phone }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Supplier address: {{ form.fuel_supplier_address }}
+                            </div>
+                            <div class="col-6 col-md-3 form-group">
+                                Refill date: {{ form.refill_date }}
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <button type="submit" name="add_to_basket" class="btn btn-primary mt-4">Submit</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+        </div>
+                
+        <div class="col-xl-12 mb-2">            
+                <form method="get" class="mb-4 mt-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label for="vehicle_registration_number">Vehicle Reg Number:</label>
+                            <input type="text" id="vehicle_registration_number" name="vehicle_registration_number" class="form-control" value="{{ vehicle_registration_number }}">
+                        </div>
+                       
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                        </div>
+                    </div>                 
+                </form>            
+            
+            <form method="GET" action="{% url 'transport:create_fuel_refill' %}">        
+                <button type="submit" name="download_csv" class="btn btn-primary">Export CSV</button>
+                <span class="fw-bold text-dark">Vehicle Fuel refill history</span>
+            </form>
+
+        </div>
+
+        <div class="col-xl-12 table-responsive">
+    
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                    
+                        <th class="text-center p-2">Update</th>
+                        <th class="text-center p-2">Date</th>
+                        <th class="text-center p-2">User</th>
+                        <th class="text-center p-2">fuel refill code</th>
+
+                        <th class="text-center p-2">Refill Date</th>
+                        <th class="text-center p-2">Vehicle Reg</th>
+                        <th class="text-center p-2">Refill amount(litre)</th>
+                        <th class="text-center p-2">Kilometer Reading</th>
+                        <th class="text-center p-2">Kilometer run</th>
+                        <th class="text-center p-2">Fuel consumed</th>
+                        <th class="text-center p-2">Fuel balance</th>
+                        <th class="text-center p-2">Total Fuel reserve</th>
+
+
+                        <th class="text-center p-2"> refill supporting documents</th>
+                        <th class="text-center p-2">fuel pump supplier name</th>
+                        <th class="text-center p-2"> Fuel supplier Phone</th>
+                        <th class="text-center p-2"> Fuel supplier address</th>
+                    
+                    
+                        <th class="text-center p-2">Vehicle owner Name</th>     
+                        <th class="text-center p-2">Vehicle owner phone</th>        
+                        <th class="text-center p-2">vehicle joining date</th>       
+                                        
+                    
+
+                    
+                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fuel in fuel_refill %}
+
+                    <tr>
+                        <td><a href="{% url 'transport:update_fuel_refill' fuel.id %}">Update</a></td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.created_at }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.refill_requester }}</td>              
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.fuel_refill_code }}</td>
+        
+
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ fuel.refill_date}}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ fuel.vehicle.vehicle_registration_number }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.refill_amount }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle_kilometer_reading }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle_kilometer_run }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle_fuel_consumed }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle_fuel_balance }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle_total_fuel_reserve }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">
+                            {% if fuel.refill_supporting_documents %}
+                            <a href="{{ fuel.refill_supporting_documents.url }}" target="_blank">
+                                <img src="{{ fuel.refill_supporting_documents.url }}" alt="Supporting Document" style="cursor: pointer; width: 50px; height: 20px;">
+                            </a>
+                            {% else %}
+                            No image available
+                            {% endif %}
+                        </td>  
+                        {% if fuel.pump %}
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ fuel.pump.fuel_pump_name  }}</td> 
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.pump.fuel_pump_phone }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.pump.fuel_pump_address }}</td>
+                        {% else %}
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ fuel.fuel_supplier_name  }}</td> 
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.fuel_supplier_phone }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.fuel_supplier_address }}</td>
+                        {% endif %}
+
+                    
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle.vehicle_owner_name }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle.vehilce_owner_mobile_number }}</td>
+                        <td class="text-center p-2"style="white-space: nowrap;">{{ fuel.vehicle.joining_date }}</td>
+                        
+                    
+                    
+
+                        
+                    </tr> 
+                    {% endfor %} 
+                </tbody>
+            </table>
+
+        </div>
+
+
+
+    <!-- Pagination -->
+    <div class="pagination" style="padding: 10px;">
+        <span class="step-links">
+            {% if fuel_refill.has_previous %}
+                <a href="?page=1">&laquo; First</a>
+                <a href="?page={{ fuel_refill.previous_page_number }}">Previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ fuel_refill.number }} of {{ fuel_refill.paginator.num_pages }}.
+            </span>
+    
+            {% if fuel_refill.has_next %}
+                <a href="?page={{ fuel_refill.next_page_number }}">Next</a>
+                <a href="?page={{ fuel_refill.paginator.num_pages }}">Last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+    </div>
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        function toggleFields() {
+            var refillType = $('#id_refill_type').val();
+            if (refillType === 'pump') {
+                $('#id_pump').closest('.form-group').show();
+                $('#id_fuel_supplier_phone, #id_fuel_supplier_address, #id_fuel_supplier_name,#id_fuel_rate').closest('.form-group').hide();
+            } else if (refillType === 'local_purchase') {
+                $('#id_pump').closest('.form-group').hide();
+                $('#id_fuel_supplier_phone, #id_fuel_supplier_address, #id_fuel_supplier_name, #id_fuel_rate').closest('.form-group').show();
+            }
+        }
+
+        toggleFields(); // Initial call
+        $('#id_refill_type').change(function() {
+            toggleFields(); // Update fields on change
+        });
+    });
+</script>
+
+{% endblock %}

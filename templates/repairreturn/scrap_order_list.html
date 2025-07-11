@@ -1,0 +1,251 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">          
+        <div class="col-12">     
+            <div class="container-fluid">
+                <form method ="GET" action="">
+                <div class="row">                   
+                      
+                            <div class="col-6 col-md-4 p-1">
+                            <label for="id_sale_order_id"> Scrap Order</label>
+                             {{ form.order_id }}
+                            </div>
+                            
+                            <div class="col-6 col-md-4 p-1">
+                                <label for="id_start_date"> Start date</label>
+                                {{ form.start_date }}
+                            </div>
+                            <div class="col-6 col-md-4 p-1">
+                                <label for="id_start_date"> End date</label>
+                                {{ form.end_date }}
+                            </div>   
+                            <div class="col-6 col-md-4 p-1">
+                                <button type="Submit" class="btn btn-primary">Search</button>
+                            </div>                      
+                                                      
+                      
+                    </div> 
+                </form>                 
+                </div>
+            </div>
+            
+        <hr class="mt-2">
+          
+        <div class="col">       
+
+            <h4> Scrapped orders</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr class="btn-primary text-white">
+                   
+                      
+                        <th class="text-center p-2">Scrap Order</th>                    
+                        <th class="text-center p-2">Total amount</th>                                       
+                        <th class="text-center p-2">Status</th>      
+                        <th class="text-center p-2">Requester</th>   
+                        <th class="text-center p-2">Requested item</th>                      
+                                       
+                        <th class="text-center p-2">Submission</th>
+                        <th class="text-center p-2">Reviewed</th>
+                        <th class="text-center p-2">Approval</th>               
+                        <th class="text-center p-2">Confirm scrapped</th>
+                        
+                     
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}
+                        <tr>
+                         
+                           
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.order_id }}</td>                            
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount|add_commas}}</td>
+                                             
+                           
+                            <td class="text-center p-2" > 
+                               {{ order.status }}
+                            </td>             
+                           
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.user}}</td>
+
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                              <a href="{% url 'repairreturn:scrap_request_items' order.id %}">Scrapped items</a>
+                            </td>
+                            
+                            <!-- Rquester Button -->
+                            <td>
+                                {% if order.requester_approval_status == 'SUBMITTED' %}
+                                <strong><i class="fas fa-check" style="color:green">Submitted</i></strong>
+                                {% else %}
+                                <a href="{% url 'repairreturn:process_scrap_order' order.id %}" class="btn btn-primary">Submit</a>
+                                {% endif %}
+
+                            </td>                            
+                        
+                            <!-- Review Button -->
+                             <td>
+                                {% if order.requester_approval_status != 'SUBMITTED' %}
+                                <strong><i class="fas fa-times" style="color:rgb(128, 21, 0)" class="btn btn-secondary">Submission Pending</i></strong>
+                                {% elif order.requester_approval_status == 'SUBMITTED' and order.reviewer_approval_status != 'REVIEWED'  %}
+                                <a href="{% url 'repairreturn:process_scrap_order' order.id %}" class="btn btn-primary">Review</a>
+                                {% else %}
+                                <strong><i class="fas fa-check" style="color:green" class="btn btn-secondary">Reviewed</i></strong>
+                                {% endif %}
+
+
+                             </td>                          
+                                                     
+                            <!-- Approver Button -->                                                
+                            <td>
+                            {% if order.reviewer_approval_status != 'REVIEWED' %}
+                            <strong><i class="fas fa-times" style="color:rgb(128, 21, 0)" class="btn btn-secondary">Review Pending</i></strong>
+                            {% elif order.reviewer_approval_status == 'REVIEWED' and order.approver_approval_status != 'APPROVED'  %}
+                            <a href="{% url 'repairreturn:process_scrap_order' order.id %}" class="btn btn-primary">Approve</a>
+                            {% else %}
+                            <strong><i class="fas fa-check" style="color:green">Approved</i></strong> 
+                            {% endif %}
+
+                            </td>
+
+                        <td>   
+                            {% if order.approver_approval_status != 'APPROVED' %}  
+                            <strong><i class="fas fa-times" style="color:rgb(128, 21, 0)" class="btn btn-secondary">Approval Pending</i></strong>
+                            {% elif order.status == 'SCRAPPED_OUT' %}
+                            <strong><i class="fas fa-check" style="color:rgb(244, 7, 7)">Confirmed</i></strong> 
+                            {% else %}
+                            <a href="{% url 'repairreturn:scrap_confirmation' order.id %}" class="btn btn-primary">Confirm scrap</a>
+                            {% endif %}
+                         
+                        </td>
+                                             
+
+                   
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+
+
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+    </div>
+</div>      
+
+
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="messageModalLabel">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if forloop.first %}
+                                {% if "error" in message.tags %}
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Error
+                                {% elif "success" in message.tags %}
+                                    <i class="bi bi-check-circle-fill"></i> Success
+                                {% elif "info" in message.tags %}
+                                    <i class="bi bi-info-circle-fill"></i> Info
+                                {% elif "warning" in message.tags %}
+                                    <i class="bi bi-exclamation-circle-fill"></i> Warning
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messagesContainer">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_order_id').select2({
+            width: '70%',
+            placeholder: 'Search sale order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale order',
+            allowClear: true
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const messageModal = document.getElementById('messageModal');
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messageModal && messagesContainer && messagesContainer.children.length > 0) {
+            const modalInstance = new bootstrap.Modal(messageModal);
+            modalInstance.show();
+            setTimeout(() => {
+                    modalInstance.hide();
+                }, 5000)
+        }
+    });
+    </script>
+    
+
+
+
+
+{% endblock %}

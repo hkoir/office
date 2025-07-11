@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Scrap Confirmation</h1>
+
+{% if not scrap_items %}
+    <p>No scrap items found.</p>
+    <a href="{% url 'repairreturn:create_scrap_request' %}" class="btn btn-primary">Go Back</a>
+{% else %}
+    <p>Are you sure you want to scrap the following items?</p>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Warehouse</th>
+                <th>Location</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in scrap_items %}
+            <tr>
+                <td>{{ item.scrapped_product.name }}</td>
+                <td>{{ item.warehouse.name }}</td>
+                <td>{{ item.location }}</td>
+                <td>{{ item.quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm and Submit</button>
+    </form>
+{% endif %}
+
+{% endblock %}

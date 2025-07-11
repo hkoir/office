@@ -1,0 +1,315 @@
+{% extends 'base.html' %}  
+
+
+{% load static %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">
+            <div class="marquee-container">
+                <div class="marquee-content">
+                    <h4 style="color:green;font-weight: bold;">Welcome
+                        || <span style="color:orangered;font-weight: bold;">Explore our services and offerings with ease and professionalism</span>
+                        || <span style="color:blue;font-weight: bold;">We automate organization's activities with comprehensive mathematical calculations to streamline all process.</span>
+                    </h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <h4 class="text-center">
+               
+                <span class="fw-bolder" style="color: mediumvioletred;">Increase organizational efficiency ||</span>
+                <span class="fw-bolder" style="color: yellow;"> by streamlining processes and workflows</span><br>
+                
+                <span class="fw-bolder" style="color: brown;">Reduce human intervention ||</span>
+                <span class="fw-bolder" style="color: rgb(111, 245, 9);"> Minimize error and saving time</span><br>
+
+                <span class="fw-bolder" style="color: rgb(16, 40, 222);"> Instant real time report analysis</span>
+                   
+            </h4>
+        </div>
+        
+        <div class="col-12">
+            
+            <div id="professionalCarousel" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="3000">
+                <!-- Indicators -->
+                <div class="carousel-indicators">
+                  <button type="button" data-bs-target="#professionalCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Slide 1"></button>
+                  <button type="button" data-bs-target="#professionalCarousel" data-bs-slide-to="1" aria-label="Slide 2"></button>
+                  <button type="button" data-bs-target="#professionalCarousel" data-bs-slide-to="2" aria-label="Slide 3"></button>
+                  <button type="button" data-bs-target="#professionalCarousel" data-bs-slide-to="3" aria-label="Slide 4"></button>
+                  <button type="button" data-bs-target="#professionalCarousel" data-bs-slide-to="4" aria-label="Slide 5"></button>
+                </div>
+          
+                <!-- Carousel Images -->
+                <div class="carousel-inner">
+                  <div class="carousel-item active">
+                    <img src="{% static 'images/scm.jpg' %}" class="d-block w-100 image_size" alt="SCM">
+                    <div class="carousel-caption">
+                     
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/appraisal-2.jpg' %}" class="d-block w-100 image_size" alt="Appraisal">
+                    <div class="carousel-caption">
+                      
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/database-1.jpg' %}" class="d-block w-100 image_size" alt="Database 1">
+                    <div class="carousel-caption">
+                      
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/database-2.jpg' %}" class="d-block w-100 image_size" alt="Database 2">
+                    <div class="carousel-caption">
+                     
+                    </div>
+                  </div>
+                  <div class="carousel-item">
+                    <img src="{% static 'images/database-3.jpg' %}" class="d-block w-100 image_size" alt="Database 3">
+                    <div class="carousel-caption">
+                      
+                    </div>
+                  </div>
+                </div>
+          
+                <!-- Navigation Controls -->
+                <button class="carousel-control-prev" type="button" data-bs-target="#professionalCarousel" data-bs-slide="prev">
+                  <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#professionalCarousel" data-bs-slide="next">
+                  <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                  <span class="visually-hidden">Next</span>
+                </button>
+              </div>
+        </div>
+        <div class="col-12">
+            
+            <hr style="height: 10px; border: 2px solid #000;">
+        
+            <div class="row justify-content-center">
+                           
+                <div class="col-6 col-md-3 col-lg-2 m-2">
+                    <a href="{% url 'core:only_core_dashboard' %}" class="text-decoration-none">
+                        <div class="menu-card1 text-center p-4">
+                            <i class="fas fa-users menu-icon mb-2" style="font-size: 40px;"></i>
+                            <div class="menu-title">Core Management Automation</div>
+                        </div>
+                    </a>
+                </div>
+        
+                <div class="col-6 col-md-3 col-lg-2 m-2">
+                    <a href="{% url 'core:home' %}" class="text-decoration-none">
+                        <div class="menu-card2 text-center p-4">
+                            <i class="fas fa-chart-line menu-icon mb-2" style="font-size: 40px;"></i>
+                            <div class="menu-title">SCM Automation</div>
+                        </div>
+                    </a>
+                </div>
+        
+                <div class="col-6 col-md-3 col-lg-2 m-2">
+                    <a href="{% url 'tasks:tasks_dashboard' %}" class="text-decoration-none">
+                        <div class="menu-card3 text-center p-4">
+                            <i class="fas fa-chart-area menu-icon mb-2" style="font-size: 40px;"></i>
+                            <div class="menu-title">Performance and Appraisal Automation</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+         
+        <div class="col-12 box1" style="margin-top: 50px;">
+            <div class="container-fluid py-5">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-10">
+                        <div class="card shadow-lg border-0 rounded-lg">
+                            <div class="card-body p-4">
+                                <h4 class="text-success fw-bold mb-4 text-center">Purpose of This Application:</h4>
+                                <hr class="my-4">
+                                <ul class="text-left" style="font-size: 1.1rem; line-height: 1.8;">
+                                   
+                                    <li>Offer detailed multiple warehouse stock reports with valuation for better inventory management.</li>
+                                    <li>Automate employee performance evaluation for consistent and efficient assessments.</li>
+                                    <li>Increase organizational efficiency by streamlining processes and workflows.</li>
+                                    <li>Enhance data accuracy through automated data validation and processing.</li>
+                                    <li>Reduce human intervention, minimizing errors and saving time.</li>
+                                    <li>Securely preserve data, ensuring confidentiality and protection against breaches.</li>                                    
+                                    <li>Generate multiple reports, enabling management to make data-driven decisions easily.</li>
+                                    <li>Provide unbiased performance evaluation and monitoring, reducing potential biases.</li>                                    
+                                    <li>Improve decision-making with real-time data and insights.</li>
+                                    <li>Facilitate easy scalability and adaptability to meet organizational growth.</li>
+                                    <li>Provide a better user experience through intuitive interfaces and automation.</li>
+                                    <li>Ensure compliance with organizational policies and standards.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 box2" style="margin-top: 50px;">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-12 col-md-10">
+                        <div class="card shadow-lg border-0 rounded-lg">
+                            <div class="card-body p-4">
+                                <h5 class="text-center text-primary fw-bold mb-4">
+                                    How to Start!
+                                    <br>
+                                    To start using this application, follow the initial database creation as follows:
+                                </h5>
+                                <hr class="my-4">
+        
+                                <div class="row">
+                                    <div class="col-12 col-md-4 mb-4">
+                                        <h5 class="text-success fw-bold">Core Module:</h5>
+                                        <ul class="custom-arrow-list">
+                                            <li>Create user account for login</li>
+                                            <li>Create Departments of company</li>
+                                            <li>Create Positions/Designations</li>
+                                            <li>Create all company's basic info</li>
+                                            <li>Create all locations of each company</li>
+                                            <li>Enroll employees</li>
+                                            <li>Rest .........</li>
+                                        </ul>
+                                    </div>
+        
+                                    <div class="col-12 col-md-4 mb-4">
+                                        <h5 class="text-success fw-bold">SCM Module:</h5>
+                                        <ul class="custom-arrow-list">
+                                            <li>Create Customers database</li>
+                                            <li>Create Suppliers database</li>
+                                            <li>Create Products (important)</li>
+                                            <li>Create Warehouse </li>
+                                            <li>Create Locations of warehouse </li>
+                                            <li>Rest .........</li>
+                                        </ul>
+                                    </div>
+        
+                                    <div class="col-12 col-md-4 mb-4">
+                                        <h5 class="text-success fw-bold">Appraisal Module:</h5>
+                                        <ul class="custom-arrow-list">
+                                            <li>Create Team for team work</li>
+                                            <li>Add members to each team</li>
+                                            <li>Create Task</li>
+                                            <li>Update Task</li>
+                                            <li>Evaluate Task</li>
+                                            <li>Rest .........</li>
+                                        </ul>
+                                    </div>
+                                </div>
+        
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <div class="col-12 mt-4">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">Choose your desired plan</h3>
+                </div> 
+                {% for plan in plans %}
+                <div class="col-6 col-md-4 mt-2">
+                    <div class="card shadow h-100">
+                        <div class="card-header text-center bg-primary text-white">
+                            <h4>{{ plan.get_duration_display }}</h4>
+                        </div>
+                        <div class="card-body text-center">
+                            <h2 class="card-title">${{ plan.price }}</h2>
+                            <p class="card-text">{{ plan.description }}</p>
+                            <ul class="list-group mb-3">
+                                {% for feature in plan.features_list %}
+                                <li class="list-group-item">{{ feature }}</li>
+                                {% endfor %}
+                            </ul>
+                            <a href="{% url 'clients:apply_for_tenant' %}?plan_id={{ plan.id }}" class="btn btn-success">Subscribe Now</a>
+                            <a href="{% url 'clients:renew_subscription' %}?plan_id={{ plan.id }}" class="btn btn-success">Renew Now</a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>                
+    </div>
+  
+
+        
+    <div class="col-12 box3">
+        <div class="container-fluid text-center py-5">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8">
+                    <div class="card shadow-lg border-0 rounded-lg">
+                        <div class="card-body p-4">
+                            <h2 class="text-primary mb-4">Thank You for Choosing Our Application!</h2>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                We appreciate your time and effort in exploring our 
+                                <strong>SCM and Performance Appraisal System</strong>. With its advanced features 
+                                designed to streamline operations, improve efficiency, and enable data-driven decision-making, 
+                                we are confident that this application will bring immense value to your organization.
+                            </p>
+                            <p class="text-muted" style="font-size: 1.1rem; line-height: 1.8;">
+                                If you have any feedback or need further assistance, feel free to reach out. 
+                                Your insights are invaluable to us and help us grow and improve!
+                            </p>
+                            <h4 class="text-success mt-4">Stay Efficient. Stay Productive. See You Again Soon!</h4>
+                            <p class="text-muted mt-3">~ The Development Team</p>
+                            <p style="margin-left:0px">
+                                <img src="{% static 'images/Logo.png' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #007bff;"><br>
+                                    mymeplus Technology <br>
+
+                                    <img src="{% static 'images/my_image2.JPG' %}" 
+                                    class="rounded-circle border"                                    
+                                    style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #007bff;">
+                                    Engineer Humayun Kobir(Buet-eee,MBA) <br>
+                                    CTO <br>
+                                    <i class="fas fa-envelope"></i> hkobir1973@gmail.com <br>
+                                    <i class="fas fa-phone">+88-01743-800-705</i>
+                            </p>
+                           
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+   
+</div>
+
+</div>
+
+
+
+<script>
+    // JavaScript to handle redirection on link clicks
+    document.addEventListener('DOMContentLoaded', () => {
+        const tenantLinks = document.querySelectorAll('.tenant-link');
+        tenantLinks.forEach(link => {
+            link.addEventListener('click', event => {
+                event.preventDefault(); // Prevent the default navigation
+                const redirectUrl = '/commonapp/common_view/'; // Target URL
+                window.location.href = redirectUrl; // Redirect to `apply_for_tenant`
+            });
+        });
+    });
+</script>
+
+
+
+
+    {% endblock %}

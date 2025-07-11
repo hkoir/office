@@ -1,0 +1,43 @@
+
+{% extends 'base.html' %}  
+{% load custom_filters %}
+
+
+
+{% block content %}
+
+
+<div class="col-12 table-responsive">
+
+<table class="table">
+    <thead class="table-dark">
+        <tr>
+            <th>Product</th>
+            <th>Purchased Qty</th>
+            <th>Purchase Cost</th>
+            <th>Sold Qty</th>
+            <th>Revenue</th>
+            <th>Cost of Sold</th>
+            <th>Profit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in product_report %}
+            <tr>
+                <td>{{ item.product }}</td>
+                <td>{{ item.purchased_qty }}</td>
+                <td>{{ item.purchase_cost }}</td>
+                <td>{{ item.sold_qty }}</td>
+                <td>{{ item.revenue }}</td>
+                <td>{{ item.cost_of_sold }}</td>
+                <td>{{ item.profit }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h3>Total Profit till now BDT&nbsp;{{grand_total_profit|add_commas}}</h3>
+
+<a href="{% url 'reporting:Calculate_sales_profit' %}">Revenue Summary</a>
+
+{% endblock %}

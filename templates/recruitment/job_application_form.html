@@ -1,0 +1,69 @@
+
+      {% extends "base.html" %}
+    {% load static %}
+    
+    {% block content %}
+    
+    
+    <div class="container-fluid main-content">
+        
+        <div class="row">
+            <div class="col-12 col-md-3"></div>
+            <div class="col-12 col-md-6">
+               
+
+                <div class="card shadow-lg" style="background-color: aliceblue;">
+                     <!-- Card Header -->
+                     <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0"> Application form</h3>
+                    </div>   
+                    <div class="card-body mx-3">  
+                        <span class="text-center"> 
+                        <h3>Job Title:{{ job.title }}</h3>
+                        Job Description:{{ job.description }}<br>
+                        <strong>Location:</strong> {{ job.location }}<br>
+                        <strong>Salary:</strong> ${{ job.salary }}<br>
+                        <strong>Deadline:</strong> {{ job.deadline }}
+                        </p>                            
+                    </span>    
+                    
+                    <form method="POST" enctype="multipart/form-data" class="p-2 m-4">
+                        {% csrf_token %}
+                        {{ form.as_p }}   
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg"> Submit</button>
+                        </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-3"></div>
+            
+            </div>
+            <h4 style="height:10px"></h4>
+        </div>
+    
+        
+    
+  
+    
+    
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget; 
+            const entityId = button.getAttribute('data-id');
+            const entityName = button.getAttribute('data-name');
+    
+              const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+            modalEntityName.textContent = entityName;
+      
+            const deleteForm = deleteModal.querySelector('#delete-form');
+            deleteForm.action = `/recruitment/delete_exam/${entityId}/`;
+        });
+    </script>
+    
+    
+    
+    
+    {% endblock %}

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+       
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:sale_order_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">View and apply RRR</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:return_request_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">Initial Feedback</div>
+                </div>
+            </a>
+        </div>
+
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:faulty_product_list' %}"  class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">Actions</div>
+                </div>
+            </a>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:replacement_product_list' %}"  class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-list menu-icon"></i>
+                    <div class="menu-title">Replacement status</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:scrap_order_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-list menu-icon"></i>
+                    <div class="menu-title">Scrap order list</div>
+                </div>
+            </a>
+        </div>
+      
+      
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'repairreturn:create_scrap_request' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">Scrap request</div>
+                </div>
+            </a>
+        </div>
+
+                             
+        
+
+    </div>
+</div>
+
+
+
+    {% endblock %}
+
+ 

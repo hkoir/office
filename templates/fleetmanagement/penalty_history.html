@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">                                 
+            <div class="container">
+                <form method="get" enctype="multipart/form-data" action="" id="add_customer">
+                    {% csrf_token %}
+                <div class="row">
+                    
+                    <div class="col-6 col-md-3">
+                        Start Date:{{ form.start_date }}   
+                    </div>
+                    <div class="col-6 col-md-3">
+                        End date:{{ form.end_date }}   
+                    </div>
+                    <div class="col-6 col-md-3">
+                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>
+                </div>
+                
+                </div>
+            </form>
+            </div>
+                                   
+                
+        </div>
+     
+       
+        <div class="col-12 table-responsive">  
+        
+        {% if history %}
+        <h2>Penalty history</h2>
+          
+        <table class="table table-hover">
+            <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">User </th>                                         
+                        <th class="text-center p-2">Vehicle code</th>
+                        <th class="text-center p-2">Vehicle Reg Number</th>
+                        <th class="text-center p-2">Penaly amount</th>
+                        <th class="text-center p-2">Issued at</th>
+                        <th class="text-center p-2">Return date</th>                       
+                        <th class="text-center p-2">Reason</th>                            
+                        <th class="text-center p-2">Status</th>
+                        <th class="text-center p-2">Action</th>
+                        <th class="text-center p-2">Paid amount</th>
+                        <th class="text-center p-2">Paid on</th>
+                        <th class="text-center p-2">Payment Doc</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in history %} 
+                        <tr>
+                           
+                            <td class="text-center p-1">{{ data.transport_request.staff.username }}</td>                         
+                            <td class="text-center p-1">{{ data.transport_request.vehicle.vehicle_code }}</td>  
+                            <td class="text-center p-1">{{ data.transport_request.vehicle.vehicle_registration_number }}</td> 
+                            <td class="text-center p-1">{{ data.penalty_amount}}</td>    
+                            <td class="text-center p-1">{{ data.issued_at}}</td>
+                            <td class="text-center p-1">{{ data.transport_request.return_datetime}}</td>                            
+                            <td class="text-center p-1">{{ data.reason}}</td>
+                            
+                            <td>
+                                {% if data.payment_status  %}
+                                <i class="fas fa-check text-success fw-bold">Paid</i>
+                                {% else %}
+                                <i class="fas fa-times text-danger fw-bold">Un paid</i>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.payment_status  %}
+                                <i class="fas fa-check text-success fw-bold">Paid</i>
+                                {% else %}
+                                <a href="{% url 'transport:penalty_payment' data.id %}">Make payment</a>
+                                {% endif %}
+                            </td>
+                            <td>{{data.penalty_payment.first.paid_amount }}</td>
+                            <td>{{data.penalty_payment.first.paid_at }}</td>
+                            <td>
+                                {% if data.payment_status %}
+                                {% if data.penalty_payment.first.payment_doc %}
+                                <a href="{{ data.penalty_payment.first.payment_doc.url }}" target="_blank">
+                                    <img src="{{ data.penalty_payment.first.payment_doc.url }}" style="width:40px; height:40px">
+                                </a>
+                               {% else %}
+                               <span> payment document not submitted</span>
+                                {% endif %}
+                                {% else %}
+                                <span> Not paid yet</span>
+                                {% endif %}
+                            </td>
+                           
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                        
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+
+            {% endif %}
+        </div>
+       
+    </div>
+</div>
+
+
+
+{% endblock %}

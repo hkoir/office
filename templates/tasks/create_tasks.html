@@ -1,0 +1,202 @@
+{% extends 'base.html' %}  
+
+{% block extra_head %}
+
+<style>
+    .form-group {
+    margin-bottom: 0px !important; 
+}
+
+.card-body .row > div {
+    padding: 0 !important; 
+}
+
+form .form-control {
+    height: 5px;  
+    padding: 0; 
+    font-size: 14px;  
+}
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">  
+
+        <div class="col-12">  
+                                               
+                <div class="card shadow" style="background-color:aliceblue;">
+                     <!-- Card Header -->
+                     <div class="card-header bg-primary text-white text-center">
+                        <h4 class="mb-0"> Create/Update Task</h4>
+                    </div> 
+                    <div class="card-body">
+                        <div class="container">
+                            <form method="post" enctype="multipart/form-data" id="add_category">
+                                {% csrf_token %} 
+                                <div class="row g-1"> <!-- g-1 reduces gutter spacing between rows -->
+                                    <div class="col-6 col-md-3 form-group">Department: {{ form.department }}</div>
+                                    <div class="col-6 col-md-3 form-group">Task type: {{ form.task_type }}</div>
+                                    <div class="col-6 col-md-3 form-group">Task Title: {{ form.title }}</div>
+                                    <div class="col-6 col-md-3 form-group">Ticket: {{ form.ticket }}</div>
+                                    <div class="col-6 col-md-3 form-group">Assigned type: {{ form.assigned_to }}</div>
+                                    <div class="col-6 col-md-3 form-group">Team: {{ form.assigned_to_team }}</div>
+                                    <div class="col-6 col-md-3 form-group">Member: {{ form.assigned_to_employee }}</div>
+                                    <div class="col-6 col-md-3 form-group">Task Manager: {{ form.task_manager }}</div>
+                                    <div class="col-6 col-md-3 form-group">Assigned score: {{ form.assigned_number }}</div>
+                                    <div class="col-6 col-md-3 form-group">Assigned date: {{ form.assigned_datetime }}</div>
+                                    <div class="col-6 col-md-3 form-group">Due date: {{ form.due_datetime }}</div>
+                                    <div class="col-6 col-md-3 form-group">Priority: {{ form.priority }}</div>
+                                    <div class="col-6 col-md-3 form-group">Remarks: {{ form.remarks }}</div>
+                                    <div class="col-6 col-md-3 form-group">
+                                        <button type="submit" name="add_to_basket" class="btn btn-primary mt-2">Submit</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+
+                    </div>
+                </div>
+        </div>
+                       
+                        
+                            
+
+                                                
+                     
+                     
+            
+        
+        <div class="col-12 table-responsive my-3">    
+            <h2 class="mt-4">Tasks List</h2>   
+            <form method="get">
+                <label for="start_date">Start Date:</label>
+                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+            
+                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
+            </form>
+           
+            <table class="table table-hover mt-4">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Task ID</th>
+                        <th>Title</th>
+                        <th>Priority</th>
+                        <th>Assigned Date</th>
+                        <th>Due date</th>                        
+                        <th>Assigned to</th>                      
+                        <th>Remarks</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in page_obj %}
+                    <tr>
+                        <td>{{ task.task_id }}</td>
+                        <td>{{ task.title}}</td>
+                        <td>{{ task.priority }}</td>
+                        <td>{{ task.assigned_datetime }}</td>
+                        <td>{{ task.due_datetime}}</td>                  
+                     
+                        <td>
+                            {% if task.assigned_to_employee %}
+                           member: {{ task.assigned_to_employee }}
+                            {% else %}
+                            Team:{{ task.assigned_to_team }}
+                            {% endif %}
+                        </td>   
+                   
+                        <td>{{ task.remarks }}</td>
+                       
+                    
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        </div>  
+
+   
+    <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+
+</div>
+
+
+
+
+
+<script>
+    $(document).ready(function() {  
+        function toggleFields() {
+            var assignedTypeValue = $('#id_assigned_to').val();   
+            var taskTypeValue = $('#id_task_type').val();            
+
+            // Toggle fields based on assigned type
+            if (assignedTypeValue === 'team') {               
+                $('#id_assigned_to_team').show();
+                $('#id_assigned_to_employee').hide();
+            } else if (assignedTypeValue === 'member') {                
+                $('#id_assigned_to_team').hide();
+                $('#id_assigned_to_employee').show();
+            } else {                
+                $('#id_assigned_to_team').hide();
+                $('#id_assigned_to_employee').hide();
+            }
+
+            // Toggle fields based on task type
+            if (taskTypeValue === 'TICKET') {  // Ensure the value matches the actual choice value (e.g., 'TICKET')
+                $('#id_ticket').show();
+                $('#id_title').hide();
+            } else {                
+                $('#id_ticket').hide();
+                $('#id_title').show();
+            }
+        }
+
+        // Initialize toggle on page load
+        toggleFields();
+
+        // Attach change event listeners
+        $('#id_assigned_to, #id_task_type').change(function() {
+            toggleFields();
+        });
+    });
+</script>
+
+
+    
+
+{% endblock %}

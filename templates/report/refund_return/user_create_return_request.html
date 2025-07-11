@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+   
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">           
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                    <h6 class="text-center" style="color:blue; font-weight: bold;">Sale Order: {{ sale_order.sale_order_id }}</h6>
+                    <h6 class="card-title text-center" style="margin-top: 10px;"><strong style="color:goldenrod">Add return/refund request</strong></h6>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="container-fluid">
+                            <div class="row">
+                                <div class="col-12 col-md-6 col-lg-4"> <!-- Adjusted to fit better -->
+                                    <div class="form-group">
+                                        <label for="{{ form.sale.id_for_label }}">Sale:</label>
+                                        {{ form.sale }}  <!-- Add custom class if needed -->
+                                        {% if form.sale.errors %}
+                                            <div class="text-danger">
+                                                {{ form.sale.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4"> <!-- Adjusted to fit better -->
+                                    <div class="form-group">
+                                        <label for="{{ form.return_reason.id_for_label }}">Return Reason:</label>
+                                        {{ form.return_reason }}
+                                        {% if form.return_reason.errors %}
+                                            <div class="text-danger">
+                                                {{ form.return_reason.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4"> <!-- Adjusted to fit better -->
+                                    <div class="form-group">
+                                        <label for="{{ form.refund_type.id_for_label }}">Refund Type:</label>
+                                        {{ form.refund_type }}
+                                        {% if form.refund_type.errors %}
+                                            <div class="text-danger">
+                                                {{ form.refund_type.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4"> <!-- Adjusted to fit better -->
+                                    <div class="form-group">
+                                        <label for="{{ form.quantity_refund.id_for_label }}">Quantity Refund:</label>
+                                        {{ form.quantity_refund }}
+                                        {% if form.quantity_refund.errors %}
+                                            <div class="text-danger">
+                                                {{ form.quantity_refund.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4"> <!-- Adjusted to fit better -->
+                                    <div class="form-group">
+                                        <label for="{{ form.remarks.id_for_label }}">Remarks:</label>
+                                        {{ form.remarks }}
+                                        {% if form.remarks.errors %}
+                                            <div class="text-danger">
+                                                {{ form.remarks.errors|first }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6 col-lg-4 text-center mt-4"> <!-- Centered the button -->
+                                    <button type="submit" class="btn btn-primary">Submit Request</button>
+                                </div>
+                            </div>
+                        </div>                        
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+
+        <div class="col-12 mt-4">
+            <table class="table table-hover">
+                <thead class="table-dark">                   
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th style="background-color: rgba(222, 241, 13, 0.825);" colspan="3">Actions progress</th>
+                    </tr>
+                    <tr>
+                        <th>Order Number</th>
+                        <th>Product</th>
+                        <th>Purchased Qty</th>
+                        <th>Faulty Qty</th> 
+                        <th>Customer</th>
+                        <th>Refund Type</th> 
+                        <th>Return Reason</th>
+                        <th>Stage 1</th>                                                                 
+                        <th>Stage 2</th>
+                        <th>Stage 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for return in page_obj %}
+                    <tr>
+                        <td>
+                            {{ return.sale.sale_order_id }} <!-- Corrected this line to match the context -->
+                        </td>
+                        <td>{{ return.sale.product.product_name|default:"No product" }}</td>
+                        <td>{{ return.sale.quantity|default:"Not available" }}</td>
+                        <td>{{ return.quantity_refund|default:"Not available" }}</td>
+                        <td>{{ return.customer.customer_name|default:"No customer" }}</td>
+                        <td>{{ return.get_refund_type_display|default:"Not specified" }}</td>
+                        <td>{{ return.get_return_reason_display|default:"Not specified" }}</td>
+                        <td>{{ return.get_status_display|default:"Pending" }}</td>
+                        <td>
+                            {% if return.faulty_products.all %}
+                                {% for step2_status in return.faulty_products.all %}
+                                    {{ step2_status.status|default:"Not started yet" }}
+                                {% endfor %}
+                            {% else %}
+                                Not started yet
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% for faulty_product in return.faulty_products.all %}
+                                {% if faulty_product.faulty_replacement.exists %}
+                                    {% for replacement in faulty_product.faulty_replacement.all %}
+                                    <i class="fas fa-check" style="color:green">
+                                        {{ replacement.status|default:"Not started yet" }}<br>
+                                    </i>
+                                    {% endfor %}
+                                {% else %}
+                                    Not started yet
+                                {% endif %}
+                            {% empty %}
+                                Not started yet
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">No return requests available.</td> <!-- Adjusted colspan to 10 -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+
+<h4>Purchase Order:{{ purchase_order.purchase_order_id }} </h4>
+<h6> Supplier: {{ purchase_order.supplier.supplier_name }} </h6>
+<h6>Dated: {{ purchase_order.order_date }}</h6>
+
+<h4 style="margin-top:30px">Order Details</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Product Type</th>
+            <th>Unit Price</th>
+            <th>Total price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for purchase in purchase_order.purchases_order.all %}
+        <tr>
+            <td>{{ purchase.product.product_name }}</td>
+            <td>{{ purchase.quantity }}</td>
+            <td>{{ purchase.product.product_type }}</td>
+            <td>BDT {{ purchase.product.unit_price }}</td>
+            <td>BDT {{ purchase.total_price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+ 
+</table>
+
+<a href="?download=true">Download CSV</a>
+
+
+
+
+
+
+
+    {% endblock %}

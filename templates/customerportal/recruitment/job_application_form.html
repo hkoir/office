@@ -1,0 +1,68 @@
+
+{% extends "recruitment_portal.html" %}
+    {% load static %}
+    {% load custom_filters %}
+    
+    {% block content %}
+    
+    
+    <div class="container-fluid main-content">
+        
+        <div class="row">
+            <div class="col-12 col-md-2"></div>
+            <div class="col-12 col-md-8">               
+
+                <div class="card" >
+                     <!-- Card Header -->
+                     <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0"> Application form</h3>
+                    </div>   
+                    <div class="card-body mx-3">  
+                        <span class="text-center"> 
+                        <h3>Job Title:{{ job.title }}</h3>
+                         <a href="{% url 'customerportal:position_details' job.position.id %}"> Job Description:</a>
+                        <br>
+                        <strong>Location:</strong> {{ job.location }}<br>
+                        <strong>Basic Salary:</strong> ${{ job.salary_structure.basic_salary|add_commas }}<br>
+                        <strong>Deadline:</strong> {{ job.deadline }}
+                        </p>                            
+                    </span>    
+                    
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form.as_p }}   
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg"> Submit</button>
+                        </div>
+                    </form>
+                </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-2"></div>
+            
+            </div>
+        </div>
+    
+        
+    
+   
+    
+    <script>
+        const deleteModal = document.getElementById('deleteModal');
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget; 
+            const entityId = button.getAttribute('data-id');
+            const entityName = button.getAttribute('data-name');
+    
+              const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+            modalEntityName.textContent = entityName;
+      
+            const deleteForm = deleteModal.querySelector('#delete-form');
+            deleteForm.action = `/recruitment/delete_exam/${entityId}/`;
+        });
+    </script>
+    
+    
+    
+    
+    {% endblock %}

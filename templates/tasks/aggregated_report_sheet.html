@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">
+            <form method="get" action="{% url 'tasks:aggregated_report_sheet' %}">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-3 p-1">
+                            <div class="form-group">
+                                <label for="year">Enter Year:</label>
+                                {{ form.year }}
+                            </div>
+                        </div>
+                        <div class="col-3 p-1">
+                            <div class="form-group">
+                                <label for="employee">Employee(optional):</label>
+                                {{ form.employee }}
+                            </div>
+                        </div>
+                        <div class="col-3 p-1">
+                            <div class="form-group">
+                                <label for="employee">Department(optional):</label>
+                                {{ form.department}}
+                            </div>
+                        </div>
+                        <div class="col-3 p-1">
+                            <div class="form-group">
+                                <label for="employee">Enter Position (optional):</label>
+                                {{ form.position }}
+                            </div>
+                        </div>
+                        <div class="col-3 p-1">
+                            <div class="form-group">
+                                <label for="employee"><span style="color:green;font-weight: bold;">Choose Type of report</span></label>
+                                {{ form.aggregation_type }}
+                            </div>
+                        </div>
+                        <div class="col-2 mt-2">
+                            <button type="submit" class="btn btn-primary">Filter data</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Link to export data to Excel -->
+        <div class="col-12 mt-4 table-responsive">   
+            <h4>
+                  <a href="?export=true&year={{ form.year.value }}&employee={{ form.employee.value }}" class="btn btn-success mt-3">
+                    <i class="fas fa-download"></i> Download
+                </a>
+                Report Type:{{ aggregation_type }}  
+            </h4>
+            
+
+            {% if aggregated_report %}
+            <table class="table table-hover">
+                <thead class="table-dark">
+                       
+                        <tr class="bg-primary text-white">   
+                            <th>Period</th>                        
+                            <th>Employee</th>
+                            <th>Department</th>
+                            <th>Position</th>    
+
+                            <th>Obtained Quantitative score</th>
+                            <th>Manager Given Quantity score</th>
+                            <th>Qualitative score</th> 
+                            
+                            <th>Assigned Quantitative number</th>
+                            <th>Assigned Qualitative number</th>                            
+                            <th>Total assigned number</th>
+
+                            <th>Total obtained number</th>
+                            <th>Total given number</th>
+
+                            <th>Overall Obtained Score</th>
+                            <th>Overall given score</th>
+                            
+                     </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in aggregated_report %}
+                            <tr>
+                                <td>
+                                    {% if form_data.aggregation_type == 'month_wise' %}
+                                        {{ report.month }} {{ report.year }}
+                                    {% elif form_data.aggregation_type == 'quarter_wise' %}
+                                        {{ report.quarter }} {{ report.year }}
+                                    {% elif form_data.aggregation_type == 'year_wise' %}
+                                        {{ report.year }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                
+                                <td>{{ report.employee__name }}</td>
+                                <td>{{ report.department__name }}</td>
+                                <td>{{ report.position__name }}</td>                                
+
+                                <td>{{ report.avg_quantitative_score|floatformat:'2' }}%</td>
+                                <td>{{ report.avg_manager_given_quantitative_score|floatformat:'2' }}%</td>                               
+                                <td>{{ report.avg_qualitative_score|floatformat:'2' }}%</td>
+
+                                <td>{{ report.total_assigned_quantitative|floatformat:'2'}}</td>
+                                <td>{{ report.total_assigned_qualitative|floatformat:'2'}}</td>
+                                 <td>{{ report.total_assigned_number|floatformat:'2'}}</td>
+                                
+                                 <td>{{ report.total_obtained_number|floatformat:'2'}}</td>
+                                 <td>{{ report.total_given_number|floatformat:'2'}}</td>
+                                                            
+                              
+                                <td>{{ report.over_all_obtained_score|floatformat:'2'}}%</td>
+                                <td>{{ report.over_all_given_score|floatformat:'2'}}%</td>
+                                
+                                 
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No data available for the selected filters.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

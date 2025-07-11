@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+   <div class="container-fluid main-content">
+    <div class="row">       
+
+           <div class="col-12">     
+            <div class="container">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_operations_request_order_id"> Request Order id</label>
+                             {{ form.operations_request_order_id}}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">                  
+                        {% if request_order %}
+                            Search result for sale order: <b>{{ request_order }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>      
+        <hr class="mt-2">
+        <div class="col-12 col-md-12">
+          
+            <table class="table table-hover">
+                <thead class="table-dark">                      
+                    <h4>Operations Request Order</h4>
+                        <tr>
+                            
+                            <th>Request Number</th>                            
+                            <th style="white-space: nowrap;">Total amount</th>
+                            <th style="white-space: nowrap;">Requested items</th>
+                            <th style="white-space: nowrap;">Requested by</th>
+                            <th style="white-space: nowrap;">Create Delivery</th>
+                         
+                                              
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in page_obj%}
+                        <tr>
+                            <td style="white-space: nowrap;">{{ order.order_id }}</td>                             
+                            <td style="white-space: nowrap;">{{ order.total_amount }}</td> 
+                            <td style="white-space: nowrap;">
+                                <a href="{% url 'operations:operations_request_order_items' order.id %}">Requested items</a>
+                            </td>  
+                            <td style="white-space: nowrap;">{{ order.user}}</td> 
+                            <td>
+                             <a href="{% url 'operations:create_operations_items_delivery' order.id %}" class="btn btn-sm btn-primary">Create delivery</a></td>                    
+                            
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No pending. All requested order delivered</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+         
+        </div>
+    </div>
+
+    
+ <div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+</div>
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_operations_request_order_id').select2({
+            width: '70%',
+            placeholder: 'Search order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for order',
+            allowClear: true
+        });
+    });
+
+    </script>
+    
+
+
+
+{% endblock %}

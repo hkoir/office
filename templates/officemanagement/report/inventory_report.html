@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+
+
+
+{% block extra_head %}
+
+<style>
+    .chart-container {
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+    }
+    .chart-box {
+        width: 45%;
+        min-width: 300px;
+    }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <h2 class="text-center text-success fw-bold">Current stock value:&nbsp;BDT&nbsp;{{ total_stock_value|add_commas }}</h2>
+    <div class="row">
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">
+                    <h2>Stock Summary</h2>
+                    <div class="col-12 col-md-8">
+                        <h4 class="text-center text-primary">Product stock quantity</h4>
+                        <canvas id="productStockBarChart"></canvas>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <h4 class="text-center text-primary">Product stock value</h4>
+                        <canvas id="productStockValuePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 table-responsive">
+
+
+            <h2>Details Stock</h2>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Warehouse</th>
+                        <th>Product</th>
+                        <th>Available Quantity</th>
+                        <th>Stock Value</th>
+                        <th>Inbound</th>
+                        <th>Outbound</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody"></tbody>
+            </table>
+        
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<script>
+    const chartData = JSON.parse('{{ warehouse_json|escapejs }}');
+
+    const tableBody = document.getElementById("inventoryTableBody");
+    chartData.forEach(warehouse => {
+        warehouse.products.forEach(product => {
+            let row = `<tr>
+                <td>${warehouse.warehouse_name}</td>
+                <td>${product.product}</td>
+                <td>${product.available_quantity}</td>
+                <td>${product.stock_value.toFixed(2)}</td>
+                <td>${product.inbound}</td>
+                <td>${product.outbound}</td>
+            </tr>`;
+            tableBody.innerHTML += row;
+        });
+    });
+
+    const productNames = [...new Set(chartData.flatMap(wh => wh.products.map(p => p.product)))];
+    const warehouseNames = chartData.map(wh => wh.warehouse_name);
+
+    let productDataPerWarehouse = {};
+    productNames.forEach(product => {
+        productDataPerWarehouse[product] = chartData.map(wh => {
+            let foundProduct = wh.products.find(p => p.product === product);
+            return foundProduct ? foundProduct.available_quantity : 0;
+        });
+    });
+
+    let productStockValue = productNames.map(product => 
+        chartData.reduce((sum, wh) => {
+            let foundProduct = wh.products.find(p => p.product === product);
+            return sum + (foundProduct ? foundProduct.stock_value : 0);
+        }, 0)
+    );
+
+    const colors = [
+        'rgba(255, 99, 132, 0.6)', 
+        'rgba(54, 162, 235, 0.6)', 
+        'rgba(255, 206, 86, 0.6)', 
+        'rgba(75, 192, 192, 0.6)', 
+        'rgba(153, 102, 255, 0.6)', 
+        'rgba(255, 159, 64, 0.6)'
+    ];
+
+    new Chart(document.getElementById('productStockBarChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: warehouseNames,
+            datasets: productNames.map((product, index) => ({
+                label: product,
+                data: productDataPerWarehouse[product],
+                backgroundColor: colors[index % colors.length]
+            }))
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { stacked: true },
+                y: { stacked: true, beginAtZero: true }
+            },
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('productStockValuePieChart').getContext('2d'), {
+        type: 'doughnut', 
+        data: {
+            labels: productNames,
+            datasets: [{
+                label: 'Total Stock Value (in Currency)',
+                data: productStockValue,
+                backgroundColor: colors,
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' }
+            }
+        }
+    });
+
+</script>
+
+
+
+{% endblock %}

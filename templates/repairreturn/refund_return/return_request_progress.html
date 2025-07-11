@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+   
+
+<div class="container-fluid main-content">
+    <div class="row">        
+
+        <div class="col-12 mt-4">
+            <table class="table table-hover">
+                <thead class="table-dark">                   
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th style="background-color: rgba(222, 241, 13, 0.825);" colspan="3">Actions progress</th>
+                    </tr>
+                    <tr class="bg-primary text-white">
+                        <th>Product ID</th>
+                        <th>Product</th>
+                        <th>Purchased Qty</th>
+                        <th>Faulty Qty</th> 
+                        <th>Customer</th>
+                        <th>Refund Type</th> 
+                        <th>Return Reason</th>
+                        <th>Stage 1</th>                                                                 
+                        <th>Stage 2</th>
+                        <th>Stage 3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for return in page_obj %}
+                    <tr>
+                        <td>
+                            {{ return.sale.sale_id }} <!-- Corrected this line to match the context -->
+                        </td>
+                        <td>{{ return.sale.product.name|default:"No product" }}</td>
+                        <td>{{ return.sale.quantity|default:"Not available" }}</td>
+                        <td>{{ return.quantity_refund|default:"Not available" }}</td>
+                        <td>{{ return.sale.sale_order.customer.name|default:"No customer" }}</td>
+                        <td>{{ return.get_refund_type_display|default:"Not specified" }}</td>
+                        <td>{{ return.get_return_reason_display|default:"Not specified" }}</td>
+                        
+                        <td>{{ return.get_status_display|default:"Pending" }}</td>
+                        <td>
+                            {% if return.faulty_products.all %}
+                                {% for step2_status in return.faulty_products.all %}
+                                    {{ step2_status.status|default:"Not started yet" }}
+                                {% endfor %}
+                            {% else %}
+                                Not started yet
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% for faulty_product in return.faulty_products.all %}
+                                {% if faulty_product.faulty_replacement.exists %}
+                                    {% for replacement in faulty_product.faulty_replacement.all %}
+                                    <i class="fas fa-check" style="color:green">
+                                        {{ replacement.get_status_display|default:"Not started yet" }}<br>
+                                    </i>
+                                    {% endfor %}
+                                {% else %}
+                                    Not started yet
+                                {% endif %}
+                            {% empty %}
+                                Not started yet
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10">No return requests available.</td> <!-- Adjusted colspan to 10 -->
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

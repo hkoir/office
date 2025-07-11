@@ -1,0 +1,85 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:create_sale_request' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">Sale request</div>
+                </div>
+            </a>
+        </div>     
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:sale_request_order_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-tasks menu-icon"></i>
+                    <div class="menu-title">Request List</div>
+                </div>
+            </a>
+        </div>            
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:sale_order_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-tasks menu-icon"></i>
+                    <div class="menu-title">Sale Order list</div>
+                </div>
+            </a>
+        </div>      
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:qc_dashboard' %}"  class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-user menu-icon"></i>
+                    <div class="menu-title">QC Dashboard</div>
+                </div>
+            </a>
+        </div>     
+        
+        
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'logistics:sale_shipment_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-ship menu-icon"></i>
+                    <div class="menu-title">Sale shipment</div>
+                </div>
+            </a>
+        </div>       
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'finance:sale_invoice_list' %}"class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-dollar-sign menu-icon"></i>
+                    <div class="menu-title">Sale invoice</div>
+                </div>
+            </a>
+        </div>           
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:sale_order_list_report' %}"class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-truck menu-icon"></i>
+                    <div class="menu-title">challan</div>
+                </div>
+            </a>
+        </div>     
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'sales:product_sales_report' %}"class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-chart-line menu-icon"></i>
+                    <div class="menu-title">Sales report</div>
+                </div>
+            </a>
+        </div>     
+
+      </div>
+</div>
+
+
+
+
+    {% endblock %}
+
+ 

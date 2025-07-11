@@ -1,0 +1,158 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">     
+            <div class="container">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_sale_order_id"> Sale Order</label>
+                             {{ form.sale_order_id }}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">                  
+                        {% if replacement_ID %}
+                            Search result for sale order: <b>{{ replacement_ID }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>      
+        <hr class="mt-2">
+        <div class="col">
+
+                <H4> Replacement history</H4>
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr class="bg-primary text-white">
+                            <th>Sale Order</th>
+                            <th>Sold by</th>
+                            <th>Customer</th>
+                            <th>Replacement product</th>
+                            <th>Sold qty</th>
+                            <th>Replacement qty</th>
+                            <th>Source warehouse</th>  
+                            <th>Source location</th>          
+                            <th>Replaced by</th>
+                            <th>Date replaced</th>
+                            <th>Fault reason</th>
+                            <th>Inspected by</th>
+                            <th>Inspection date</th>
+                            <th>Inspection result</th>
+                            <th>Final feedback</th>
+                            
+
+                        
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for replacement in page_obj %}
+                            <tr>
+                                <td>{{ replacement.faulty_product.return_request.sale.sale_order.order_id }}</td>
+                                <td>{{ replacement.faulty_product.return_request.sale.sale_order.user }}</td>
+                                <td>{{ replacement.customer }}</td>
+                                <td>{{ replacement.replacement_product }}</td>
+                                <td>{{ replacement.faulty_product.sale.quantity }}</td>
+                                <td>{{ replacement.quantity }}</td>
+                                <td>{{ replacement.warehouse }}</td>                          
+                                 <td>{{ replacement.location }}</td>         
+                                              
+                                <td>{{ replacement.user }}</td>
+                                <td>{{ replacement.created_at|date:'M-d,Y' }}</td>
+                                <td>{{ replacement.faulty_product.reason_for_fault }}</td>
+                                <td>{{ replacement.faulty_product.inspected_by }}</td>
+                                <td>{{ replacement.faulty_product.inspection_date|date:'M-d,Y' }}</td>
+                                <td><i class="fas fa-check" style="color:green;font-weight: bold;"> {{ replacement.faulty_product.status }}</i>   </td>
+                          
+
+                            
+                                <td>
+                                    {% if replacement.status == 'REPLACED_DONE' %}
+                                   <i class="fas fa-check" style="color:green;font-weight: bold;"> {{ replacement.get_status_display }}</i>
+                                    {% else %}
+                                    {{ replacement.faulty_product.status }}
+                                  
+                                    {% endif %}
+                                
+                                </td>
+
+                            
+                            
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+<!-- Pagination Controls -->
+<div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_order_id').select2({
+            width: '70%',
+            placeholder: 'Search sale order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale order',
+            allowClear: true
+        });
+    });
+
+
+    </script>
+    
+
+{% endblock %}

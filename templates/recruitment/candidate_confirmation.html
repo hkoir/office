@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block extra_head %}
+
+<style>
+    .custom-radio {
+        width: 15px;
+        height: 15px;
+        transform: scale(1.2); /* Adjust size */
+        margin-right: 8px; /* Add space between radio and text */
+        vertical-align: middle; /* Align properly */
+    }
+    .radio-label {
+        display: flex;
+        align-items: center;
+    }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 col-md-2"></div>
+        <div class="col-12 col-md-8">
+
+            <div class="card shadow-lg border-0 rounded-3" style="background-color: #f9fbfd;">
+                <div class="card-body p-4">
+                     <!-- Card Header -->
+                 <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0"> Confirmation form</h3>
+                </div> 
+
+                    <h2>Offer Confirmation for {{ candidate.full_name }}</h2>
+                    <p>Please confirm whether you accept or decline the job offer.</p>
+                    <p><a href="{% url 'recruitment:preview_offer_letter' candidate.id %}">Offer letter</a></p>
+                    <form method="POST">
+                        {% csrf_token %}
+                    
+                        <label class="radio-label">
+                            <input type="radio" name="decision" value="accept" class="custom-radio" id="accept-offer"> 
+                            Accept Offer
+                        </label>
+                        <br>
+                        
+                        <label class="radio-label">
+                            <input type="radio" name="decision" value="decline" class="custom-radio" id="decline-offer"> 
+                            Decline Offer
+                        </label>
+                        <br>
+                    
+                        <!-- Joining date input (only shown when "Accept" is selected) -->
+                        <div id="joining-date-container" style="display: none;">
+                            <label class="date-label">
+                                If you accept, when can you join? Your last date of joining is {{ candidate.joining_deadline }}.
+                            </label>
+                            <input type="date" name="joining_date" class="date-input">
+                        </div>
+                    
+                        <br>
+                        <button type="submit" class="btn btn-success mt-3">Submit</button>
+                    </form>
+                </div>
+            </div>
+            
+            <a href="{% url 'recruitment:selected_candidate' %}" class="btn btn-secondary mt-3">Back</a>
+        </div>
+        <div class="col-12 col-md-2"></div>
+       
+            <div class="col-12">
+                <h6> <img src="{{ candidate.applied_job.company.logo.url }}" style="width:60px;height:60px"></h6>          
+                <p class="mt-2">
+                    <strong>Team HR</strong> <br>
+                    <b>{{ candidate.applied_job.company.name }}<br></b>
+                    <i class="fas fa-user"></i>&nbsp;{{ candidate.applied_job.company.contact_person }}<br>
+                    <i class="fas fa-phone"></i>&nbsp; {{ candidate.applied_job.company.phone }} || &nbsp;<i class="fas fa-envelope"></i>&nbsp;{{ candidate.applied_job.company.email }}<br>
+                    <i class="fas fa-globe"></i>&nbsp; {{ candidate.applied_job.company.website }}
+                </p>       
+                <h6 class="text-center">Be a proud member of our family</h6>         
+            </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const acceptOffer = document.getElementById("accept-offer");
+        const declineOffer = document.getElementById("decline-offer");
+        const joiningDateContainer = document.getElementById("joining-date-container");
+    
+        // Show joining date input only when "Accept Offer" is selected
+        acceptOffer.addEventListener("change", function() {
+            joiningDateContainer.style.display = "block";
+        });
+    
+        declineOffer.addEventListener("change", function() {
+            joiningDateContainer.style.display = "none";
+        });
+    });
+    </script>
+
+
+
+{% endblock %}

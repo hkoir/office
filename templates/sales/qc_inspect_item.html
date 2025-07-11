@@ -1,0 +1,61 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+<h2>Quality Control Inspection for {{ sale_dispatch_item.dispatch_item.product.name }}</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5>Order ID: {{ sale_dispatch_item.dispatch_item.sale_order.order_id }}</h5>
+        <p><strong>Product:</strong> {{ sale_dispatch_item.dispatch_item.product.name }}</p>
+        <p><strong>Customer:</strong> {{ sale_dispatch_item.dispatch_item.sale_order.customer.name }}</p>
+        <p><strong>Total Quantity:</strong> {{ sale_dispatch_item.dispatch_item.quantity }}</p>
+    </div>
+</div>
+
+
+
+<form method="post" class="mt-4">
+    {% csrf_token %}
+    <table class="table table-bordered">
+        <tr>
+            <th>Warehouse</th>
+            <td>{{ form.warehouse }}</td>
+        </tr>
+        <tr>
+            <th>Location</th>
+            <td>{{ form.location }}</td>
+        </tr>
+        <tr>
+            <th>Total Quantity</th>
+            <td>{{ form.total_quantity }}</td>
+        </tr>
+        <tr>
+            <th>Good Quantity</th>
+            <td>{{ form.good_quantity }}</td>
+        </tr>
+        <tr>
+            <th>Bad Quantity</th>
+            <td>{{ form.bad_quantity }}</td>
+        </tr>
+        <tr>
+            <th>Inspection Date</th>
+            <td>{{ form.inspection_date }}</td>
+        </tr>
+        <tr>
+            <th>Comments</th>
+            <td>{{ form.comments }}</td>
+        </tr>
+    </table>
+    <button type="submit" class="btn btn-success">Save QC Results</button>
+    <a href="{% url 'sales:qc_dashboard' %}" class="btn btn-secondary">Back to Dashboard</a>
+</form>
+
+
+
+
+
+
+{% endblock %}

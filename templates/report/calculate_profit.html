@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+
+
+
+
+<style>
+ #pieChart{
+  width:100%; 
+ }
+
+  #barChart{
+      width:100%;    
+  }
+</style>
+
+
+
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-center">Sales revenue and Gross profit</h2>
+
+  <div class="row">
+    <div class="col-12">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-8" style="margin-bottom: 20px;">
+            <div class="bg-light">
+                <canvas id="barChart" width="600" height="300"></canvas>
+                <div id="warehouseNames"></div>
+            </div>
+        </div>
+          <div class="col-md-4">
+            <canvas id="pieChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+   
+    <div class="col-12 table-responsive mt-4">
+        <table class="table">
+            <thead class="table-dark">
+                <tr>
+                    <th>Total Purchase</th>
+                    <th>Total revenue</th>
+                    <th>Total Cost</th>
+                    <th>Gross Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ total_purchased|add_commas }}</td>
+                    <td>{{ total_revenue|add_commas }}</td>
+                    <td>{{ total_cost|add_commas }}</td>
+                    <td>{{ total_profit|add_commas}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+
+<a href="{% url 'reporting:calculate_product_wise_revenue' %}">Details revenue</a>
+<script>
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');
+  
+    // Bar Chart
+    const barChart = new Chart(document.getElementById("barChart"), {
+      type: 'bar',
+      data: {
+        labels: ['Total Purchased', 'Total Revenue', 'Total Cost', 'Total Profit'],
+        datasets: [{
+          label: 'Amount in BDT',
+          data: [
+            chartData.total_purchased,
+            chartData.total_revenue,
+            chartData.total_cost,
+            chartData.total_profit
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.7)',
+            'rgba(75, 192, 192, 0.7)',
+            'rgba(255, 99, 132, 0.7)',
+            'rgba(255, 206, 86, 0.7)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+       
+        plugins: {
+            legend: {
+            display: false // 👈 Hide legend
+            }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        }
+      }
+    });
+  
+    // Pie Chart
+    const pieChart = new Chart(document.getElementById("pieChart"), {
+      type: 'pie',
+      data: {
+        labels: ['Total Purchased', 'Total Revenue', 'Total Cost', 'Total Profit'],
+        datasets: [{
+          data: [
+            chartData.total_purchased,
+            chartData.total_revenue,
+            chartData.total_cost,
+            chartData.total_profit
+          ],
+          backgroundColor: [
+            'rgba(54, 162, 235, 0.6)',
+            'rgba(75, 192, 192, 0.6)',
+            'rgba(255, 99, 132, 0.6)',
+            'rgba(255, 206, 86, 0.6)'
+          ],
+          borderColor: [
+            'rgba(54, 162, 235, 1)',
+            'rgba(75, 192, 192, 1)',
+            'rgba(255, 99, 132, 1)',
+            'rgba(255, 206, 86, 1)'
+          ],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: false,
+       
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  </script>
+  
+{% endblock %}

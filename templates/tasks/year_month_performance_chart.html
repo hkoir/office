@@ -1,0 +1,213 @@
+
+{% extends 'base.html' %}  
+
+
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  
+
+
+<div class="container-fluid main-content">
+    <div class="row">                             
+                       
+        <div class="col-12">           
+            <form method="GET">
+                {% csrf_token %}
+            <div class="container">
+                <div class="row">   
+                    <div class="col-6 col-md-3">
+                        Year{{ form.year }}
+                    </div>
+                    <div class="col-6 col-md-3">
+                        Department(optional){{ form.department }}
+                    </div>                
+                    <div class="col-6 col-md-3">
+                        Employee{{ form.employee }}
+                    </div>
+                    
+                    <div class="col-6 col-md-3">
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        </div>
+        <div class="col-12 mt-4">
+            <h4 class="text-center mb-4">
+                <span style="color:blue;font-weight: bold;">Monthly Performance for:{{ employee_name }}</span>
+                <span style="color:rgb(176, 7, 52);font-weight: bold;"> Year:{{ year }}:Department-{{department}}</span>
+            </h4>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-4">                        
+                        {% if report_data %}                        
+                        <h6>Performance Data for: {{ employee_name }}</h6>                       
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Month</th>
+                                    <th>Total Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in report_data %}
+                                <tr>
+                                    <td>{{ data.created_at }}</td>
+                                    <td>{{ data.total_score|floatformat:'2' }}%</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="2">No data available for the selected criteria.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% endif %}
+                        <!-- Pagination Controls -->
+                        <div class="pagination">
+                            <span class="step-links">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page=1">&laquo; first</a>
+                                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                                {% endif %}
+
+                                <span class="current">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                                </span>
+
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                    </div>
+                                       
+                        <!-- <div class="col-4">
+                            <canvas id="barChart" width="400" height="200"></canvas>
+                        </div> -->
+                        <div class="col-8 bg-light">
+                            {% if has_data %}
+                            <canvas id="lineChart" width="400" height="200"></canvas>
+                            {% else %}
+                            <span style="color:rgb(242, 6, 6);font-weight: bold;">No data found. Pls select year,name</span>
+                            {% endif %}
+                        </div>
+                      
+                   
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+<script>
+    const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+    const labels = chartData.labels || [];  
+    const totalScores = chartData.total_scores || [];   
+        
+        const staticDataPoint1 = 100; 
+        const staticDataPoint2 = 90;  
+        const staticLabel1 = '2024-05'; 
+        const staticLabel2 = '2024-06';  
+
+        labels.push(staticLabel1,staticDataPoint2);
+        totalScores.push(staticDataPoint1,staticDataPoint2);
+
+        // Calculate the max y-axis value
+        const maxYValue = Math.max(
+                ...totalScores,       
+            ) * 1.2;
+
+
+    // Line Chart Configuration
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    const lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '% Score',
+                    data: totalScores,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date (YYYY-MM)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max:maxYValue,
+                    title: {
+                        display: true,
+                        text: 'Total Score'
+                    }
+                }
+            }
+        }
+    });
+
+    // Bar Chart Configuration
+    // const ctxBar = document.getElementById('barChart').getContext('2d');
+    // const barChart = new Chart(ctxBar, {
+    //     type: 'bar',
+    //     data: {
+    //         labels: labels, 
+    //         datasets: [
+    //             {
+    //                 label: 'Total Score (Bar Chart)',
+    //                 data: totalScores,
+    //                 backgroundColor: 'rgba(75, 192, 192, 0.6)',
+    //                 borderColor: 'rgba(75, 192, 192, 1)',
+    //                 borderWidth: 1
+    //             }
+    //         ]
+    //     },
+    //     options: {
+    //         responsive: true,
+    //         scales: {
+    //             x: {
+    //                 title: {
+    //                     display: true,
+    //                     text: 'Date (YYYY-MM)'
+    //                 }
+    //             },
+    //             y: {
+    //                 beginAtZero: true,
+    //                  max:maxYValue
+    //                 title: {
+    //                     display: true,
+    //                     text: 'Total Score'
+    //                 }
+    //             }
+    //         }
+    //     }
+    // });
+</script>
+
+
+
+{% endblock %}

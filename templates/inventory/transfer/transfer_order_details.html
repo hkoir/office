@@ -1,0 +1,43 @@
+
+{% extends 'base.html' %}
+
+{% load custom_filters %}
+{% block content %}
+
+
+
+
+
+<h2>Transferred Products</h2>
+<table class="table table-striped">
+    <thead>
+        <tr class="bg-primary text-white">
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Source Warehouse</th>
+            <th>Target Warehouse</th>
+            <th>Created at</th>
+            <th>Updated at</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for transfer_product in transferred_products %}
+        <tr>
+            <td>{{ transfer_product.product.name }}</td>
+            <td>{{ transfer_product.quantity }}</td>
+            <td>{{ transfer_product.source_warehouse.name }}</td>
+            <td>{{ transfer_product.target_warehouse.name }}</td>
+            <td>{{ transfer_product.created_at }}</td>
+            <td>{{ transfer_product.updated_at }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">No products found for this Transfer order.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'inventory:transfer_order_list' %}" class="btn btn-primary">Back to transfer Order List</a>
+
+
+    {% endblock %}

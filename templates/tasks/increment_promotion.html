@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+
+
+
+{% block content %}
+
+
+
+  
+  <div class="container-fluid main-content">
+    <div class="row">   
+     
+        <h4 class="text-center" style="color: blue;font-weight: bold;">Appraisal automation (Promotion and Increment)</h4>
+ 
+      <div class="col-12 col-md-4 mb-4">      
+        <div class="card shadow-lg border-0 rounded-lg" style="width:100%">
+          <!-- Card Header -->
+          <div class="card-header bg-primary text-white text-center">
+              <h4 class="mb-0"><span style="color:white;font-weight: bold;">Final Appraisal</span> </h4>              
+          </div>
+          <div class="card-body">             
+            <hr>      
+              <form method="post" enctype="multipart/form-data" action="{% url 'tasks:increment_promotion' %}" id="add_category">
+                  {% csrf_token %} 
+                  {{ form.as_p }}
+                  <div class="d-grid">
+                  <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                </div>
+              </form>
+          </div>
+          <a href="{% url 'tasks:increment_promotion_check' %}" class="btn btn-success text-center">Go for analysis</a>
+          <a href="{% url 'tasks:increment_promotion_final_data' %}" class="btn btn-success text-center mt-2">See final result</a>
+       </div>   
+      </div>
+       <div class="col-12 col-md-8 table-responsive mt-4">
+        <table class="table table-hover">
+            <thead class="table-dark">
+               
+                <tr>   
+                                       
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Increment Category</th>
+                    <th>Increment type</th>
+                    <th>Increment year</th>
+                    <th>Increment period</th>
+
+                    <th>Obtained Score</th>                   
+                    <th>Max Task Count</th>
+                    <th>Your Task Count</th>
+                    <th>Avg Task Count</th>
+                    <th>Weighted Score</th>
+                    
+                    
+                    <th>Salary Increment %</th>
+                    <th>Promotional Increment %</th>
+
+                    <th>Obtained Salary Increment %</th>
+                    <th>Obtained Promotional Increment %</th>
+                    <th>Salary Increment amount</th>
+                    <th>Promotional Increment amount</th>
+                    <th>New basic</th>
+
+                    <th>Obtained Promotion</th>
+                    <th>Final Promotion</th>
+                    
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in page_obj %}
+                    <tr>
+                        
+                        
+                        <td>{{ data.employee }}</td>
+                        <td>{{ data.employee.department }}</td>
+                        <td>{{ data.employee.position }}</td>
+                        <td>{{ data.get_appraisal_category_display }}</td>                        
+                        <td>{{ data.get_appraisal_type_display }}</td>     
+                        <td>{{ data.appraisal_year }}</td>
+
+
+                        <td>
+                        {% if data.appraisal_type == 'MONTHLY' %}
+                        {{ data.month}}
+                        {% elif data.appraisal_type == 'QUARTERLY' %}
+                        {{ data.quarter }}
+                        {% elif data.appraisal_type == 'HALF-YEARLY' %}
+                        {{ data.half_year }}
+                        {% elif data.appraisal_type == 'YEARLY' %}
+                        {{ data.year }}
+                        {% else %}
+                        Not defined
+                        {% endif %}
+                      </td>
+
+                     
+
+                      <td>{{data.final_score}}</td>
+                      <td>{{data.max_task_count}}</td>
+                      <td>{{data.task_count_employee}}</td>
+                      <td>{{data.avg_task_count}}</td>
+                      <td>{{data.weighted_final_score}}</td>
+
+
+                      <td>{{ data.salary_increment_percentage|floatformat:1|intcomma }}%</td>
+                      <td>{{ data.promotional_increment_percentage|floatformat:1|intcomma }}%</td>
+
+                      <td>{{ data.obtained_salary_increment_percentage|floatformat:2|intcomma }}%</td>
+                      <td>{{ data.obtained_promotional_increment_percentage|floatformat:2|intcomma }}%</td>
+                      
+                        <td>{{ data.salary_increment_amount|floatformat:2|intcomma}}</td>
+                        <td>{{ data.promotional_increment_amount|floatformat:2|intcomma}}</td>
+                        <td>{{ data.new_basic_salary|floatformat:2|intcomma}}</td>   
+                        
+                        <td>{{ data.obtained_promotion_recommendation }}</td>
+                        <td>{{ data.promotion_recommendation}}</td>
+                                              
+                        
+                         
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table> 
+        <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+  
+      </div>
+   
+    </div>
+  </div>
+
+  
+
+
+<script>
+ $(document).ready(function () {
+    function toggleFields() {
+        var incrementCategoryValue = $('#id_appraisal_category').val();
+        var incrementTypeValue = $('#id_appraisal_type').val();
+
+        // Helper function to hide/show field and label by targeting the <p> wrapping the field
+        function toggleField(fieldId, show) {
+            var fieldContainer = $(`#${fieldId}`).closest('p'); // Find the <p> container
+            if (show) {
+                fieldContainer.show();
+            } else {
+                fieldContainer.hide();
+            }
+        }
+
+        // Toggle fields based on increment category
+        toggleField('id_employee', incrementCategoryValue === 'BY_EMPLOYEE');
+        toggleField('id_department', incrementCategoryValue === 'BY_DEPARTMENT');
+        toggleField('id_position', incrementCategoryValue === 'BY_POSITION');
+
+        // Hide all increment type fields initially
+        toggleField('id_month', false);
+        toggleField('id_quarter', false);
+        toggleField('id_half_year', false);
+        toggleField('id_year', false);
+
+        // Show relevant fields based on increment type
+        if (incrementTypeValue === 'MONTHLY') {
+            toggleField('id_month', true);
+        } else if (incrementTypeValue === 'QUARTERLY') {
+            toggleField('id_quarter', true);
+        } else if (incrementTypeValue === 'HALF-YEARLY') {
+            toggleField('id_half_year', true);
+        } else if (incrementTypeValue === 'YEARLY') {
+            toggleField('id_year', true);
+        }
+    }
+
+    // Initialize and attach the change event to trigger field toggling when the value changes
+    toggleFields();
+    $('#id_appraisal_category, #id_appraisal_type').change(function () {
+        toggleFields();
+    });
+});
+
+</script>
+
+
+
+{% endblock %}

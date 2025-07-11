@@ -1,0 +1,238 @@
+
+{% extends "recruitment_portal.html" %}
+{% load static %}
+
+{% block extra_head %}
+
+<style>
+
+    
+    /* Import Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&family=Roboto:wght@300;400;500&display=swap');
+    
+    /* Apply font to entire navbar, including dropdowns */
+    .navbar, 
+    .navbar .nav-item, 
+    .navbar .nav-link, 
+    .navbar .dropdown-menu, 
+    .navbar .dropdown-item, 
+    .navbar .dropdown-submenu .dropdown-menu {
+        font-family: 'Poppins', 'Roboto', sans-serif !important;
+    }
+    
+    .navbar .dropdown-menu .dropdown-item {
+        font-family: "Arial", sans-serif !important; /* Set your desired font */
+    }
+    
+    .navbar .dropdown-menu .dropdown-item i {
+        font-family: inherit !important; /* Make icons follow the text font */
+    }
+    
+    /* Apply font-family to dropdown items */
+    .navbar .dropdown-menu .dropdown-item {
+        font-family: "Arial", sans-serif !important; /* Set your desired font */
+    }
+    
+    /* Ensure icons use FontAwesome's font */
+    .navbar .dropdown-menu .dropdown-item i {
+        font-family: "Font Awesome 5 Free", "Font Awesome 5 Pro" !important;
+        font-weight: 900; /* Ensures solid icons show correctly */
+    }
+    
+   
+    
+    .nav-bar i{
+        color:#0dcaf0
+    }
+ 
+    
+    ul .dropdown-item > i{
+        color:cyan
+    }
+    
+    li a {
+        line-height: 1.3rem;
+        margin: 0 !important;
+        padding: 4px 15px !important; /* Adjust as needed */
+    }
+    
+ 
+        
+    
+    /* Ensure the main dropdown opens on hover */
+    .nav-item.dropdown:hover > .dropdown-menu {
+        display: block;
+        background-color: #2d2d2d; /* Darker gray */
+        color: #ffffff; 
+    }
+    
+    
+    /* Style for the main dropdown */
+    .navbar .dropdown-menu {
+        background-color: #2c3e50; 
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Style for dropdown items */
+    .navbar .dropdown-menu .dropdown-item {
+        color: white !important; 
+        padding: 10px 20px;
+        font-size: 15px;
+        font-weight: 500;
+        text-decoration: none;
+        font-family: 'Poppins', 'Roboto', sans-serif !important; /* Ensure font applies */
+    }
+    
+    /* Hover effect for dropdown items */
+    .navbar .dropdown-menu .dropdown-item:hover {
+        background-color: #34495e; 
+        color: #f1c40f !important; 
+    }
+    
+    
+    /* Ensure links stay visible */
+    .navbar .dropdown-menu a {
+        color: white !important;
+        font-family: 'Poppins', 'Roboto', sans-serif !important; /* Force font for links */
+    }
+    
+    
+    
+    /* Dropdown submenu wrapper */
+    .dropdown-submenu {
+        position: relative;
+    }
+    
+    /* Dropdown menu with scroll effect */
+    .dropdown-submenu > .dropdown-menu {
+        position: absolute;
+        top: 0;
+        left: 100%;
+        margin-top: -1px;
+        display: none;
+        max-height: 300px; /* Adjust height as needed */
+        overflow-y: auto;
+        background-color: #2c3e50;
+        border-radius: 8px;
+        z-index: 10001;
+    }
+    
+    /* Ensure submenu opens only when hovering on the parent */
+    .dropdown-submenu:hover > .dropdown-menu {
+        display: block;
+    }
+    
+    /* Prevent flickering */
+    .dropdown-submenu:hover {
+        position: relative;
+    }
+    
+    /* Custom scrollbar styling */
+    .dropdown-submenu > .dropdown-menu::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .dropdown-submenu > .dropdown-menu::-webkit-scrollbar-track {
+        background: #1c2833; 
+    }
+    
+    .dropdown-submenu > .dropdown-menu::-webkit-scrollbar-thumb {
+        background: #f1c40f; /* Change scrollbar color */
+        border-radius: 5px;
+    }
+    
+    /* Hover effect */
+    .dropdown-submenu .dropdown-menu .dropdown-item:hover {
+        background-color: #3a4b5c;
+        color: #ffcc00 !important;
+        z-index: 10001;
+    }
+    
+    
+    
+    
+    </style>
+    
+{% endblock %}
+
+{% block content %}
+
+               
+
+<div class="container-fluid main-content">   
+    <div class="row"> 
+        <div class="col-12">                        
+            <!-- Hero Section -->
+           
+
+            <section class="hero-section">
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <h1>Welcome to Our Careers</h1>
+                    <p>Join a team that drives innovation and fosters growth.</p>
+                    <button class="hero-btn">Explore Jobs</button>
+                </div>
+                <div class="custom-shape-divider-bottom-hero">
+                    <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                        <path d="M0,0V46.29c47.6,15.4,98.5,27.4,150,24.67,49.6-2.6,97.1-20.73,146.6-27.27,64.5-8.53,129.6,1.84,194,9.39,65.1,7.6,130.8,10.9,196.5,2.53,65.8-8.27,128.9-27.47,192.2-31.1,51.5-3,103.7,4.72,155.2,13.11,51.5,8.4,103.2,17.6,155.5,20.44,45.5,2.51,91.3-.53,136.8-5.39V0Z" fill="#ffffff"></path>
+                    </svg>
+                </div>
+            </section>
+            
+        </div>
+    </div>
+</div>
+    
+
+            <!-- Job Listings Preview -->
+            <div class="container my-5" id="job-listings">
+                <h2 class="text-center mb-4">Featured Openings</h2>
+                <div class="row">
+                    <!-- Example Job Card -->
+                    <div class="row">
+                        {% for job in jobs %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card shadow-lg border-0 rounded-3 job-card">
+                                    <div class="card-body">
+                                        <h5 class="job-title text-primary font-weight-bold">Post:{{ job.title }}</h5>
+                                        <p class="text-muted">
+                                            <i class="fas fa-map-marker-alt"></i> {{ job.location }}
+                                        </p>
+                    
+                                        <p class="job-description text-secondary">{{ job.description|truncatewords:20 }}</p>
+                    
+                                        <ul class="list-unstyled job-details">
+                                            <li><i class="fas fa-users"></i> Vacancies: <strong>{{ job.no_of_vacancies }}</strong></li>
+                                            <li><i class="far fa-calendar-alt"></i> Deadline: <strong>{{ job.deadline }}</strong></li>
+                                            <li>
+                                                <i class="fas fa-check-circle"></i> Status:
+                                                <strong class="{% if job.is_active %} text-success {% else %} text-danger {% endif %}">
+                                                    {% if job.is_active %} Open {% else %} Closed {% endif %}
+                                                </strong>
+                                            </li>
+                                        </ul>
+                    
+                                        <div class="d-flex justify-content-between mt-3">
+                                            <a href="{% url 'customerportal:job_application' job.id %}" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-paper-plane"></i> Apply Now
+                                            </a>
+                                            <a href="{% url 'customerportal:position_details' job.position.id %}" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-info-circle"></i> Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>       
+                </div>
+            </div>
+
+
+
+ 
+
+
+{% endblock %}

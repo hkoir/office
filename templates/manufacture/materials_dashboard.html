@@ -1,0 +1,58 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+    
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'manufacture:create_materials_request' %}"class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-square menu-icon"></i>
+                    <div class="menu-title">Materials request</div>
+                </div>
+            </a>
+        </div>      
+
+    
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'manufacture:materials_request_order_list' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-list menu-icon"></i>
+                    <div class="menu-title">Request list</div>
+                </div>
+            </a>
+        </div>  
+
+ 
+
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'manufacture:direct_submit_finished_goods' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-plus-circle menu-icon"></i>
+                    <div class="menu-title">Product Submit</div>
+                </div>
+            </a>
+        </div>  
+        <div class="col-6 col-md-3 col-lg-2 p-2">
+            <a href="{% url 'manufacture:qc_dashboard' %}" class="text-decoration-none">
+                <div class="menu-card">
+                    <i class="fas fa-user-plus menu-icon"></i>
+                    <div class="menu-title">QC dashboard</div>
+                </div>
+            </a>
+        </div>  
+
+
+    </div>
+</div>
+
+
+
+
+    {% endblock %}
+
+ 

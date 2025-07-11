@@ -1,0 +1,618 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+
+{% block extra_head %}
+
+<style>
+
+#doughnutChart{
+    width:100%;   
+}
+
+
+#barChart{
+    width:100%;    
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+
+ 
+
+<div class="container-fluid main-content">
+    <div class="row">
+      <h4 class="text-center mb-4" style="color:blue;font-weight: bold;">  DOPS Inventory Summary</h4>
+        <div class="col-12">                          
+            <form method="GET" action="{% url 'inventory:inventory_aggregate_list' %}">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Product Name: {{ form.product_name }}
+                        </div> 
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <label for="valuation_method">Choose Valuation Method:</label>
+                            <select name="valuation_method" id="valuation_method" onchange="this.form.submit()">                               
+                                <option value="LIFO" {% if valuation_method == 'LIFO' %}selected{% endif %}>LIFO</option>
+                                <option value="FIFO" {% if valuation_method == 'FIFO' %}selected{% endif %}>FIFO</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mt-2">
+                            <button type="submit" class="btn btn-primary">Generate Data</button> 
+                        </div>
+                    </div>
+                </div>                    
+            </form>            
+          
+          </div>
+          <span class="text-center"> 
+           
+            {% if days %}
+              Result for last {{ days }} days
+            {% elif start_date and end_date %}
+               result  from: {{ start_date }} to {{ end_date }}
+            {% endif %} 
+        </span>   
+
+        {% if page_obj %}
+
+        <h4 class="text-center" style="color:blue;font-weight: bold;"></h4>
+        <h4 class="text-center" style="color: rgb(231, 51, 11);font-weight: bold;">
+           <span style="color: rgb(6, 37, 216);font-weight: bold;">Product: {{ product_name }}</span> :Total Stock Value: {{ grand_total_stock_value|add_commas }}&nbsp;&nbsp;
+        <span style="font-size: 14px;">
+        <a href="{% url 'inventory:inventory_executive_sum' %}" class="btn btn-sm btn-primary">Grand Stock value</a>
+        <a href="{% url 'inventory:inventory_list' %}" class="btn btn-sm btn-primary">Product by warehouse</a>
+      
+        
+        </span>
+    </h4>
+   
+
+        <div class="col-12" style="margin-bottom: 20px;">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-9 bg-light">
+                        <canvas id="barChart" ></canvas>
+                        <div id="warehouseNames"></div>
+                    </div>
+                    <div class="col-3 bg-light">
+                        <canvas id="doughnutChart"></canvas>
+                    </div>
+
+                </div>
+            </div>      
+        </div>      
+        
+          
+            <div class="col-12 mt-4">
+                <div class="container-fluid">
+                    <div class="row">    
+                        <div class="col-12">    
+                            <h4> Placed Purchase orders</h4>
+                             <!-- Column Selection Dropdown (Better UI) -->
+                             <div class="dropdown mt-4">
+                                <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="columnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Select Columns
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="columnDropdown">
+                                    <li><button class="btn btn-sm btn-primary" id="selectAll">Select All</button></li>
+                                    <li><button class="btn btn-sm btn-danger" id="deselectAll">Deselect All</button></li>
+                                    <li><input type="checkbox" class="column-checkbox" value="batch"> Purchase Order Number</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="inbound"> Request Order number</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="outbound"> Total amount Due</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="manufacture_in"> Total amount Paid</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="manufacture_out"> Status</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="replacement_in"> Submission</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="replacement_out"> Review</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="operations_out"> Approval</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="transfer_in"> Create parent Schedule</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="transfer_out"> Add child schedule</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="scrapped_out"> Scrapped Out</li>
+                                    <li><input type="checkbox" class="column-checkbox" value="remaining"> Remaining Quantity</li>
+                                    <li><hr class="dropdown-divider"></li>
+                                
+                                </ul>
+                            </div>   
+                        </div>                  
+                        <div class="col-12 table-responsive">                           
+                            <table class="table table-hover">
+                                <thead class="table-dark">                                 
+                                       
+                                    <tr>
+                                    <th>Product Name</th>
+
+                                    <th>Total stock</th>
+                                    <th>Total Purchase</th>
+                                    <th>Total Sold</th>
+                                    <th>Total Available</th>
+
+                                    <th>Total Manufacture in</th>
+                                    <th>Total Manufacture out</th>
+                                    <th>Total Existing</th>                                  
+                                    <th>Total operations out</th>
+
+                                    <th>Total Transfer In</th>
+                                    <th>Total Transfer Out</th>
+                                    <th>Total Replacement in</th>
+                                    <th>Total Replacement out</th>   
+
+                                    <th>Total Scrapped in</th>
+                                    <th>Total Scrapped out</th> 
+
+                                    <th>Total stock value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in page_obj %}
+                                    <tr>
+                                        <td>{{ product.product }}</td>
+
+                                    <td>{{ product.total_stock|default:"0" }}</td>
+                                    <td>{{ product.total_purchase|default:"0" }}</td>
+                                    <td>{{ product.total_sold|default:"0" }}</td>
+                                    <td>{{ product.total_available|default:"0" }}</td>
+
+                                    <td>{{ product.total_manufacture_in|default:"0" }}</td>
+                                    <td>{{ product.total_manufacture_out|default:"0" }}</td>
+                                    <td>{{ product.total_existing_in|default:"0" }}</td>                                 
+                                    <td>{{ product.total_operations_out|default:"0" }}</td>
+
+                                    <td>{{ product.total_transfer_in|default:"0" }}</td>
+                                    <td>{{ product.total_transfer_out|default:"0" }}</td>
+                                    <td>{{ product.total_replacement_in|default:"0" }}</td>
+                                    <td>{{ product.total_replacement_out|default:"0" }}</td>
+
+                                    <td>{{ product.total_scrapped_in|default:"0" }}</td>
+                                    <td>{{ product.total_scrapped_out|default:"0" }}</td>
+                                    
+                                    <td>{{ product.total_stock_value|default:"0"|add_commas }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center text-primary">No products available.Click<b>generate data</b></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                     
+                    </div>
+                </div>
+          
+        </div>
+        {% else %}
+        <span class="text-center" style="color:blue;font-weight:bold ;">No record found. Please choose filter</span>
+        {% endif %}
+
+       <!-- Pagination Controls -->
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+
+<script>
+    document.getElementById("columnDropdown").addEventListener("click", function () {
+    let dropdown = new bootstrap.Dropdown(this);
+    dropdown.show();
+});
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const batchFilter = document.getElementById("batchFilter");
+        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+        const selectAllBtn = document.getElementById("selectAll");
+        const deselectAllBtn = document.getElementById("deselectAll");
+
+        // Hide all columns initially
+        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
+
+        // Show selected columns
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const columnClass = this.value;
+                const isChecked = this.checked;
+                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
+            });
+        });
+
+        // Select All
+        selectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
+            });
+        });
+
+        // Deselect All
+        deselectAllBtn.addEventListener("click", function () {
+            columnCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
+            });
+        });
+
+        // Batch Filter
+        batchFilter.addEventListener("change", function () {
+            const selectedBatch = batchFilter.value;
+            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
+                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
+                    row.style.display = "";
+                } else {
+                    row.style.display = "none";
+                }
+            });
+        });
+    });
+</script>
+<script>
+    // Parse the JSON data passed from the view
+    const chartData = JSON.parse('{{ warehouse_json|escapejs }}');
+// Initialize arrays for each dataset
+
+    const totalStock = [];
+    const totalPurchase = [];
+    const totalSold = [];
+    const totalAvailable = [];
+    const reorderLevel= [];
+
+    const totalManufactureIn = [];
+    const totalManufactureOut = [];
+    const totalExistingIn = [];
+    const totalOperationsOut = [];    
+ 
+    const totalTransferIn = [];
+    const totalTransferOut = [];
+    const totalReplacementOut = [];
+    const totalReplacementIn = [];
+
+    const totalScrappedOut = [];
+    const totalScrappedIn = [];
+
+    // Populate arrays for each dataset
+    chartData.labels.forEach((label, index) => {
+        totalStock.push(chartData.total_stock[index] || 0);
+        totalPurchase.push(chartData.total_purchase[index] || 0);
+        totalSold.push(chartData.total_sold[index] || 0);
+        totalAvailable.push(chartData.total_available[index] || 0);
+        reorderLevel.push(chartData.reorder_level[index] || 0);
+
+        totalManufactureIn.push(chartData.total_manufacture_in[index] || 0);
+        totalManufactureOut.push(chartData.total_manufacture_out[index] || 0);
+        totalExistingIn.push(chartData.total_existing_in[index] || 0);
+        totalOperationsOut.push(chartData.total_operations_out[index] || 0);      
+                
+        totalTransferIn.push(chartData.total_transfer_in[index] || 0);
+        totalTransferOut.push(chartData.total_transfer_out[index] || 0);
+        totalReplacementOut.push(chartData.total_replacement_out[index] || 0);
+        totalReplacementIn.push(chartData.total_replacement_in[index] || 0);
+
+        totalScrappedOut.push(chartData.total_scrapped_out[index] || 0);
+        totalScrappedIn.push(chartData.total_scrapped_in[index] || 0);
+       
+    });
+
+
+    const colors = [
+        'rgba(255, 152, 0, 0.5)',  // Orange
+        'rgba(76, 175, 80, 0.5)',  // Green
+        'rgba(255, 87, 34, .8)',  // Deep Orange
+        'rgba(255, 0, 0, 0.8)', // red
+
+        'rgba(255, 193, 7, 0.5)',  // Amber
+        'rgba(156, 39, 176, 0.5)', // Purple
+        'rgba(0, 188, 212, 0.5)',  // Teal
+        'rgba(255, 87, 34, 0.5)',  // Deep Orange
+
+        'rgba(0, 150, 136, 0.5)',  // Sea Green
+        'rgba(255, 152, 0, 0.5)',  // Orange
+        'rgba(0, 188, 212, 0.5)',  // Teal
+        'rgba(233, 30, 99, 0.5)',  // Pink
+
+        'rgba(255, 50, 6, 0.5)',  // Sea Green
+        'rgba(255, 87, 34, 0.8)',  // Deep Orange
+        'rgba(0, 150, 136, 0.8)',  // Sea Green
+
+        'rgba(255, 152, 0, 0.5)',  // Orange
+    ];
+
+     
+     
+    // Calculate the max y-axis value
+    const maxYValue = Math.max(
+        ...totalPurchase,
+        ...totalSold,
+        ...totalAvailable,
+        ...totalManufactureIn,
+        ...totalTransferIn,
+        ...totalTransferOut,
+        ...totalReplacementOut,
+        ...totalStock,
+    ) * 1.1;
+
+    // Bar chart
+    const ctxBar = document.getElementById('barChart').getContext('2d');
+  
+    const barChart = new Chart(ctxBar, {
+        
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: 'Total Stock',
+                    data: totalStock,
+                    backgroundColor: colors[0],  
+                    borderColor: colors[0],        
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Purchase',
+                    data: totalPurchase,
+                    backgroundColor: colors[1], // Purple
+                    borderColor: colors[1],       // Dark Purple
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Available',
+                    data: totalAvailable,
+                    backgroundColor: colors[2],  
+                    borderColor: colors[2],        
+                    borderWidth: 1
+                },
+                {
+                    label: 'Reorder level',
+                    data: reorderLevel,
+                    backgroundColor: colors[3],  
+                    borderColor: colors[3],        
+                    borderWidth: 1
+                },
+                
+            
+                                            
+                {
+                    label: 'Total Sold',
+                    data: totalSold,
+                    backgroundColor: colors[4],  // Deep Orange
+                    borderColor: colors[4],        // Dark Deep Orange
+                    borderWidth: 1
+                },
+                
+                {
+                    label: 'Total Existing in',
+                    data: totalExistingIn,
+                    backgroundColor: colors[5],  // Teal
+                    borderColor: colors[5],        // Dark Teal
+                    borderWidth: 1
+                },
+                
+                {
+                    label: 'Total Operations Out',
+                    data: totalOperationsOut,
+                    backgroundColor: colors[6],  // Orange
+                    borderColor: colors[6],        // Dark Orange
+                    borderWidth: 1
+                },
+                
+                {
+                    label: 'Total Manufacture in',
+                    data: totalManufactureIn,
+                    backgroundColor: colors[7],  // Amber
+                    borderColor: colors[7],        // Dark Amber
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Manufacture out',
+                    data: totalManufactureOut,
+                    backgroundColor: colors[8],  // Amber
+                    borderColor: colors[8],        // Dark Amber
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Transfer In',
+                    data: totalTransferIn,
+                    backgroundColor: colors[9],  // Sea Green
+                    borderColor: colors[9],        // Dark Sea Green
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Transfer Out',
+                    data: totalTransferOut,
+                    backgroundColor: colors[10],  // Orange
+                    borderColor: colors[10],        // Dark Orange
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Replacement out',
+                    data: totalReplacementOut,
+                    backgroundColor: colors[11],  // Pink
+                    borderColor: colors[11],        // Dark Pink
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total Replacement in',
+                    data: totalReplacementIn,
+                    backgroundColor: colors[12],  // Pink
+                    borderColor: colors[12],        // Dark Pink
+                    borderWidth: 1
+                },
+
+                {
+                    label: 'Total scrapped in',
+                    data: totalScrappedIn,
+                    backgroundColor: colors[13],  // Pink
+                    borderColor: colors[13],        // Dark Pink
+                    borderWidth: 1
+                },
+                {
+                    label: 'Total scrapped out',
+                    data: totalScrappedOut,
+                    backgroundColor: colors[14],  // Pink
+                    borderColor: colors[14],        // Dark Pink
+                    borderWidth: 1
+                }
+            ]
+
+        },
+        options: {
+        responsive: false,
+        scales: {
+                y: {
+                    beginAtZero: true,
+                    max: maxYValue,
+                    min: 0,
+                }
+            },
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: {
+                        size: 14
+                    },
+                    color: '#333' // Ensures label text is readable
+                }
+            }
+        }
+    }
+});
+
+
+
+
+
+
+    // Doughnut chart
+    const totalMetrics = {
+        'Total Stock': totalStock.reduce((a, b) => a + b, 0),          
+        'Total Purchase': totalPurchase.reduce((a, b) => a + b, 0),
+        'Total Available': totalAvailable.reduce((a, b) => a + b, 0),
+        'Reorder order': reorderLevel.reduce((a, b) => a + b, 0),
+      
+        'Total Sold': totalSold.reduce((a, b) => a + b, 0),
+
+        'Total existing in': totalExistingIn.reduce((a, b) => a + b, 0),
+        'Total operations out': totalOperationsOut.reduce((a, b) => a + b, 0),
+        'Total Manufacture in': totalManufactureIn.reduce((a, b) => a + b, 0),
+        'Total Manufacture out': totalManufactureOut.reduce((a, b) => a + b, 0),
+       
+
+        'Total transfer in': totalTransferIn.reduce((a, b) => a + b, 0),
+        'Total transfer out': totalTransferOut.reduce((a, b) => a + b, 0),
+        'Total replacement out': totalReplacementOut.reduce((a, b) => a + b, 0),
+        'Total replacement in': totalReplacementIn.reduce((a, b) => a + b, 0),
+
+        'Total scrapped out': totalScrappedOut.reduce((a, b) => a + b, 0),
+        'Total scrapped in': totalScrappedIn.reduce((a, b) => a + b, 0),
+      
+      
+
+     
+    
+       
+       
+    };
+
+    const ctxDoughnut = document.getElementById('doughnutChart').getContext('2d');
+    const doughnutChart = new Chart(ctxDoughnut, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(totalMetrics),
+            datasets: [{
+                data: Object.values(totalMetrics),
+                backgroundColor: [
+                   colors[0],  
+                   colors[1],
+                   colors[2],
+                   colors[3],
+                   colors[4],
+                   colors[5],
+                   colors[6],
+                   colors[7],
+                   colors[8],
+                   colors[9],
+                   colors[10],
+                   colors[11],
+                   colors[12],
+                   colors[13],
+                   colors[141],
+                   colors[15],
+                   colors[16],
+                ],
+                borderColor: [
+                   colors[0],  
+                   colors[1],
+                   colors[2],
+                   colors[3],
+                   colors[4],
+                   colors[5],
+                   colors[6],
+                   colors[7],
+                   colors[8],
+                   colors[9],
+                   colors[10],
+                   colors[11],
+                   colors[12],
+                   colors[13],
+                   colors[14],
+                   colors[15],
+                   colors[16],
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                }
+            }
+        }
+    });
+ 
+
+</script>
+
+
+{% endblock %}
+
+
+

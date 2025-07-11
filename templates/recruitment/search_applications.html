@@ -1,0 +1,40 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+    <h1>Search Applications</h1>
+    <form method="get" action="">
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    <h2>Results</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Applied Job</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for candidate in candidates %}
+                <tr>
+                    <td>{{ candidate.full_name }}</td>
+                    <td>{{ candidate.email }}</td>
+                    <td>{{ candidate.phone }}</td>
+                    <td>{{ candidate.applied_job }}</td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No results found.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% endblock %}

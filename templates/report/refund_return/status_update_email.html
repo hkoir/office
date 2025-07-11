@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Status Update</title>
+</head>
+<body>
+    <h2>Dear {{ customer.name }},</h2>
+    <p>
+        We wanted to inform you that the status of your product return/repair/replacement for 
+        <strong>{{ product.product_name }}</strong> has been updated to: <strong>{{ repair_status }}</strong>.
+    </p>
+    <p>
+        Inspection Date: {{ inspection_date }}<br>
+        Remarks: {{ remarks }}
+    </p>
+    <p>Thank you for your patience.</p>
+    <p>Best regards, <br> Customer Service Team</p>
+</body>
+</html>

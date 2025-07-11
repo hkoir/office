@@ -1,0 +1,257 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+<style>
+    .fas_fa_spin_icon {
+    color: greenyellow;  
+    animation: spin 5s infinite, glow 5s ease-in-out infinite;
+}
+</style>
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">     
+            <div class="container">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_sale_order_id"> Sale Order</label>
+                             {{ form.sale_order_id }}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">  
+                        <span class="text-white">              
+                        {% if return_id %}
+                            Search result for sale order: <b>{{ return_id }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    </span>  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>     
+     
+        <div class="col-12">
+            {% if page_obj %}
+
+                <h2 class="text-white">Return/Refund Requests</h2>
+                <table class="bg-light">
+                    <thead>
+                        <tr class="bg-dark text-white">
+                            <th>Customer feedback</th>                              
+                            <th>Progress by service provider</th>   
+                            <th>Progress by customer</th>                               
+                            <th>Sale order</th>
+                            <th>Product</th>
+                            <th>Sold by</th>
+                            <th>Sold qty</th>
+                            <th>Refund Qty</th>
+                            <th>Customer</th>                            
+                            <th>Return Reason</th>                           
+                            <th>Refund Type</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for return in page_obj %}
+                        <tr>                           
+                            {% if return.faulty_products.first.status == 'REPAIRED_AND_RETURNED' %}
+                            <td><a href="{% url 'customerportal:customer_feedback' return.id%}">Final assessment</a></td>
+                            {% elif return.faulty_products.first.faulty_replacement.first.status == 'REPLACED_DONE' %}
+                            <td><a href="{% url 'customerportal:customer_feedback' return.id%}">Please help to improve</a></td>
+                            {% elif return.progress_by_user == 100.0 %}
+                            <td><a href="{% url 'customerportal:customer_feedback' return.id%}">Please help to improve</a></td>
+                            {% elif return.progress_by_customer == 100.0 %}
+                            <td><a href="{% url 'customerportal:customer_feedback' return.id%}">Please help to improve</a></td>
+                            {% elif return.return_feedback %}
+                            <td><i class="fas fa-handshake-o text-success fw-bold"></i></td>                                                
+                            {% else %}
+                            <td><i class="fas fa-hourglass-half fas_fa_spin_icon text-danger fw-bold"></i></td>
+                            {% endif %}
+
+                           <td>
+                            {% if return.progress_by_user >= 20.0 and return.progress_by_user < 30.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 30.0 and return.progress_by_user < 40.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 40.0 and return.progress_by_user < 50.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">40%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 50.0 and return.progress_by_user < 60.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 60.0 and return.progress_by_user < 70.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 70.0 and return.progress_by_user < 80.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 80.0 and return.progress_by_user < 90.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                </div>
+                            {% elif return.progress_by_user >= 90.0 and return.progress_by_user < 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">90%</div>
+                                </div>
+                            {% elif return.progress_by_user == 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                                </div>
+                            {% else %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- Update data from Ticket update view becaz Ticket update only can do by Customer -->
+                            {% if return.progress_by_customer >= 20.0 and return.progress_by_customer < 30.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 20%;" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">20%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 30.0 and return.progress_by_customer < 40.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">30%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 40.0 and return.progress_by_customer < 50.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 40%;" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100">40%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 50.0 and return.progress_by_customer < 60.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">50%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 60.0 and return.progress_by_customer < 70.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 60%;" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100">60%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 70.0 and return.progress_by_customer < 80.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 70%;" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100">70%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 80.0 and return.progress_by_customer < 90.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100">80%</div>
+                                </div>
+                            {% elif return.progress_by_customer >= 90.0 and return.progress_by_customer < 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100">90%</div>
+                                </div>
+                            {% elif return.progress_by_customer == 100.0 %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">100%</div>
+                                </div>
+                            {% else %}
+                                <div class="progress">
+                                    <div class="progress-bar bg-danger" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                </div>
+                            {% endif %}
+                        </td>
+                           
+                            <td>{{ return.sale.sale_order.order_id }}</td>
+                            <td>{{ return.sale.product.name }}</td>
+                            <td>{{ return.sale.user }}</td>
+                            <td>{{ return.sale.quantity }}</td>
+                            <td>{{ return.quantity_refund }}</td>
+                            <td>{{ return.sale.sale_order.customer.name }}</td>
+                            <td>{{ return.get_return_reason_display }}</td>                          
+                            <td>{{ return.get_refund_type_display }}</td>
+
+                            <td><i class="fas fa-check" style="color:rgb(244, 121, 6);font-weight:bold"></i>{{ return.get_status_display }}</td>
+                            <td>
+                                {% if return.faulty_products.first.faulty_replacement.first.status == 'REPLACED_DONE' %}
+                                <span><i  class="fas fa-check text-success fwbold">Replaced completed</i></span>
+                                {% elif return.faulty_products.first.status == 'REPAIRED_AND_RETURNED' %}   
+                                <span><i  class="fas fa-check text-success fwbold">Reapired and returned done</i></span> 
+                                {% else %}                           
+                                <i class="fas fa-ellipsis-h">In process</i>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+              <!-- Pagination Controls -->
+              <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+            {% else %}
+            <span>No records available</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_order_id').select2({
+            width: '70%',
+            placeholder: 'Search sale order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale order',
+            allowClear: true
+        });
+    });
+
+
+   
+    </script>
+    
+
+
+{% endblock %}

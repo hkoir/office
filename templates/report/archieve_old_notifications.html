@@ -1,0 +1,92 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">    
+        <h4 class="text-center" style="color:blue;margin-top:10px"><strong>Archieve and delete old notifications</strong></h6>  
+            
+
+        <div class="col-12">    
+                        
+            <form method="GET" action="">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days }}
+                        </div>
+                        
+                        <div class="col-md-3 col-sm-6 mt-2">
+                            <button type="submit" class="btn btn-primary">Submit</button> 
+                           
+                        </div>
+                    </div>
+                </div>                    
+            </form>
+           
+        </div>
+
+       
+
+        <div class="col-12">                  
+            <h6 style="color:blue;margin-top: 40px;">Notifications</h6>
+            <table class="table table-hover">
+                <thead class="table-dark">                           
+                    <tr>
+                        <th>Notification Type</th>
+                        <th>Notification</th>
+                        <th>Created at</th>
+                    </tr>
+                </thead>
+                <tbody>  <!-- Move <tbody> before the loop -->
+                    {% for data in page_obj %}
+                        <tr>
+                            <td style="white-space: normal;">{{ data.notification_type }}</td>
+                            <td style="white-space: normal;">{{ data.message }}</td>
+                            <td>{{ data.created_at }}</td>                                   
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="2">No notifications available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>             
+            </table>
+        </div>
+        
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">previous</a>
+                    {% endif %}
+            
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+            
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.days %}&days={{ request.GET.days }}{% endif %}{% if request.GET.start_date %}&start_date={{ request.GET.start_date }}{% endif %}{% if request.GET.end_date %}&end_date={{ request.GET.end_date }}{% endif %}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+            
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}

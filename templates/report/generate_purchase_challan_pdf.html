@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+<title>Challan - {{ delivery_order.order_number }}</title>
+
+   
+<h4>Challan/Invoice Details for Order: {{ purchase_order.purchase_order_id }}</h4>
+<p>Date: {{ purchase_order.order_date }}: Supplier:{{  purchase_order.supplier.supplier_name}}</p>
+
+<div class="col-12 table-responsive">
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Product Type</th>
+            <th>Unit Price</th>
+            <th>Total Price</th>
+         
+        </tr>
+    </thead>
+    <tbody>
+        {% for purchase in purchase_order.purchases_order.all %}
+        <tr>
+            <td>{{ purchase.product.product_name }}</td>
+            <td>{{ purchase.quantity }}</td>
+            <td>{{ purchase.product.product_type }}</td>
+            <td>BDT {{ purchase.product.unit_price }}</td>
+            <td>BDT {{ purchase.total_price }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<a href="?download=true">Download PDF Challan</a>
+
+
+
+    {% endblock %}

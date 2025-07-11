@@ -1,0 +1,41 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+    
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">       
+       
+            <h4 class="text-center mb-4" >
+                <span style="color: blue;font-weight: bolder;"> ||Office Documentations||</span> 
+             </h4>
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'officemanagement:create_office_document' %}"  class="text-decoration-none">
+                <div class="menu-card">   
+                    <i class="fas fa-user menu-icon"></i>                    
+                    <div class="menu-title">Manage Documents</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'officemanagement:office_document_list' %}"  class="text-decoration-none">
+                <div class="menu-card">   
+                    <i class="fas fa-eye menu-icon"></i>                    
+                    <div class="menu-title">Documents view</div>
+                </div>
+            </a>
+        </div>
+        
+
+     
+
+    </div>
+</div>
+
+
+    
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+
+<body>
+    <div class="container">
+        <h1 class="mt-4">Results for: {{ question_paper.title }}</h1>
+        <p>Your total score: {{ total_score }}</p>
+
+        <a href="{% url 'recruitment:take_exam' paper_id=question_paper.id %}" class="btn btn-primary">Take Another Exam</a>
+    </div>
+
+  
+
+{% endblock %}

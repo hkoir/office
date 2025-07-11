@@ -1,0 +1,151 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+   
+        <h4 class="text-center mb-4" >
+            <span style="color: blue;font-weight: bolder;"> ||<A>Performance & Appraisal</A>||</span> 
+         </h4>
+        
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'tasks:create_team' %}"class="text-decoration-none">
+                <div class="menu-card">      
+                    <i class="fas fa-plus-square menu-icon"></i>                
+                    <div class="menu-title">Create team</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'tasks:add_member' %}"class="text-decoration-none">
+                <div class="menu-card">       
+                    <i class=" fas fa-solid fa-plus-circle"></i>               
+                    <div class="menu-title">Add Member</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'tasks:create_task' %}"class="text-decoration-none">
+                <div class="menu-card">    
+                    <i class="fas fa-plus-square menu-icon"></i>                  
+                    <div class="menu-title">Create Task</div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'tasks:tasks_list' %}"class="text-decoration-none">
+                <div class="menu-card">      
+                    <i class="fas fa-tasks menu-icon"></i>              
+                    <div class="menu-title">Tasks List</div>
+                </div>
+            </a>
+        </div>   
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'customerportal:ticket_list' %}"class="text-decoration-none">
+                <div class="menu-card">      
+                    <i class="fas fa-tasks menu-icon"></i>              
+                    <div class="menu-title">Ticket List</div>
+                </div>
+            </a>
+        </div>   
+
+        <div class="col-6 col-md-3 col-lg-2 mt-2">
+            <a href="{% url 'tasks:performance_evaluation_view' %}"class="text-decoration-none">
+                <div class="menu-card">       
+                    <i class="fas fa-file menu-icon"></i>                
+                    <div class="menu-title">Evaluation sheet</div>
+                </div>
+            </a>
+        </div>
+
+
+   
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:aggregated_report_sheet' %}"class="text-decoration-none">
+            <div class="menu-card">      
+                <i class="fas fa-file menu-icon"></i>               
+                <div class="menu-title">Aggregated report Sheet</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:team_performance_chart' %}"class="text-decoration-none">
+            <div class="menu-card">    
+                <i class="fas fa-chart-bar menu-icon"></i>                
+                <div class="menu-title">Team performance</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:employee_performance_chart' %}" class="text-decoration-none">
+            <div class="menu-card">  
+                <i class="fas fa-chart-line menu-icon"></i>                     
+                <div class="menu-title">Employee performance</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:year_month_performance_chart' %}" class="text-decoration-none">
+            <div class="menu-card">   
+                <i class="fas fa-chart-area menu-icon"></i>                  
+                <div class="menu-title">Monthly trend</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:year_quarter_performance_chart' %}" class="text-decoration-none">
+            <div class="menu-card">
+                <i class="fas fa-chart-area menu-icon"></i>                       
+                <div class="menu-title">Quarterly Trend</div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:yearly_performance_trend' %}" class="text-decoration-none">
+            <div class="menu-card">       
+                <i class="fas fa-chart-area menu-icon"></i>               
+                <div class="menu-title">Yearly Trend</div>
+            </div>
+        </a>
+    </div>
+
+    
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:group_performance_chart' %}" class="text-decoration-none">
+            <div class="menu-card">   
+                <i class="fas fa-chart-area menu-icon"></i>                    
+                <div class="menu-title">Group performance</div>
+            </div>
+        </a>
+    </div>
+
+    
+    <div class="col-6 col-md-3 col-lg-2 mt-2">
+        <a href="{% url 'tasks:increment_promotion' %}" class="text-decoration-none">
+            <div class="menu-card">   
+                <i class="fas fa-chart-area menu-icon"></i>                    
+                <div class="menu-title">Appraisal</div>
+            </div>
+        </a>
+    </div>
+          
+      
+
+    </div>
+</div>
+
+
+
+    {% endblock %}

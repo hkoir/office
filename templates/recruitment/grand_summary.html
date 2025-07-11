@@ -1,0 +1,194 @@
+
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+
+<style>
+    h4 {
+    font-size: 22px;
+    font-weight: bold;
+    color: #333; /* Darker color for better visibility */
+}
+
+.list-group-item {
+    font-size: 16px;
+    font-weight: 500;
+    border-bottom: 1px solid #ddd; /* Controls line thickness */
+    padding: 10px 15px;
+    height:40px;
+}
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <h4 class="text-center fw-bold">Recruitment summary:
+        {% if project_name %}
+        Project name:{{ project_name }}
+        {% else %}
+        Please choose project
+         {% endif %}
+         : <a href="{% url 'recruitment:selected_candidate' %}" class="btn btn-danger text-white">Selected Candidates</a>
+    </h4>
+  
+    <div class="row">       
+       
+        <div class="col-12">
+            <div class="container-fluid">
+                <div class="row">               
+                                   
+                     <div class="col-12 col-md-4">
+                        <div class="card shadow-lg" style="background-color: aliceblue;">
+                             <!-- Card Header -->
+                             <div class="card-header bg-primary text-white text-center">
+                                <h4 class="text-white">Filter by project</h4>
+                            </div>              
+                            <form method="GET" enctype="multipart/form-data" class="p-2 m-4">
+                                {% csrf_token %}
+                                {{ form.as_p }}   
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg"> Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>    
+                            
+
+                    <div class="col-12 col-md-4">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body" style="background-color: aqua;">                                                          
+                               
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total candidates:
+                                        <span> {{ total_candidates_project }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total selected:
+                                        <span> {{ total_selected_project }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total offer letter:
+                                        <span> {{ total_offer_letter_project }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total waitlist:
+                                        <span> {{ total_waitlist_project}}</span>
+                                    </li>
+
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total confirmation :
+                                        <span> {{ total_confirmation_project }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        total onboard:
+                                        <span> {{ total_onboard_project}}</span>
+                                    </li>
+                                </ul>
+                               
+                                  
+                                     
+                            </div>
+                        </div>
+                    </div>
+                           
+               
+                <div class="col-12 col-md-4" style="background-color: aliceblue;height:250px" >
+                    <h4 class="text-center mt-2"> Summary of Recruitment Process</h4>
+                    <canvas id="piChart" style="margin-top:30px; max-width: 100%; max-height: 60%;"></canvas>        
+                </div>
+            </div>
+            </div>
+        </div>        
+        <div class="col-12 mt-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12">                       
+                        <h3>🔍 Job-Specific Details</h3>                        
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                            <tr>
+                                <th>Job Title</th>
+                                <th>Total Candidates</th>
+                                <th>Selected</th>
+                                <th>Offer Letters</th>
+                                <th>Waitlisted</th>
+                                <th>Confirmed</th>
+                                <th>Onboarded</th>
+                            </tr>
+                            </thead>
+                            {% for job in job_reports %}
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <a href="{% url 'recruitment:selected_candidate_with_id' job.job_id %}">{{ job.job_title }}</a>
+                                 
+                                </td>
+                                <td>{{ job.total_candidates }}</td>
+                                <td>{{ job.total_selected }}</td>
+                                <td>{{ job.total_offer_letter }}</td>
+                                <td>{{ job.total_waitlist }}</td>
+                                <td>{{ job.total_confirmation }}</td>
+                                <td>{{ job.total_onboard }}</td>
+                            </tr>
+                        </tbody>
+                            {% endfor %}
+                        </table>
+                    </div>
+            
+
+                </div>
+            </div>
+           
+        </div>
+       
+
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+
+
+    <script>
+        var pieChartData = JSON.parse('{{ pie_chart_data|escapejs }}');  // Parsing the JSON data
+
+        var ctx = document.getElementById('piChart').getContext('2d');
+        var pieChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: pieChartData.labels,  // Using the parsed labels from JSON
+                datasets: [{
+                    label: 'Recruitment Data',
+                    data: pieChartData.data,  // Using the parsed data from JSON
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FFC107', '#FF5722', '#9C27B0']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'left', 
+                        labels: {
+                            font: {
+                                size: 16, 
+                                family: 'Arial', 
+                                weight: 'bold', 
+                            },
+                            color: '#333', 
+                        }
+                    }
+                }
+            }
+
+        });
+    </script>
+
+
+
+{% endblock %}

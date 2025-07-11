@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <h4>Confirm transfer Order</h4>
+            {% if transfer_basket %}        
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Source Warehouse</th>
+                        <th>Target Warehouse</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     {% for item in transfer_basket %}
+                    <tr>
+                        <td>{{ item.product_name }}</td>
+                        <td>{{ item.source_warehouse_name }}</td>
+                        <td>{{ item.target_warehouse_name }}</td>
+                        <td>{{ item.quantity }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary">Confirm transfer</button>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

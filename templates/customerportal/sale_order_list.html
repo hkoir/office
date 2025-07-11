@@ -1,0 +1,248 @@
+{% extends 'partner_portal_base.html' %}
+
+{% load custom_filters %}
+{% block content %}
+
+
+<div class="container-fluid main-content mt-0">
+    <div class="row">          
+        <div class="col-12">     
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_sale_order_id"> Sale Order</label>
+                             {{ form.sale_order_id }}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">                  
+                        {% if sale_order_number %}
+                            Search result for sale order: <b>{{ sale_order_number }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>      
+                  
+        <div class="col-12 table-responsive">       
+
+            <table class="bg-light">
+                <thead class="bg-dark text-white">
+                    <tr>                   
+                        <th class="text-center p-2">Sale Order Number</th>    
+                        <th class="text-center p-2">Customer</th>                  
+                         <th class="text-center p-2">Total amount</th> 
+                         <th>Delivered Items</th>
+                         <th class="text-center p-2">Date sold</th> 
+                         <th class="text-center p-2">Days Passed</th> 
+                         <th class="text-center p-2">Delivery Status</th> 
+ 
+                         <th class="text-center p-2" style="background-color: rgb(235, 109, 12);">Update Item shipment status</th> 
+                         <th class="bg-primary text-white">Quality/Quantity Confirmation</th> 
+                         <th class="bg-primary text-white">Items received</th> 
+                         <th style="height:5px; background-color:red"></th>
+                         <th class="text-center p-2">Create RRR</th>    
+                         <th class="text-center p-2">View RRR Status</th>              
+                     
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in page_obj %}                  
+                        <tr>                          
+                          <td class="text-center p-1" style="white-space: nowrap;">{{ order.order_id }}</td> 
+                          <td class="text-center p-1" style="white-space: nowrap;">{{ order.customer.name}}</td>                           
+                          <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount|add_commas}}</td>
+                          
+                          <td>
+                            <a href="{% url 'customerportal:item_dispatched' order.id %}">
+                                 Items Dispatched</a>
+                        </td>
+                                  
+                          
+                          <td class="text-center p-2" style="white-space: nowrap;">{{order.created_at|date:'M-d,Y'}}</td>
+                          <td class="text-center">
+                            {% if order.created_at %}
+                                {{ order.created_at|timesince }}
+                            {% else %}
+                                Not Sold Yet
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="text-success fw-bold">
+                                {{order.sale_shipment.first.sale_shipment_dispatch.first.get_status_display}}
+                            </span>
+                          
+                        </td>
+
+                        <td style="background-color: aquamarine;">                          
+                                {% if order.sale_shipment.first.sale_shipment_dispatch.first.status|item_list:'DELIVERED,REACHED,OBI' %}
+                                <i class="fas fa-check" style="color:green;font-weight: bold;"></i>Done
+                            {% else %}
+                                <a href="{% url 'customerportal:sale_dispatch_item_list' order.id %}">Update</a>
+                            {% endif %}
+                        </td>
+                       
+                    
+                        <td>
+                            {% if order.is_fully_delivered %}
+                            <i class="fas fa-check text-success fw-bold"></i> <span>Completed</span>
+                            {% elif not order.sale_shipment.first.sale_shipment_dispatch.first.status|item_list:'REACHED,OBI' %}
+                            <i class="fas fa-box text-info fw-bold"></i> <span style="color:brown">Not arrived yet</span>
+                            {% else %}
+                            <a href="{% url 'customerportal:customer_qc_dashboard_with_order' order.id %}">Check & confirm</a>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if order.is_fully_delivered %}
+                            <a href="{% url 'customerportal:sale_dispatch_item_list' order.id %}">Items received</a>
+                            {% else %}
+                            <span>In Process</span>
+                            {% endif %}
+                        </td>
+
+                        <td style="height:5px; background-color:red"></td>
+                          <td>
+                            {% if order.is_fully_delivered %}
+                            <a href="{% url 'customerportal:create_return_request' order.id %}"> Apply for repair return</a>
+                            {% else %}
+                            <span>Goods Not delivered</span>
+                            {% endif %}
+                        </td>
+                     
+                          <td>
+                            {% if order.is_fully_delivered %}
+                            <a href="{% url 'customerportal:return_request_progress' order.id %}">View Progress</a>
+                            {% else %}
+                            <span>Goods Not delivered</span>
+                            {% endif %}
+                        </td>
+                           
+
+
+                        </tr> 
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+        
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        
+    </div>
+</div>      
+
+
+
+<!-- Bootstrap Modal -->
+<div class="modal fade" id="messageModal" tabindex="-1" aria-labelledby="messageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="messageModalLabel">
+                    {% if messages %}
+                        {% for message in messages %}
+                            {% if forloop.first %}
+                                {% if "error" in message.tags %}
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Error
+                                {% elif "success" in message.tags %}
+                                    <i class="bi bi-check-circle-fill"></i> Success
+                                {% elif "info" in message.tags %}
+                                    <i class="bi bi-info-circle-fill"></i> Info
+                                {% elif "warning" in message.tags %}
+                                    <i class="bi bi-exclamation-circle-fill"></i> Warning
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="messagesContainer">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_order_id').select2({
+            width: '70%',
+            placeholder: 'Search sale order...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale order',
+            allowClear: true
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const messageModal = document.getElementById('messageModal');
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messageModal && messagesContainer && messagesContainer.children.length > 0) {
+            const modalInstance = new bootstrap.Modal(messageModal);
+            modalInstance.show();
+            setTimeout(() => {
+                    modalInstance.hide();
+                }, 5000)
+        }
+    });
+    </script>
+    
+
+
+
+
+{% endblock %}

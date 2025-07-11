@@ -1,0 +1,337 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">         
+        <div class="col">       
+
+            <h4> Placed Purchase orders</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                   
+                        <th class="text-center p-2">Purchase Order Number</th>                      
+                         <th class="text-center p-2">Request Order Number</th>
+                        <th class="text-center p-2">Total amount Due</th> 
+                    
+
+                        <th class="text-center p-2">Total amount Paid</th>
+                        <th class="text-center p-2">Created at</th>                    
+                        <th class="text-center p-2">Status</th>
+                
+                        <th class="text-center p-2">Prepared by</th>
+                        <th class="text-center p-2">Order items</th>
+                        <th class="text-center p-2">Submission</th>
+
+                        <th class="text-center p-2">Reviewal</th>
+                        <th class="text-center p-2">Approval</th>                                     
+                        <th class="text-center p-2">Create shipment</th>
+
+                        <th class="text-center p-2">Add child schedule</th>
+                        <th class="text-center p-2">QC Dashboard</th>                        
+                        <th class="text-center p-2">Create Invoice</th>
+
+                        <th class="text-center p-2">Payment Status</th>
+                        <th class="text-center p-2">Make payment</th>
+                        <th class="text-center p-2">Dispatch Items</th> 
+                     
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in purchase_orders%}
+                  
+                        <tr>                           
+                         
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.order_id }}</td>                            
+                            <td class="text-center p-1" style="white-space: nowrap;">{{ order.purchase_request_order.order_id }}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>
+                           
+
+
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                                {% with shipment=order.purchase_shipment.first %}
+                                    {% if shipment %}
+                                        {% with invoice=shipment.shipment_invoices.first %}
+                                            {% if invoice %}
+                                                <!-- Display the total payment amount -->
+                                                <span>BDT{{ invoice.total_paid_amount }}</span>
+                                            {% else %}
+                                                <span class="text-secondary">No Invoice</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <span class="text-secondary">No Shipment</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.created_at}}</td>                          
+                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">{{ order.get_status_display }}</i></td>    
+                                       
+                            
+
+
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.user}}</td>
+                            <td class="text-center p-1" style="white-space: nowrap;">
+                                <a href="{% url 'manufacture:materials_request_items' order.id %}">Order items</a>
+                            </td>
+                            <!-- Rquester Button -->
+                            <td>
+                                {% if order.approval_data %}
+                                    {% with order.approval_data.requester as approval_data %}
+                                        {% if approval_data %}
+                                            {% if approval_data.status == 'SUBMITTED' %}
+                                            <strong><i class="fas fa-check" style="color:green">Submitted</i></strong>
+                                            {% elif approval_data.status == 'CANCELLED' %}
+                                            <strong><i class="fas fa-times" style="color:red;"></i> Cancelled</strong>
+                                            {% else %}
+                                                <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Submit Request</a>
+                                            {% endif %}
+                                        {% else %}
+                                            <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Submit Request</a>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Submit Request</a>
+                                {% endif %}
+                            </td>                            
+                        
+
+
+
+                            <!-- Review Button -->
+                            <td>
+                            {% if order.requester_approval_status != 'CANCELLED' %}
+                             {% if order.approval_data %}                          
+                                 {% with order.approval_data.reviewer as approval_data %}
+                                     {% if approval_data %}
+                                            {% if approval_data.status == 'REVIEWED' %}
+                                            <strong><i class="fas fa-check" style="color:green">Reviewed</i></strong>
+                                            {% elif approval_data.status == 'CANCELLED' %}
+                                            <strong><i class="fas fa-times" style="color:red;"></i> Cancelled</strong>
+                                            {% else %}
+                                                <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Review Request</a>
+                                            {% endif %}
+                                        {% else %}
+                                        <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Review Request</a>
+                                     {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Review Request</a>
+                                {% endif %}
+                            {% else %}
+                            <button class="btn btn-secondary" disabled>Cancelled</button>
+                            {% endif %}
+                            </td>     
+
+                         <!-- Approver Button -->                                                
+                        <td>
+                            {% if order.requester_approval_status == 'CANCELLED' or order.reviewer_approval_status == 'CANCELLED' %}
+                                <button class="btn btn-secondary" disabled>Cancelled</button>
+                            {% elif order.requester_approval_status != 'SUBMITTED' or order.reviewer_approval_status != 'REVIEWED' %}
+                                <button class="btn btn-secondary" disabled>Pending Actions</button>
+                            {% else %}
+                                <!-- Enable Approve Request button only if all conditions are met -->
+                                {% if order.approval_data %}
+                                    {% with order.approval_data.approver as approval_data %}
+                                        {% if approval_data %}
+                                            {% if approval_data.status == 'APPROVED' %}
+                                                <strong><i class="fas fa-check" style="color:green">Approved</i></strong>
+                                            {% elif approval_data.status == 'CANCELLED' %}
+                                                <strong><i class="fas fa-times" style="color:red;"></i> Cancelled</strong>
+                                            {% else %}
+                                                <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Approve Request</a>
+                                            {% endif %}
+                                        {% else %}
+                                        <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Approve Request</a>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                <a href="{% url 'manufacture:process_materials_request' order.id %}" class="btn btn-primary">Approve Request</a>
+                                {% endif %}
+                            {% endif %}
+                        </td>        
+                        
+
+                           {% if order.purchase_shipment.first.is_fully_shipped %}
+                        <td><i class="fas fa-check" style="color:green;font-weight: bold;">Shipment completed</i></td>
+                            {% elif order.approver_approval_status != 'APPROVED' %}
+                        <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                            {% else %}
+                        <td class="text-center p-2" style="white-space: nowrap;">
+                            <a href="{% url 'logistics:create_purchase_shipment' order.id %}" class="btn btn-sm btn-primary">Create Shipment</a>
+                        </td>
+                         {% endif %}
+
+
+
+
+
+
+                            
+                         {% if order.approver_approval_status != 'APPROVED' %}
+                    <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                        {% else %}                           
+                        {% with shipment=order.purchase_shipment.first %}
+                        {% if shipment %}
+                                {% if shipment.is_fully_shipped %}
+                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">All Scheduled</i></td>
+                            {% else %}
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                                <a href="{% url 'logistics:create_purchase_dispatch_item' shipment.id %}" class="btn btn-sm btn-primary">Add child dispatch</a>
+                            </td>
+                            {% endif %}
+                            {% else %}
+                        <td>Make shipment first</td>
+                        {% endif %}
+                        {% endwith %}
+                    {% endif %}
+                        
+  
+                        {% if order.approver_approval_status != 'APPROVED' %}
+                    <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                        {% else %}                       
+                        {% if order.status == "DELIVERED" %}
+                    <td><i class="fas fa-check" style="color:green;font-weight: bold;">QC done</i></td>
+                        {% else %}
+                    <td class="text-center p-2" style="white-space: nowrap;">
+                        <a href="{% url 'manufacture:qc_dashboard' order.id %}" class="btn btn-sm btn-primary">QC Dashboard</a>
+                    </td>
+                        {% endif %}
+                    {% endif %}
+
+                    {% if order.approver_approval_status != 'APPROVED' %}
+                        <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                        {% else %}                                                    
+                            {% with shipment=order.purchase_shipment.first %}
+                                {% if shipment %}
+                                    {% with invoices=shipment.shipment_invoices %}
+                                        {% if invoices.exists %}
+                                            {% if shipment.is_fully_invoiced %}
+                                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">Fully Invoiced</i></td>
+                                            {% else %}
+                                                <td><i class="fas fa-check" style="color:green;font-weight: bold;">Partially Invoiced</i></td>
+                                                <td class="text-center p-2" style="white-space: nowrap;">
+                                                    <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Another Invoice</a>
+                                                </td>
+                                            {% endif %}
+                                        {% else %}
+                                            <td class="text-center p-2" style="white-space: nowrap;">
+                                                <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
+                                            </td>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <td><button class="btn btn-sm btn-secondary" disabled>Make shipment first</button></td>
+                                {% endif %}
+                            {% endwith %}   
+                    {% endif %}
+
+
+
+
+
+                        
+                {% if order.approver_approval_status != 'APPROVED' %}
+                <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                {% else %}
+                        <td class="text-center p-2" style="white-space: nowrap;">
+                            {% with shipment=order.purchase_shipment.first %}
+                                {% if shipment %}
+                                    {% with invoice=shipment.shipment_invoices.first %}
+                                        {% if invoice %}
+                                            {% if invoice.status == "SUBMITTED" or invoice.status == "PARTIALLY_PAID" %}
+                                                {% if invoice.is_fully_paid %}
+                                                    <span style="color:green; font-weight: bold;">Fully Paid</span>
+                                                {% elif invoice.remaining_balance > 0 %}
+                                                    <span style="color:orange; font-weight: bold;">Partially Paid</span>
+                                                {% else %}
+                                                    <span style="color:red; font-weight: bold;">No Payment Made</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span style="color:red; font-weight: bold;">Invoice Not Submitted</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-secondary">No Invoice</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="text-secondary">No Shipment</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    {% endif %}                            
+
+                     {% if order.approver_approval_status != 'APPROVED' %}
+                        <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                        {% else %}
+                            <td class="text-center p-2" style="white-space: nowrap;">
+                                {% with shipment=order.purchase_shipment.first %}
+                                    {% if shipment %}
+                                        {% with invoice=shipment.shipment_invoices.first %}
+                                            {% if invoice %}
+                                                {% if invoice.status == "SUBMITTED" or invoice.status == "PARTIALLY_PAID" %}
+                                                    {% if invoice.is_fully_paid %}
+                                                        <i class="fas fa-check" style="color:green; font-weight: bold;">Payment clear</i>
+                                                    {% elif invoice.remaining_balance > 0 %}
+                                                        <a href="{% url 'finance:create_purchase_payment' invoice.id %}" 
+                                                           class="btn btn-sm btn-primary">Make Payment</a>
+                                                    {% else %}
+                                                        <a href="{% url 'finance:create_purchase_payment' invoice.id %}" 
+                                                           class="btn btn-sm btn-primary">Make Payment</a>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span style="color:red; font-weight: bold;">Invoice not submitted or partially paid</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <button class="btn btn-sm btn-secondary" disabled>Make invoice first</button>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <button class="btn btn-sm btn-secondary" disabled>Make shipment first</button>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>                                      
+                       {% endif %}               
+
+                        {% if order.approver_approval_status != 'APPROVED' %}
+                    <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                       {% else %}
+                    <td><a href="{% url 'logistics:dispatch_item_list' order.id %}" class="btn btn-sm btn-primary">View Item List</a></td>
+                       {% endif %}
+
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+        
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        
+    </div>
+</div>      
+
+
+
+
+{% endblock %}

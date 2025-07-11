@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">     
+            <div class="container">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_sale_shipment_id"> Sale shipment ID</label>
+                             {{ form.sale_shipment_id }}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">                  
+                        {% if shipment_id %}
+                            Search result for sale order: <b>{{ shipment_id }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>      
+        <hr class="mt-2">
+
+
+        <div class="col-12 table-responsive">                    
+        <h4>Shipment List</h4>
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr class="btn-primary text-white">
+                    <th>Sale Order</th>
+                    <th>Shipment ID</th>
+                    <th>Total amount</th>
+                    <th>Carrier</th>
+                    <th>estimated_delivery</th>
+                    <th>Status</th>
+                
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for data in page_obj %}
+                    <tr>
+                        <td>{{ data.sales_order.order_id }}</td>
+                        <td>
+                            <a href="{% url 'logistics:sale_dispatch_item_list' data.sales_order.id %}">{{ data.shipment_id}}</a>
+                           
+                        </td>
+                       
+                        <td>{{ data.sales_order.total_amount|add_commas }}</td>
+                        <td>{{ data.carrier }}</td>
+                        <td>{{ data.estimated_delivery }}</td>
+
+                        <td>{{ data.status }}</td>
+                    
+                        <td>
+                            <a href="{% url 'logistics:sale_shipment_detail' data.id %}">Shipment details</a>
+                        </td>
+                    </tr>
+            
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+
+    </div>
+    
+ <div class="pagination">
+    <span class="step-links">
+        {% if page_obj.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+</div>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_shipment_id').select2({
+            width: '70%',
+            placeholder: 'Search sale shipment...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale ishipment',
+            allowClear: true
+        });
+    });
+
+    </script>
+
+{% endblock %}

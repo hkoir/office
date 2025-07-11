@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h2>Visitor Reports</h2>
+        <div class="col-12 mb-5">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-6 col-md-auto">
+                        <strong>Total Visitors Today:</strong> {{ daily_visitors }}
+                    </div>
+                    <div class="col-6 col-md-auto">
+                        <strong>Total Visitors This Month:</strong> {{ monthly_visitors }}
+                    </div>
+                    <div class="col-6 col-md-auto">
+                        <strong>Visitors Currently Inside:</strong> {{ current_visitors }}
+                    </div>
+                    <div class="col-6 col-md-auto">
+                        <strong>Overdue Visitors (Security Risk):</strong> {{ overdue_visitors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12 col-md-auto">
+            <canvas id="visitorTypeChart"></canvas>
+        </div>
+        <div class="col-12 col-md-auto">
+            <canvas id="companyVisitsChart"></canvas>
+        </div>
+        <div class="col-12 col-md-auto">
+            <canvas id="peakHoursChart"></canvas>
+        </div>
+
+
+
+        <h3>🚨 Overdue Visitors (Security Risk)</h3>
+        {% if overdue_visitors %}
+            <table class="table table-bordered table-striped">
+                <thead class="table-info">
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Check-in Time</th>
+                </tr>
+            </thead>
+                {% for visitor in overdue_visitors %}
+                    <tr>
+                        <td>{{ visitor.visitor__name }}</td>
+                        <td>{{ visitor.visitor__phone }}</td>
+                        <td>{{ visitor.check_in }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No overdue visitors.</p>
+        {% endif %}
+    
+        <!-- 🔁 Frequent Visitors Table -->
+        <h3>🔁 Frequent Visitors</h3>
+        {% if frequent_visitors %}
+            <table class="table table-bordered table-striped">
+                <thead class="table-warning">
+                <tr>
+                    <th>Name</th>
+                    <th>Phone</th>
+                    <th>Visit Count</th>
+                </tr>
+            </thead>
+                {% for visitor in frequent_visitors %}
+                    <tr>
+                        <td>{{ visitor.name }}</td>
+                        <td>{{ visitor.phone }}</td>
+                        <td>{{ visitor.visit_count }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p>No frequent visitors.</p>
+        {% endif %}
+    
+    </div>
+</div>
+
+
+   
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        let visitorSummary = JSON.parse('{{ visitor_summary_json|escapejs }}');
+        let companyVisits = JSON.parse('{{ company_visits_json|escapejs }}');
+        let peakHours = JSON.parse('{{ peak_hours_json|escapejs }}');
+
+        // Visitor Type Chart (Pie Chart)
+        let visitorLabels = visitorSummary.map(v => v.visitor_type);
+        let visitorCounts = visitorSummary.map(v => v.count);
+
+        new Chart(document.getElementById("visitorTypeChart"), {
+            type: 'pie',
+            data: {
+                labels: visitorLabels,
+                datasets: [{
+                    label: "Visitor Type",
+                    data: visitorCounts,
+                    backgroundColor: ['#ff6384', '#36a2eb']
+                }]
+            }
+        });
+
+        // Company Visits Chart (Bar Chart)
+        let companyLabels = companyVisits.map(c => c.company);
+        let companyCounts = companyVisits.map(c => c.total_visits);
+
+        new Chart(document.getElementById("companyVisitsChart"), {
+            type: 'bar',
+            data: {
+                labels: companyLabels,
+                datasets: [{
+                    label: "Company Visits",
+                    data: companyCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)'
+                }]
+            }
+        });
+
+        // Peak Hours Chart (Line Chart)
+        let hourLabels = peakHours.map(p => p.hour + ":00");
+        let hourCounts = peakHours.map(p => p.count);
+
+        new Chart(document.getElementById("peakHoursChart"), {
+            type: 'line',
+            data: {
+                labels: hourLabels,
+                datasets: [{
+                    label: "Peak Visitor Hours",
+                    data: hourCounts,
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    fill: false
+                }]
+            }
+        });
+    });
+</script>
+
+    
+
+{% endblock %}

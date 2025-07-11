@@ -1,0 +1,194 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+    <div class="container-fluid main-content my-3">
+        <h2 class="text-center mb-4">Score Card Details: Card name: {{ score_card.name }}</h2>
+        <div class="row row-cols-2 row-cols-md-4">
+            <div class="col">
+                <h4>Experiences:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Years of Experience</th>
+                            <th>Area of Experience</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for experience in experiences %}
+                        <tr>
+                            <td>{{ experience.year_of_experience }}</td>
+                            <td style="white-space: normal;">{{ experience.area_of_experience }}</td>
+                            <td>{{ experience.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col">
+
+
+                <h4>Language Score:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Language</th>
+                            <th>Skill Level</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lang in languages %}
+                            {% for skill in lang.skill_levels %}
+                                <tr>
+                                    <td>{{ lang.language.name }}</td>
+                                    <td>{{ skill.level }}</td>
+                                    <td>{{ skill.score }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col">
+                <h4>Educations:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="white-space: normal;">Degree Awarded</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for education in educations %}
+                        <tr>
+                            <td style="white-space: normal;">{{ education.degree_awarded }}</td>
+                            <td>{{ education.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </div>
+            <div class="col">
+
+                <h4>Educational Institutions:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Institution Name</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for institution in institutions %}
+                        <tr>
+                            <td>{{ institution.institution_name }}</td>
+                            <td>{{ institution.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </div>
+            <div class="col">
+
+       
+                <h4>Educational Subjects:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for subject in subjects %}
+                        <tr>
+                            <td>{{ subject.subject }}</td>
+                            <td>{{ subject.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </div>
+
+            <div class="col">
+
+                <h4>Skills:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Skills</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for skill in score_skills %}
+                        <tr>
+                            <td>{{ skill.skill_name }}</td>
+                            <td>{{ skill.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col">
+
+                <h4>Age:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Age</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for age in score_ages %}
+                        <tr>
+                            <td>{{ age.age }}</td>
+                            <td>{{ age.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </div>
+
+            <div class="col">
+
+                <h4>Certifications:</h4>
+                <table class="table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Certifications</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cert in certifications %}
+                        <tr>
+                            <td>{{ cert.certificate_name }}</td>
+                            <td>{{ cert.score }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            
+  
+       
+        
+       
+    </div>
+       <h4 style="height:10px"></h4>
+    </div>
+
+   
+{% endblock %}
+

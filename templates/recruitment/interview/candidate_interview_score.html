@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">    
+            <h2>Interview Scores for {{ candidate.full_name }}</h2>
+            <!-- Table for Scores -->
+            <table class="table mt-4">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Exam</th>
+                        <th>Panel Member</th>
+                        <th>Score</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for score in scores %}
+                        <tr>
+                            <td>{{ score.interview.exam.title }}</td>
+                            <td>{{ score.panel_member.panel_member }}</td>
+                            <td>{{ score.avg_score }}</td>
+                            <td>{{ score.remarks }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">No scores available for this candidate.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-12">
+            <h2>All score for {{ candidate.full_name }}</h2>
+
+            <!-- Table for Scores -->
+            <table class="table mt-4">
+                <thead class="table-dark">
+                    <tr>
+                    
+                        <th>CV screening score</th>
+                        <th>MCQ Exam score</th>
+                        <th>BQ Exam score</th>
+                        <th>MCQ + BQ Exam score</th>
+                        <th>Average Interview score</th>
+                        <th>Total average score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                
+                        <tr>
+                        
+                            <td>{{ cv_screening_score }}</td>
+                            <td>{{ exam_score }}</td>
+                            <td>{{ bq_exam_score }}</td>
+                            <td>{{ mcq_bq_exam_score }}</td>
+                            <td> {{ average_interview_score }}</td>
+                            <td> {{ total_average_score|floatformat:'2' }}</td>
+                        
+                        </tr>
+                    
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+  
+
+
+{% endblock %}

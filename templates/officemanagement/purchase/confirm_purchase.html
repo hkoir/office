@@ -1,0 +1,51 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">        
+
+        <div class="col-12 col-md-auto">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0"> Purchase Confirmation warehouse entry</h3>
+                </div> 
+                <div class="card-body">                       
+                    <form method="post" enctype="multipart/form-data" action="" id="add_customer">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> {% if instance %} Update {% else %} Add {% endif %}</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+const deleteModal = document.getElementById('deleteModal');
+deleteModal.addEventListener('show.bs.modal', function (event) {
+const button = event.relatedTarget; 
+const entityId = button.getAttribute('data-id');
+const entityName = button.getAttribute('data-name');
+
+const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+modalEntityName.textContent = entityName;
+
+const deleteForm = deleteModal.querySelector('#delete-form');
+deleteForm.action = `/officemanagement/delete_product/${entityId}/`;
+});
+</script>
+
+
+
+
+{% endblock %}

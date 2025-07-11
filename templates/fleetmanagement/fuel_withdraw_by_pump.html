@@ -1,0 +1,166 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+
+
+{% block content %}
+
+
+    <title>Create Ticket</title>
+   
+       
+
+<body>
+
+
+
+<div class="container-fluid main-content"> 
+    <div class="row">   
+        
+        <div class="col-xl-12">
+            
+            <form method="post">
+                {% csrf_token %}
+            <div class="container-fluid">
+               <div class="row row-cols-2 row-cols-md-3">
+                
+         
+                <div class="col"> Start date: {{ form.start_date }}</div>
+                <div class="col">End date {{ form.end_date }}</div>
+                <div class="col"> <button class="btn btn-primary" type="submit">Search</button></div>
+                 
+               </div>
+            </div>
+        </form>
+        </div>
+     
+      
+        <div class="col-xl-12 mt-4 mb-4 table-responsive">          
+                <h4 class ='text-center'>Total fuel withdraw and payment summary</h4>
+                <table class="table table-hover">
+                    <thead class="table-dark">        
+                        <tr>
+                
+                        <th class="text-center p-2">Action</th>
+                        <th class="text-center p-2">Action</th>
+                        <th class="text-center p-2">Pump Name</th>
+                        <th class="text-center p-2">Fuel amount</th>   
+                        <th class="text-center p-2">Total fuel cost</th>
+                        <th class="text-center p-2">Advance deposited</th>     
+                        <th class="text-center p-2">remaining balance</th>    
+                        <th class="text-center p-2">Payment made</th>                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in combined_fuel_data %}
+                    <tr>
+                        <td class="text-center p-2" style="white-space: nowrap;">
+                            {% if data.pump_id %}
+                                <a href="{% url 'transport:create_fuel_pump_payment' %}">view payment details</a>
+                            {% else %}
+                                No payment details
+                            {% endif %}
+                        </td>
+                        
+                        <td class="text-center p-2" style="white-space: nowrap;"><a href="{% url 'transport:datewise_fuel_withdraw' %}">view fuel withdraw details</a></td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.fuel_pump_name }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel_cost }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.advance_amount_given }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.remaining_cost }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_payment }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+      
+        <div class="col-12 col-md-6">
+            <h4 class ='text-center'>Fuel withdraw by Generator</h4>
+            <table class="bg-light">
+                <thead class="table table-striped">         
+                    <tr class="bg-primary text-white">
+                        <th class="text-center p-2">Pump Name</th>
+                        <th class="text-center p-2">Fuel amount</th>   
+                        <th class="text-center p-2">Fuel Cost</th>    
+                                       
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in pg_fuel_data %}
+
+                    <tr>
+                      {% if data.fuel_pump__fuel_pump_name %}
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.fuel_pump__fuel_pump_name }}</td>
+                        {% else %}
+                        <td class="text-center p-2" style="white-space: nowrap;">Loal Purchase</td>
+                        {% endif %}
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel_cost }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <h4 class ='text-center'>Fuel withdraw by Vehicle</h4>
+            <table class="bg-light">
+                <thead class="table table-striped">         
+                    <tr class="bg-primary text-white">
+                        <th class="text-center p-2">Pump Name</th>
+                        <th class="text-center p-2">Fuel amount</th>   
+                        <th class="text-center p-2">Fuel cost</th>                     
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in vehicle_fuel_data %}
+                    <tr>
+                      {% if data.pump__fuel_pump_name %}
+                      <td class="text-center p-2" style="white-space: nowrap;">{{ data.pump__fuel_pump_name }}</td>
+                      {% else %}
+                      <td class="text-center p-2" style="white-space: nowrap;">Loal Purchase</td>
+                      {% endif %}
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel }}</td>
+                        <td class="text-center p-2" style="white-space: nowrap;">{{ data.total_fuel_cost }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+
+
+
+    <script>
+        $(document).ready(function() {
+            $('#id_region_id').change(function() {
+                var selectedRegion = $('#id_region_id option:selected').text();
+                if (selectedRegion) {
+                    $('#id_region_name').val(selectedRegion);
+                }
+            });
+
+            $('#id_region_name').focus(function() {
+                $('#id_region_id').val('');
+            });
+
+            $('#id_zone_id').change(function() {
+                var selectedZone = $('#id_zone_id option:selected').text();
+                if (selectedZone) {
+                    $('#id_zone_name').val(selectedZone);
+                }
+            });
+
+            $('#id_zone_name').focus(function() {
+                $('#id_zone_id').val('');
+            });
+        });
+    </script>
+
+{% endblock %}

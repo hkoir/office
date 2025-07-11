@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+<div class="container main-content">
+    <h4 class="text-center">Confirm Delivery Order</h4>
+
+    <h4>Items to be delivered</h4>
+    {% if basket %}
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr class="bg-primary text-white">
+                <th>Product</th>
+                <th>Category</th>
+                <th>Quantity</th>
+                <th>Warehouse</th>
+                <th>Location</th>             
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in basket %}
+            <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.category }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.warehouse_name }}</td>
+                <td>{{ item.location_name }}</td>              
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Confirm Delivery Order</button>
+    </form>
+    {% else %}
+    <p>No items in the basket to confirm.</p>
+    {% endif %}
+</div>
+
+
+
+
+{% endblock %}

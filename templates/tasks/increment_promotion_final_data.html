@@ -1,0 +1,320 @@
+{% extends "base.html" %}
+
+{% load humanize %}
+
+
+{% block content %}
+
+
+
+  
+  <div class="container-fluid main-content">
+    <div class="row">   
+        
+        <div class="col-12 col-md-3 mb-4">
+            <div class="card shadow-lg border-0 rounded-lg" style="width:100%">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h5 class="mb-0"><span style="color:white;font-weight: bold;">After Final Appraisal</span></h5>
+                </div>
+                <div class="card-body" style="margin-left: 30px;">
+                    <hr>
+                    <form method="get" action="" id="filter_appraisal_data"> <!-- Change method to GET -->
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                        </div>
+                    </form>
+                </div>
+                <a href="{% url 'tasks:increment_promotion_check' %}" class="btn btn-success text-center">Go for analysis</a>
+            </div>
+        </div>
+        {% if page_obj %}
+
+        <div class="col-4 mt-4">                   
+            <h6>
+                <span style="color:blue;font-weight: bolder;">Choosen Criteria:</span><br>
+                Appraisal Year:{{appraisal_year}}<br>
+                Appraisal_type:{{appraisal_type}} <br>
+                {% if appraisal_type == 'MONTHLY' %}
+                Appraisal Period: {{month}}<br>
+                {% elif appraisal_type == 'QUARTERLY'  %}
+                Appraisal Period: {{quarter}}<br>
+                {% elif appraisal_type == 'HALF-YEARLY'  %}
+                Appraisal Period: {{half_year}}
+                {% endif %}
+            </h6>   
+            <h6 class="mt-2">
+                <span style="color:blue;font-weight: bolder;">Result:</span><br>
+                Total employee:{{total_employee}}<br>
+                Total employee evaluated:{{total_employee_evaluated}}<br>
+                Total employee promoted:{{total_promoted_employee}}<br><br>
+                <span style="color:blue;font-weight: bolder;">Increment:</span><br>
+                Total increment:{{total_increment_value|floatformat:'2'|intcomma}}<br>
+                Salary increment:{{total_salary_increment_value|floatformat:'2'|intcomma}}<br>
+                Promotional increment:{{total_promotional_increment_value|floatformat:'2'|intcomma}}<br>
+
+
+            </h6>             
+        </div>
+        <div class="col-4 col-md-2">                   
+            <canvas id="incrementChart" width="400" height="400"></canvas>                 
+        </div>
+        <div class="col-4 col-md-2">                   
+            <canvas id="incrementChart2" width="400" height="400"></canvas>                 
+        </div>
+        
+
+        <div class="col-12 table-responsive mt-2 mb-4">
+          
+            <table class="table table-hover">
+                <thead class="table-dark">
+               
+                <tr>   
+                                       
+                    <th>Employee</th>
+                    <th>Department</th>
+                    <th>Designation</th>
+                    <th>Increment Category</th>
+                    <th>Increment type</th>
+                    <th>Increment year</th>
+                    <th>Increment period</th>
+
+                    <th>Obtained Score</th>                   
+                    <th>Max Task Count</th>
+                    <th>Your Task Count</th>
+                    <th>Avg Task Count</th>
+                    <th>Weighted Score</th>
+                    
+                    
+                    <th>Salary Increment %</th>
+                    <th>Promotional Increment %</th>
+
+                    <th>Obtained Salary Increment %</th>
+                    <th>Obtained Promotional Increment %</th>
+                    <th>Salary Increment amount</th>
+                    <th>Promotional Increment amount</th>
+                    <th>New basic</th>
+
+                    <th>Obtained Promotion</th>
+                    <th>Final Promotion</th>
+                    
+                    
+                </tr>
+            </thead>
+            <tbody>
+              
+                {% for item in page_obj %}
+                    <tr>
+                        
+                        
+                        <td>{{ item.employee }}</td>
+                        <td>{{ item.employee.department }}</td>
+                        <td>{{ item.employee.position }}</td>
+                        <td>{{ item.get_appraisal_category_display }}</td>                        
+                        <td>{{ item.get_appraisal_type_display }}</td>     
+                        <td>{{ item.appraisal_year }}</td>
+
+                        <!-- Increment period -->
+                        <td>
+                        {% if item.appraisal_type == 'MONTHLY' %}
+                        {{ item.month}}
+                        {% elif item.appraisal_type == 'QUARTERLY' %}
+                        {{ item.quarter }}
+                        {% elif item.appraisal_type == 'HALF-YEARLY' %}
+                        {{ item.half_year }}
+                        {% elif item.appraisal_type == 'YEARLY' %}
+                        {{ item.year }}
+                        {% else %}
+                        Not defined
+                        {% endif %}
+                      </td>
+
+                     
+
+                      <td>{{item.final_score}}</td>
+                      <td>{{item.max_task_count}}</td>
+                      <td>{{item.task_count_employee}}</td>
+                      <td>{{item.avg_task_count}}</td>
+                      <td>{{item.weighted_final_score}}</td>
+
+
+                      <td>{{ item.salary_increment_percentage|floatformat:1|intcomma }}%</td>
+                      <td>{{ item.promotional_increment_percentage|floatformat:1|intcomma }}%</td>
+
+                      <td>{{ item.obtained_salary_increment_percentage|floatformat:2|intcomma }}%</td>
+                      <td>{{ item.obtained_promotional_increment_percentage|floatformat:2|intcomma }}%</td>
+                      
+                        <td>{{ item.salary_increment_amount|floatformat:2|intcomma}}</td>
+                        <td>{{ item.promotional_increment_amount|floatformat:2|intcomma}}</td>
+                        <td>{{ item.new_basic_salary|floatformat:2|intcomma}}</td>   
+                        
+                        <td>{{ item.obtained_promotion_recommendation }}</td>
+                        <td>{{ item.promotion_recommendation}}</td>
+                                              
+                        
+                         
+                    </tr>
+                {% endfor %}
+            </tbody>
+           
+        </table> 
+        {% else %}
+        <p>No data within selected criteria</p>
+        {% endif %}
+        <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+  
+      </div>
+   
+    </div>
+  </div>
+
+  
+
+<script>
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');
+    const chartData2 = JSON.parse('{{ chart_data2|escapejs }}');
+
+    const ctx = document.getElementById('incrementChart').getContext('2d');
+    const ctx2 = document.getElementById('incrementChart2').getContext('2d');
+
+    const incrementChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Increments',
+                data: chartData.values,
+                backgroundColor: [
+                    '#FF4500',  // Color for total employee (Orange Red)
+                    '#1E90FF',  // Color for total eligible (Dodger Blue)
+                    '#32CD32',  // Color for % of eligible (Lime Green)     
+                                
+                ],
+                borderColor: ['#FFFFFF', '#FFFFFF', '#FFFFFF'],
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                    color: '#333333',  // Set legend text color (e.g., dark gray)
+                    font: {
+                        size: 14,      // Optional: Change font size
+                        family: 'Arial', // Optional: Change font family
+                        weight: 'bold',  // Optional: Change font weight
+                    },
+                },
+                },
+            },
+        },
+    });
+
+
+    const incrementChart2 = new Chart(ctx2, {
+        type: 'pie',
+        data: {
+            labels: chartData2.labels,
+            datasets: [{
+                label: 'No of employees',
+                data: chartData2.values,
+                backgroundColor: [
+                    '#FF4500',  // Color for total employee (Orange Red)
+                    '#1E90FF',  // Color for total eligible (Dodger Blue)
+                    '#32CD32',  // Color for % of eligible (Lime Green)            
+                ],
+                borderColor: ['#FFFFFF', '#FFFFFF', '#FFFFFF'],
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                    color: '#333333',  // Set legend text color (e.g., dark gray)
+                    font: {
+                        size: 14,      // Optional: Change font size
+                        family: 'Arial', // Optional: Change font family
+                        weight: 'bold',  // Optional: Change font weight
+                    },
+                },
+                },
+            },
+        },
+    });
+</script>
+
+
+
+<script>
+    $(document).ready(function () {
+        function toggleFields() {
+            var monthValue = $('#id_month').val();
+            var quarterValue = $('#id_quarter').val();
+            var halfYearValue = $('#id_half_year').val();
+            var yearValue = $('#id_year').val();
+            var appraisalTypeValue = $('#id_appraisal_type').val();
+           
+            function toggleField(fieldId, show) {
+                var fieldContainer = $(`#${fieldId}`).closest('p'); 
+                if (show) {
+                    fieldContainer.show();
+                } else {
+                    fieldContainer.hide();
+                }
+            }
+
+            toggleField('id_appraisal_type', true);
+            toggleField('id_month', false);
+            toggleField('id_quarter', false);
+            toggleField('id_half_year', false);
+            toggleField('id_year', false);
+
+            if (appraisalTypeValue === 'MONTHLY') {
+                toggleField('id_month', true);
+            } else if (appraisalTypeValue === 'QUARTERLY') {
+                toggleField('id_quarter', true);
+            } else if (appraisalTypeValue === 'HALF-YEARLY') {
+                toggleField('id_half_year', true);
+            }else if (appraisalTypeValue === 'YEARLY') {
+                toggleField('id_year', true);
+            }
+        }
+
+        toggleFields();
+
+        $('#id_appraisal_type').change(function () {
+            toggleFields();
+        });
+
+        $('#id_month, #id_quarter, #id_half_year, #id_year').change(function () {
+            toggleFields();
+        });
+    });
+</script>
+
+
+
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'partner_portal_base.html' %}
+{% load custom_filters %} 
+{% block content %}
+
+
+
+<div class="container-fluid main-content" >
+    <div class="row">
+        <h4>Dispatch Items for Sale Order: {{ sale_order.order_id }}</h4>
+            <div class="col-12">            
+                          
+
+            {% for shipment, dispatch_items in shipments.items %}
+                <h5>Sale Shipment ID: {{ shipment.shipment_id }} - Status: <span style="font-size: large;color:brown;font-weight: bold;">{{ shipment.get_status_display }}</span></h5>
+            
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                      
+                        <!-- Column headers -->
+                        <tr>
+                            <th rowspan="2" style="width: 5%;">#</th>
+                            <th rowspan="2" style="width: 15%;">Item Name</th>
+                            <th rowspan="2" style="color:yellow;font-weight: bold; width: 10%;">Order Qty</th>
+                            <th rowspan="2" style="color:green;font-weight: bold; width: 10%;">Dispatch Qty</th>
+                            <th rowspan="2" style="color:yellow;font-weight: bold; width: 15%;">Committed Delivery</th>
+                            <th rowspan="2" style="color:green;font-weight: bold; width: 15%;">Actual Delivery</th>
+                            <th rowspan="2" style="width: 10%;">Delivery Status</th>
+                           
+                    </thead>
+                    
+                    <tbody>
+                        {% for shipment, dispatch_items in shipments.items %}
+                            {% for dispatch_item in dispatch_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+
+                                    <td>{{ dispatch_item.dispatch_item.product.name }}</td>                           
+                                    <td>{{ dispatch_item.dispatch_item.quantity }}</td>
+                                    <td>{{ dispatch_item.dispatch_quantity }}</td>
+                                    <td>{{ dispatch_item.delivery_date }}</td>                                                           
+                                    <td>
+                                        {% if dispatch_item.status|item_list:"REACHED,OBI,DELIVERED" %}
+                                            {{ dispatch_item.updated_at|date:"M-d,Y" }}
+                                        {% else %}
+                                            <span style="color:red;font-weight: bold;">Not delivered yet</span>
+                                        {% endif %}
+                                    </td>
+
+                                    
+                                    <td>{{ dispatch_item.get_status_display }}</td>  
+                                                              
+                                                              
+                               
+                            </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                    
+                </table>
+            {% endfor %}
+            
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}

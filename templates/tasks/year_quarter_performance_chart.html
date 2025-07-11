@@ -1,0 +1,190 @@
+
+{% extends 'base.html' %}  
+
+
+
+{% block content %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+   
+
+<div class="container-fluid main-content">
+    <div class="row">                             
+                       
+        <div class="col-12">           
+            <form method="GET">
+                {% csrf_token %}
+            <div class="container">
+                <div class="row">    
+                    <div class="col-6 col-md-3">
+                        Year{{ form.year }}
+                    </div>
+                    <div class="col-6 col-md-3">
+                        Department{{ form.department }}
+                    </div>               
+                    <div class="col-6 col-md-3">
+                        Employee{{ form.employee }}
+                    </div>
+                   
+                    <div class="col-6 col-md-3">
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        </div>
+        <div class="col-12 mt-4">
+            <h4 class="text-center mb-4">
+                <span style="color:blue;font-weight: bold;">Quarterly Performance for:{{ employee.name }}</span>
+                <span style="color:rgb(176, 7, 10);font-weight: bold;"> Year:{{ year }}:Department-{{department}}</span>
+            </h4>
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-6 col-md-4">                        
+                        {% if report_data %}                     
+                        <h6>Employee: {{ employee.name }}</h6>
+
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr class="bg-primary text-white">
+                                    <th>Quarter</th>                                    
+                                    <th>Total Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quarter, scores in page_obj %}
+                                    <tr>
+                                        <td>{{ quarter }}</td>                                        
+                                        <td>{{ scores.total_score|floatformat:'2'}}%</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% endif %}
+                        <!-- Pagination Controls -->
+                        <div class="pagination">
+                            <span class="step-links">
+                                {% if page_obj.has_previous %}
+                                    <a href="?page=1">&laquo; first</a>
+                                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                                {% endif %}
+
+                                <span class="current">
+                                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                                </span>
+
+                                {% if page_obj.has_next %}
+                                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                                {% endif %}
+                            </span>
+                        </div>
+
+                    </div>
+                    <!-- <div class="col-4">                      
+                        <canvas id="scoreChart" width="400" height="200"></canvas>
+                    </div> -->
+                    <div class="col-12 col-md-8 bg-light">
+                        {% if has_data %}
+                        <canvas id="lineChart" width="400" height="200"></canvas>
+                        {% else %}
+                        <span style="color:rgb(242, 6, 6);font-weight: bold;">No data found. Pls select year,name</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+<script>   
+    var chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+
+    const labels = chartData.labels || [];  
+    const totalScores = chartData.total_scores || [];  
+
+    const staticDataPoint1 = 100; 
+        const staticDataPoint2 = 90;  
+        const staticLabel1 = '2024-05'; 
+        const staticLabel2 = '2024-06';  
+
+        labels.push(staticLabel1,staticDataPoint2);
+        totalScores.push(staticDataPoint1,staticDataPoint2);
+
+       // Calculate the max y-axis value
+       const maxYValue = Math.max(
+                ...totalScores,       
+            ) * 1.2;
+
+
+    // var ctx = document.getElementById('scoreChart').getContext('2d');
+    // var scoreChart = new Chart(ctx, {
+    //     type: 'bar',  
+    //     data: {
+    //         labels: chartData.labels,  
+    //         datasets: [          
+    //         {
+    //             label: 'Total Score',
+    //             data: chartData.total_scores,  
+    //             backgroundColor: 'rgba(75, 192, 192, 0.6)',
+    //             borderColor: 'rgba(75, 192, 192, 1)',
+    //             borderWidth: 1,
+    //             barThickness: 30,
+    //         }]
+    //     },
+    //     options: {
+    //         scales: {
+    //             y: {
+    //                 beginAtZero: true
+    //             }
+    //         }
+    //     }
+    // });
+
+
+
+
+    const ctxLine = document.getElementById('lineChart').getContext('2d');
+    const lineChart = new Chart(ctxLine, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: '% Score',
+                    data: totalScores,
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date (YYYY-MM)'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max:maxYValue,
+                    title: {
+                        display: true,
+                        text: 'Total Score'
+                    }
+                }
+            }
+        }
+    });
+
+</script>
+{% endblock %}

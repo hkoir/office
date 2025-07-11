@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<form method="GET" action="{% url 'officemanagement:confirm_usage_dispatch' usage_request_order.id %}">
+    <label for="valuation_method">Choose Valuation Method:</label>
+    <select name="valuation_method" id="valuation_method" onchange="this.form.submit()">
+        <option value="FIFO" {% if valuation_method == 'FIFO' %}selected{% endif %}>FIFO</option>
+        <option value="LIFO" {% if valuation_method == 'LIFO' %}selected{% endif %}>LIFO</option>
+    </select>
+</form>
+
+
+<form method="POST">
+    {% csrf_token %}
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Requester</th>
+                <th>Department</th>
+                <th>Product</th>
+                <th>Requested Quantity</th>
+                <th>Batch</th>
+                <th>Warehouse</th>
+                <th>Location</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in usage_request_items %}
+
+            <tr>
+                <th>{{ item.requester }}</th>
+                <th>{{ item.department }}</th>
+                <td>
+                    {{ item.product_name }}
+                    <input type="hidden" name="product_id_{{ forloop.counter }}" value="{{ item.product_id }}">
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>
+                    <select name="batch_{{ forloop.counter }}" class="form-select">
+                        {% for batch in item.batches %}
+                        <option value="{{ batch.id }}">BATCH: Product={{ batch.stationary_product }}:Warehouse={{ batch.batch_inventory.first.warehouse }}:Warehouse Location={{ batch.batch_inventory.first.location }}:Available={{ batch.quantity }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select name="warehouse_{{ forloop.counter }}" class="form-select">
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <select name="location_{{ forloop.counter }}" class="form-select">
+                        {% for location in locations %}
+                        <option value="{{ location.id }}">{{ location.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary">Confirm Usage Dispatch</button>
+</form>
+
+
+{% endblock %}

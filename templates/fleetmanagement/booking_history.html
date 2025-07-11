@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">                                  
+                <form method="get" enctype="multipart/form-data" action="" id="add_customer">
+                    {% csrf_token %}
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-6 col-md-3">
+                                Start Date:{{ form.start_date }}   
+                            </div>
+                            <div class="col-6 col-md-3">
+                                End date:{{ form.end_date }}   
+                            </div>
+                            
+                        </div>
+                    </div>
+                                   
+                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>
+                </form>
+        </div>
+        <hr>
+        <h2>Booking history</h2>
+        
+        {% if history %}
+          
+        <table class="table table-hover">
+            <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">User </th>                                         
+                        <th class="text-center p-2">Vehicle code</th>
+                        <th class="text-center p-2">Vehicle Reg Number</th>                       
+                        <th class="text-center p-2">Start date</th>
+                        <th class="text-center p-2">End date</th>
+                        <th class="text-center p-2">Purpose</th>     
+                        <th class="text-center p-2">Status</th>     
+                       
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in history %} 
+                        <tr>
+                           
+                            <td class="text-center p-1">{{ data.booking.staff.username }}</td>                         
+                            <td class="text-center p-1">{{ data.booking.vehicle.vehicle_code }}</td>  
+                            <td class="text-center p-1">{{ data.booking.vehicle.vehicle_registration_number }}</td> 
+                               
+                            <td class="text-center p-1">{{ data.booking.request_datetime}}</td>
+                            <td class="text-center p-1">{{ data.booking.return_datetime}}</td>
+                            <td class="text-center p-1">{{ data.booking.purpose}}</td>
+                            <td class="text-center p-1">{{ data.booking.status}}</td>
+                           
+                           
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+                        
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+
+            {% endif %}
+       
+    </div>
+</div>
+
+
+
+{% endblock %}

@@ -1,0 +1,46 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">        
+
+       
+        <div class="col-12 col-md-8">
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Items</th>
+                        <th class="text-center p-2">Amount</th>
+                    
+                        <th class="text-center p-2">Description</th>
+                        <th class="text-center p-2">Created at</th>                       
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in items_submitted %}
+                        <tr>
+                            <td class="text-center p-1">{{ data.category }}</td>
+                            <td class="text-center p-1">{{ data.amount}}</td>                         
+                            <td class="text-center p-1">{{ data.description}}</td>                          
+                            <td>{{data.created_at}}</td>
+                           
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+   
+
+{% endblock %}

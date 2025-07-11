@@ -1,0 +1,21 @@
+
+{% extends "recruitment_portal.html" %}
+
+{% block content %}
+
+
+<div class="container mt-5">
+    <h2 style="color:blue;font-size: 16;font-weight: bold;">🎉Congratulations, {{ candidate.full_name }}! 🎉</h2>
+    <p>You have successfully confirmed your offer. Please follow the guidelines below:</p>
+    
+    <ul>
+        {% for guideline in guidelines %}
+            <li>{{ guideline }}</li>
+        {% endfor %}
+    </ul>
+
+    <p>Your expected joining date: <strong>{{ candidate. expected_joining_date }}</strong></p>
+    
+    <a href="{% url 'customerportal:job_list_candidate_view' %}" class="btn btn-primary mt-3">Go to Dashboard</a>
+</div>
+{% endblock %}

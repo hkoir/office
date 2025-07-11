@@ -1,0 +1,208 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid main-content"> 
+    <div class="row">
+
+        <div class="col-12">
+            <div class="container">
+                <div class="row">           
+                    <form method="GET" action="{% url 'transport:vehicle_overtime_calc' %}"></form>
+                    <div class="col" style="padding:5px;">  Start Date:  {{ form.start_date }} </div>
+                    <div class="col" style="padding:5px;">  End Date:  {{ form.end_date }} </div>
+                    <div class="col" style="padding:5px;"> No of days {{ form.days }} </div>
+                     <div class="col" style="padding:5px;">  Vehicle:{{ form.vehicle_number }} </div> 
+                    <div class="col" style="padding:5px; margin:5px"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                            
+                    </form>
+                 </div>
+            </div>
+        </div>
+       
+        
+        <div class="col-12 table-responsive">
+            <h4 style="margin-top:20px">Vehicle Costs Summary:                                   
+                Data for
+                {% if days %}
+                    the last {{ days }} days
+                {% elif start_date and end_date %}
+                    from: {{ start_date }} to {{ end_date }}
+                {% endif %}
+                         
+            </h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Vehicle Registration Number</th>
+                        <th class="text-center p-2">Total driver Overtime Cost</th>
+                        <th class="text-center p-2">Total Body Overtime Cost</th>
+                        <th class="text-center p-2">Total body rental Cost</th>
+                        <th class="text-center p-2">Total vehicle cost</th>
+
+                        <th class="text-center p-2" >Total kilometer cost</th>
+                        <th class="text-center p-2" >Grand total cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vehicle_reg_number, totals in vehicle_totals_list %}
+                        <tr>
+                            <td class="text-center p-2">{{ vehicle_reg_number }}</td>
+                            <td class="text-center p-2">{{ totals.total_overtime_cost|floatformat:'2' }}</td>
+                            <td class="text-center p-2">{{ totals.total_body_overtime_cost|floatformat:'2' }}</td>
+                            <td class="text-center p-2">{{ totals.total_rent_cost|floatformat:'2' }}</td>
+                            <td class="text-center p-2">{{ totals.total_vehicle_cost|floatformat:'2' }}</td>
+
+                            <td class="text-center p-2">{{ totals.total_kilometer_cost|floatformat:'2' }}</td>
+                            <td class="text-center p-2">{{ totals.grand_total_summary|floatformat:'2' }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>   
+        <div class="col-12 table-responsive">           
+            {% for vehicle_reg_number, x in datewise_running_data.object_list %}
+                <h4 style="margin-top:20px">Vehicle Registration Number: {{ vehicle_reg_number }}</h4>
+                
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th class="text-center p-2">Date</th>
+                            <th class="text-center p-2">Travel day</th>                                  
+                            <th class="text-center p-2">Kilometer run</th>
+
+                            <th class="text-center p-2">Total Running Hours</th>
+                            
+                            <th class="text-center p-2">Overtime hours</th>
+                            <th class="text-center p-2">Driver Overtime rate</th>
+                            <th class="text-center p-2">Vehicle Overtime rate</th>
+                            <th class="text-center p-2" >Vehicle Overtime</th>
+                            <th class="text-center p-2" >Driver Overtime</th>
+                            <th class="text-center p-2" >Vehicle body rent/day</th>
+                            <th class="text-center p-2" >Total vehicle cost today</th>
+
+                            <th class="text-center p-2" >Total CNG cost</th>
+                            <th class="text-center p-2" >Total gasoline cost</th>
+                            <th class="text-center p-2" >Total kilometer cost today</th>
+
+                            <th class="text-center p-2" >Grand total cost today</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for date, data in x.items %}
+                            <tr>
+                                <td class="text-center p-2" style="white-space:nowrap;">{{ date }}</td>
+                                <td class="text-center p-2" style="white-space:nowrap;">{{ data.remarks}}</td>                                        
+                                <td class="text-center p-2" style="white-space:nowrap;">{{ data.kilometer_run}}</td>
+                                
+                                <td class="text-center p-2">{{ data.total_running_hours|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.overtime_running_hours|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.overtime_rate|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.body_overtime_rate|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.body_overtime_cost|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.overtime_cost|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.vehicle_rent_per_day|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.total_cost|floatformat:'2' }}</td>
+
+                                <td class="text-center p-2">{{ data.total_CNG_cost|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.total_gasoline_cost|floatformat:'2' }}</td>
+                                <td class="text-center p-2">{{ data.total_kilometer_cost|floatformat:'2' }}</td>
+
+                                <td class="text-center p-2">{{ data.grand_total_cost|floatformat:'2' }}</td>
+
+                                
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% endfor %}                   
+
+        <div class="pagination" style="padding:10px">
+            {% if datewise_running_data.has_previous %}
+                <a style="margin:10px; font-size: 14px;" href="?page={{ datewise_running_data.previous_page_number }}">Previous</a>
+            {% endif %}
+            
+            {% for num in datewise_running_data.paginator.page_range %}
+                {% if datewise_running_data.number == num %}
+                    <span style="margin:10px; font-size:14px">{{ num }}</span>
+                {% else %}
+                    <a style="margin:10px; font-size:14px" href="?page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if datewise_running_data.has_next %}
+                <a style="margin:10px; font-size:14px" href="?page={{ datewise_running_data.next_page_number }}">Next</a>
+            {% endif %}
+        </div>       
+
+        </div>
+       
+
+    </div>
+</div>
+
+
+
+
+
+    
+<script>
+    $(document).ready(function(){      
+        var regionZoneMapping = {
+            'Sylhet': ['','Sylhet', 'Moulovibazar','Mymensingh','Kisorganj','Tangail'], 
+            'Rangpur': ['','Rangpur', 'Dinajpur','Bagura','Rajshahi'] ,                          
+            
+        };
+     
+        $('#id_region').change(function(){
+            var selectedRegion = $(this).val();
+            var zoneChoices = regionZoneMapping[selectedRegion];
+            $('#id_zone').empty();
+            $.each(zoneChoices, function(index, value){
+                $('#id_zone').append($('<option>').text(value).attr('value', value));
+            });
+        });
+              
+        var zoneMpMapping = {              
+            'Sylhet': ['','Sylhet','Taherpur','Sunamganj','Bianibazar','Dorbhost','Dherai','Chatak'], // Add more MPs for Sylhet zone
+            'Moulovibazar': ['','Moulovibazar', 'Saestaganj','Juri','Baniachong'],
+            'Mymensingh': ['','Mymensingh', 'Fulpur','Valuka'] ,
+            'Kisorganj': ['','Kisorganj','Katiadi','Netrokona','Mohonpur','Austogram'],
+            'Tangail': ['','Tangail','Madhupur','Jamalpur','Sherpur','Bakshihanj','Rowmari'],
+           
+            'Rangpur':['','Rangpur','Hatibandha','Gaibandha','Ulipur','Boropar','Polasbari'],
+            'Dinajpur':['','Dinajpur','Panchghor','Jaldhaka','Thakurgaon'],
+            'Rajshahi':['','Rajshahi','Bagura','Nachole','Natore','Chapai'],
+            'Bagura':['','Bagura'],
+            '': ['']
+           
+        };
+
+   
+        $('#id_zone').change(function(){
+            $('#id_mp').val('');
+            var selectedZone = $(this).val();
+            var mpChoices = zoneMpMapping[selectedZone];
+
+            $('#id_mp').empty();
+            $.each(mpChoices, function(index, value){
+                $('#id_mp').append($('<option>').text(value).attr('value', value));
+            });
+        });
+
+
+
+});          
+
+</script> 
+
+{% endblock %}

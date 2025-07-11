@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+
+<!-- seems it has no use need to check -->
+
+<form method="get" action="{% url 'tasks:search_employee' %}">
+    <input type="text" name="q" class="form-control" placeholder="Search employees..." value="{{ request.GET.q }}">
+    <button type="submit" class="btn btn-primary mt-2">Search</button>
+</form>
+
+<h5>Available Employees</h5>
+<ul>
+    {% for employee in employees %}
+    <li>
+        {{ employee.name }} ({{ employee.email }})
+        <a href="{% url 'tasks:add_to_basket' employee.id %}" class="btn btn-sm btn-success">Add</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<h5>Selected Members</h5>
+<ul>
+    {% for employee in basket %}
+    <li>
+        {{ employee.name }} ({{ employee.email }})
+        <a href="{% url 'tasks:remove_from_basket' employee.id %}" class="btn btn-sm btn-danger">Remove</a>
+    </li>
+    {% endfor %}
+</ul>
+
+<a href="{% url 'tasks:create_team' %}" class="btn btn-primary mt-3">Proceed to Create Team</a>
+
+
+
+
+
+{% endblock %}

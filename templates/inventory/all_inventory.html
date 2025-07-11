@@ -1,0 +1,168 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+{% load static %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h4 class="text-center mb-4" style="color:blue;font-weight: bold;">DOPS Inventor Summary</h4>
+            
+        <div class="col-12">   
+                       
+            <form method="GET" action="{% url 'inventory:all_inventory' %}">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date }}
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days }}
+                        </div>
+                       
+                        <div class="col-md-3 col-sm-6 mt-2">
+                            <button type="submit" class="btn btn-primary">Generate Data</button> 
+                           
+                        </div>
+                    </div>
+                </div>                    
+            </form>                         
+        
+        </div>
+        <h6 class="text-center">  
+               
+            {% if days %}
+              Result for last {{ days }} days
+            {% elif start_date and end_date %}
+                Result data from: {{ start_date }} to {{ end_date }}
+            {% endif %} 
+        </h6>      
+        
+        <h4 class="text-center" style="color:blue;font-weight: bold;">
+            <span style="font-size: 14px;">
+                <span style="color:rgb(0, 128, 102);font-weight: bold; font-size: 20px;">Current Stock Value: {{ grand_total_stock_value|add_commas }}</span>
+                &nbsp;&nbsp;
+            <a href="{% url 'inventory:inventory_executive_sum' %}">Stock value</a>:
+            <a href="{% url 'inventory:inventory_list' %}">Product in warehouse</a>:
+            <a href="{% url 'inventory:inventory_aggregate_list' %}">Stocked Product</a>
+        </span>
+        </h4>
+
+
+        <hr style="height:5px">
+
+       
+       
+
+        {% if grouped_data %}
+        <div class="col-12 table-responsive mt-4">
+            <div class="container-fluid">            
+                               
+                {% for warehouse, products, warehouse_total_stock_value in grouped_data %}
+                <div class="row mt-4">
+                    <div class="col">
+                        <h6 style="font-weight: bold; color:green">Warehouse: {{ warehouse }}</h6>
+                        
+                        <div>
+                            <h5 style="color: blue;">Stock Value: {{ warehouse_total_stock_value|add_commas }}</h5>
+                            
+                        </div>
+                        
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Product Name</th>
+                                    <th>Total Purchase</th>
+                                    <th>Total Manufacture IN</th>
+                                    <th>Total Manufacture Out</th>
+                                    <th>Total Existing</th>
+                                    <th>Total Sold</th>
+                                    <th>Total operations out</th>
+                                    <th>Total Transfer In</th>
+                                    <th>Total Transfer Out</th>
+                                    <th>Total Replacement</th>
+                                    <th>Total Available</th>
+                                    <th>Total stock value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if products %}
+                                {% for product in products %}
+                                <tr>
+                                    <td>{{ product.product }}</td>
+                                    <td>{{ product.total_purchase|default:"0" }}</td>
+                                    <td>{{ product.total_manufacture_in|default:"0" }}</td>
+                                    <td>{{ product.total_manufacture_out|default:"0" }}</td>
+                                    <td>{{ product.total_existing_in|default:"0" }}</td>
+                                    <td>{{ product.total_sold|default:"0" }}</td>
+                                    <td>{{ product.total_operations_out|default:"0" }}</td>
+                                    <td>{{ product.total_transfer_in|default:"0" }}</td>
+                                    <td>{{ product.total_transfer_out|default:"0" }}</td>
+                                    <td>{{ product.total_replacement_out|default:"0" }}</td>
+                                    <td>{{ product.total_available|default:"0" }}</td>
+                                    <td>{{ product.total_stock_value|default:"0"|add_commas }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No products available for this warehouse.</td>
+                                </tr>
+                                {% endfor %}
+                                {% else %}
+                                <tr>
+                                    <td colspan="8" class="text-center">No products found for this warehouse.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="col-12 mt-4">
+            <p class="text-center">No inventory data available.</p>
+        </div>
+        {% endif %}       
+
+    </div>
+
+
+         <!-- Pagination Controls -->
+         <div class="pagination">
+            <span class="step-links">
+                {% if product_wise_data.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ product_wise_data.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ product_wise_data.number }} of {{ product_wise_data.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ product_wise_data.next_page_number }}">next</a>
+                <a href="?page={{ product_wise_data.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+
+
+</div>
+
+
+
+{% endblock %}
+
+
+
+
+
+
+

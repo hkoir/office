@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">     
+
+        <div class="col-12 col-md-3">
+            <div class="card shadow-lg" style="background-color: aliceblue;">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="mb-0">Create transfer Order</h4>
+                </div> 
+                <div class="card-body">                       
+                    <form method="post" enctype="multipart/form-data" action="{% url 'inventory:create_transfer' %}" id="add_category">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                            <button type="submit" name="add_to_basket"value="add_to_basket" class="btn btn-primary btn-lg">Add to list</button>
+                        </div>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+        <div class="col-12 col-md-9">
+
+            {% if transfer_basket %}
+                <table class="table table-striped">
+                    <thead>                        
+                    <h4>Items to be transferred</h4>
+                        <tr>
+                            <th>Product</th>
+                            <th>Source Warehouse</th>
+                            <th>Target Warehouse</th>
+                            <th>Quantity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in transfer_basket %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.source_warehouse_name }}</td>
+                            <td>{{ item.target_warehouse_name }}</td>
+                            <td>
+                                <form method="post" action="{% url 'inventory:create_transfer' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
+                                    <input type="hidden" name="product_id" value="{{ item.id }}">
+                                    <input type="hidden" name="source_warehouse_id" value="{{ item.source_warehouse_id }}">
+                                    <input type="hidden" name="target_warehouse_id" value="{{ item.target_warehouse_id }}">
+                                    <button type="submit" name="action" value="update" class="btn btn-warning btn-sm">Update</button>
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" action="{% url 'inventory:create_transfer' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ item.id }}">
+                                    <input type="hidden" name="source_warehouse_id" value="{{ item.source_warehouse_id }}">
+                                    <input type="hidden" name="target_warehouse_id" value="{{ item.target_warehouse_id }}">
+                                    <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+
+                    </tbody>
+                </table>
+        
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="confirm_transfer" class="btn btn-success">Confirm transfer</button>
+                </form>
+            {% else %}
+                <p class="btn btn-warning">No products added to the list yet.</p>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+
+
+
+{% endblock %}

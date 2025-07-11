@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Letter</title>
+</head>
+<body>
+    <h2>Dear {{ candidate.full_name }},</h2>
+
+    <p>We are excited to offer you the position of <strong>{{ candidate.applied_job.title }}</strong> at <strong>{{ employee.company.name }}</strong>. We are impressed with your qualifications and are confident that you will be a great addition to our team.</p>
+
+    <p>Attached to this email is your formal offer letter, which outlines the details of your role, salary, and other benefits. Please take some time to review the document.</p>
+
+    <h3>Next Steps:</h3>
+    <ul>
+        <li>📌 <a href="{{ confirmation_link }}">Confirm Offer (Accept or Decline)</a></li>
+        <li>🚀 <a href="{{ onboarding_link }}">Start Onboarding</a> (After confirmation)</li>
+    </ul>
+
+    <p>If you have any questions, feel free to reach out to our HR department.</p>
+
+    <p>Best regards,</p>
+    <p><strong>{{ employee.name }}</strong><br>
+    HR Department<br>
+    {{ employee.company.name }}</p>
+</body>
+</html>

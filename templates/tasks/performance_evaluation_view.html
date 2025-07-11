@@ -1,0 +1,189 @@
+{% extends 'base.html' %}  
+
+
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">  
+
+        <div class="col">
+           
+
+            <div class="container">
+                <form method="GET">
+                    {% csrf_token %}
+
+                <div class="row">     
+
+                    <div class="col-12 col-md-4 p-1">
+                        Employee{{ form.employee }}
+                    </div>
+
+                    <div class="col-12 col-md-4 p-1">
+                        Start date{{ form.start_date }}
+                    </div>
+
+                    <div class="col-12 col-md-4 p-1">
+                    End date{{ form.end_date }}
+                    </div>
+
+                    <div class="col-12 col-md-4 p-1">
+                        Department{{ form.department }}
+                    </div>
+
+                    <div class="col-12 col-md-4 p-1">
+                        Position{{ form.position }}
+                    </div>
+                    <div class="col-12 col-md-4 mt-2">
+                        <button type="submit" class="btn btn-primary">Generate Report</button>
+                    </div>  
+
+                    </div>
+                </form>
+            </div>
+         </div>
+        <div class="col mt-4 table-responsive">       
+                         
+            <h4>Evaluation Data</h4>
+            <table class="table bg-dark">
+                <thead class="table-dark">
+                    <tr>
+                        <th>EV ID</th>
+                        <th >Employee</th>
+                        <th >Department</th>
+                        <th >Position</th>
+                        <th >Task</th>
+
+                        <th >Assigned Quantitative number</th>
+                        <th >Obtained Quantitative number</th>
+                        <th >Given Quantitative number</th>
+                        <th >Obtained Quantitative score</th>
+                        <th>Given Quantitative score</th>
+
+                        <th>Assigned Qualitative number</th>
+                        <th>Obtained Qualitative number</th>
+                        <th>Obtained Qualitative Score</th> 
+
+                        <th>Total Assigned number</th>                                 
+                        <th>Total obtained number</th>
+                        <th>Total given number</th>
+                        <th>Final obtained scorer</th>                                 
+                        <th>Final given score</th>  
+                        
+                        <th>Evaluator</th>
+                        <th>Evaluation date</th>                        
+                        <th>Created </th>
+                        <th>Updated</th>
+                      
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if evaluations %}
+                    {% for ev in page_obj %}
+                    <tr>
+                        <td>{{ ev.ev_id }}</td>
+                        <td>{{ ev.employee.name}}</td>
+                        <td>{{ ev.department.name}}</td>
+                        <td>{{ ev.position.name}}</td>
+                        <td>{{ ev.task.title }}</td>
+
+                        <td>{{ ev.assigned_quantitative_number|floatformat:'2'}}</td>
+                        <td>{{ ev.obtained_quantitative_number|floatformat:'2'}}</td>
+                        <td>{{ ev.given_quantitative_number|floatformat:'2'}}</td>
+                        <td>{{ ev.obtained_quantitative_score|floatformat:'2'}}</td>
+                        <td>{{ ev.given_quantitative_score|floatformat:'2'}}</td>
+
+                        <td>{{ ev.assigned_qualitative_number|floatformat:'2' }}</td> 
+                        <td>{{ ev.obtained_qualitative_number|floatformat:'2' }}</td> 
+                        <td>{{ ev.obtained_qualitative_score|floatformat:'2' }}%</td>  
+
+                        <td>{{ ev.total_assigned_number|floatformat:'2' }}</td>  
+                        <td>{{ ev.total_obtained_number|floatformat:'2' }}</td>  
+                        <td>{{ ev.total_given_number|floatformat:'2' }}</td>  
+                        <td>{{ ev.total_obtained_score|floatformat:'2' }}%</td>    
+                        <td>{{ ev.total_given_score|floatformat:'2' }}%</td>                                             
+                                             
+
+                        <td>{{ ev.qualitative_evaluations.first.evaluator}}</td>
+                        <td>{{ ev.evaluation_date }}</td>
+                        <td>{{ ev.created_at|date:'M-d-Y'}}</td>
+                        <td>{{ ev.updated_at|date:'M-d-Y' }}</td>
+                    
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center;">No records found.</td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <span> No evaluation found yet</span>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>  
+
+    </div>
+    <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+<h4 style="height:10px"></h4>
+
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_employee_name').select2({
+            width: '100%',
+            placeholder: 'Search employee...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for employee',
+            allowClear: true
+        });
+    });
+    </script>
+    
+
+{% endblock %}

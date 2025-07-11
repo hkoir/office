@@ -1,0 +1,124 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12 col-md-2"></div>
+            <div class="col-12 col-md-8">                            
+                <div class="card shadow-lg" style="background-color: aliceblue;">
+                        <!-- Card Header -->
+                        <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0"> Create Ticket</h3>
+                    </div> 
+                    <div class="card-body">                                   
+                        <form method="post" enctype="multipart/form-data" action="{% url 'customerportal:create_ticket' %}" id="add_category">
+                            {% csrf_token %} 
+                            {{ form.as_p }}
+                            <div class="d-grid">
+                                <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> Submit</button>
+                            </div>
+                        </form>
+                        </div>
+                </div>        
+            </div>
+            <div class="col-12 col-md-2"></div>
+    </div>
+</div>
+            
+
+
+
+<script>
+    $(document).ready(function () {
+        function toggleFields() {
+            var ticketTypeValue = $('#id_ticket_type').val();           
+
+            // Helper function to hide/show field and label by targeting the <p> wrapping the field
+            function toggleField(fieldId, show) {
+                var fieldContainer = $(`#${fieldId}`).closest('p'); // Find the <p> container
+                if (show) {
+                    fieldContainer.show();
+                } else {
+                    fieldContainer.hide();
+                }
+            }
+
+            // Default: Show appraisal type, hide all others
+            toggleField('id_production', false);
+            toggleField('id_sales', false);
+            toggleField('id_operations', false);
+            toggleField('id_repair_return', false);
+          
+
+            // Show fields based on the appraisal type value
+            if (ticketTypeValue === 'SALES') {
+                toggleField('id_sales', true);
+            } else if (ticketTypeValue === 'OPERATIONS') {
+                toggleField('id_operations', true);
+            } else if (ticketTypeValue === 'PRODUCTION') {
+                toggleField('id_production', true);
+            } else if (ticketTypeValue === 'REPAIR-RETRUN') {
+                toggleField('id_repair_return', true);
+            }
+        }
+
+        // Initialize the toggle logic on page load
+        toggleFields();
+
+        // Attach the change event to the appraisal type field
+        $('#id_ticket_type').change(function () {
+            toggleFields();
+        });
+
+        // Attach change events to the other fields for future expansion
+        $('#id_sales, #id_operations, #id_production, #id_repair_return').change(function () {
+            toggleFields();
+        });
+    });
+</script>
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_product,#id_category').select2({
+            width: '50%',
+            placeholder: 'Search ...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search',
+            allowClear: true
+        });
+    });
+
+   
+    </script>
+
+
+
+{% endblock %}

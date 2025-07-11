@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load static %}
+
+
+{% block content %}
+
+    <title>Vehicle creation form</title>
+
+
+  
+    
+
+    <div class="container-fluid main-content">
+        <div class='row'>           
+            <div class="col-12 col-md-4"> <!-- Adjust the width for medium screens -->
+                <div class="card shadow-lg" style="background-color: aliceblue;">
+                    <!-- Card Header -->
+                    <div class="card-header bg-primary text-white text-center">
+                        <h3 class="mb-0"> {% if instance %} Update  {% else %} Create  {% endif %}</h3>
+                    </div> 
+                    <div class="card-body">                                     
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {{ form.as_p }}
+                           
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Submit Request
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class='col-12 col-md-8 table-responsive'>     
+                <h3> Vehicle fault data </h3>                
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Update fault</th>                          
+                            <th>Vehicle Number</th>
+                            <th>Vehicle company name</th>
+                            <th>Fault start datetime</th>
+                            <th>Fault end datetime</th>                            
+                            <th>Fault type</th> 
+                            <th>Incident place</th>    
+                            <th >Fault duration hours</th>                          
+                             
+                                    
+                        </tr>
+                    </thead>
+
+                    {% for payment in  page_obj %}
+                    <tbody>
+                        <tr>
+                            <td>
+                                <a href="{% url 'transport:create_vehicle_fault' %}" class="btn btn-primary btn-sm">New fault</a>
+                                <a href="{% url 'transport:update_vehicle_fault' payment.id %}" class="btn btn-primary btn-sm">update fault</a>
+                            </td>
+                            
+
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.vehicle.vehicle_registration_number}}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.vehicle.vehicle_owner_company_name}}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.fault_start_time}}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.fault_stop_time}}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.fault_type }}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.fault_location}}</td>
+                            <td class="text-center" style="white-space: nowrap;">{{ payment.fault_duration_hours|floatformat:'2'}}</td>
+                            
+    
+                        </tr>
+                    </tbody>
+                    {% endfor %}
+                </table>   
+                           
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+
+
+    <script>
+        $(document).ready(function() {
+            $('#id_vehicle').select2({
+                width: '100%', 
+                ajax: {
+                    url: "{% url 'accounts:common_search' %}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1, 
+                placeholder: 'Search ',
+                allowClear: true
+            });
+
+
+
+        });
+    </script>
+
+
+
+
+<script>
+    $(document).ready(function(){      
+        var regionZoneMapping = {
+            'Sylhet': ['','Sylhet', 'Moulovibazar','Mymensingh','Kisorganj','Tangail'], 
+            'Rangpur': ['','Rangpur', 'Dinajpur','Bagura','Rajshahi'] ,                          
+            
+        };
+     
+        $('#id_region').change(function(){
+            var selectedRegion = $(this).val();
+            var zoneChoices = regionZoneMapping[selectedRegion];
+            $('#id_zone').empty();
+            $.each(zoneChoices, function(index, value){
+                $('#id_zone').append($('<option>').text(value).attr('value', value));
+            });
+        });
+              
+        var zoneMpMapping = {              
+            'Sylhet': ['','Sylhet','Taherpur','Sunamganj','Bianibazar','Dorbhost','Dherai','Chatak'], // Add more MPs for Sylhet zone
+            'Moulovibazar': ['','Moulovibazar', 'Saestaganj','Juri','Baniachong'],
+            'Mymensingh': ['','Mymensingh', 'Fulpur','Valuka'] ,
+            'Kisorganj': ['','Kisorganj','Katiadi','Netrokona','Mohonpur','Austogram'],
+            'Tangail': ['','Tangail','Madhupur','Jamalpur','Sherpur','Bakshihanj','Rowmari'],
+           
+            'Rangpur':['','Rangpur','Hatibandha','Gaibandha','Ulipur','Boropar','Polasbari'],
+            'Dinajpur':['','Dinajpur','Panchghor','Jaldhaka','Thakurgaon'],
+            'Rajshahi':['','Rajshahi','Bagura','Nachole','Natore','Chapai'],
+            'Bagura':['','Bagura'],
+            '': ['']
+           
+        };
+
+   
+        $('#id_zone').change(function(){
+            $('#id_mp').val('');
+            var selectedZone = $(this).val();
+            var mpChoices = zoneMpMapping[selectedZone];
+
+            $('#id_mp').empty();
+            $.each(mpChoices, function(index, value){
+                $('#id_mp').append($('<option>').text(value).attr('value', value));
+            });
+        });
+
+
+
+});          
+
+</script> 
+
+
+
+{% endblock %}
+
+
+

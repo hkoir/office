@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+
+
+<div class="container fluid main-content">
+    <div class="row">
+        <div class="col-3"></div>
+        <div class="col-7">          
+       
+            <div class="card shadow" style="padding:10px;background-color:white;">
+                <!-- Card Header -->
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Update status</h3>
+                </div> 
+                <div class="card-body">                  
+                    <h5 class="card-title text-center mb-3"><strong>Manage Return/Refund Request for: {{ return_request.sale.product.name }}</strong> </h5>
+                    <form method="post">
+                        {% csrf_token %}                       
+                        {{ form.as_p }}
+                        <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                    </div>
+                    </form>
+                 </div>
+            </div>          
+            
+        </div>
+        <div class="col-2"></div>
+
+    </div>
+</div>
+
+
+
+
+
+{% endblock %}

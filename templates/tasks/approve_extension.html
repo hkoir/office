@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+  
+  <div class="container-fluid main-content">
+    <div class="row">    
+
+      <div class="col-12 col-md-3"></div>
+
+      <div class="col-12 col-md-6">
+        <a href="{% url 'tasks:tasks_list' %}">Back to Task List</a>
+        <div class="card shadow-lg border-0 rounded-lg" style="width:100%">
+          <!-- Card Header -->
+          <div class="card-header bg-primary text-white text-center">
+              <h4 class="mb-0"> Time Extension for Task:<span style="color:red;font-weight: bold;">{{ task.title }}</span> </h4>              
+          </div>
+          <div class="card-body" style="margin-left: 30px;"> 
+            <h6 class="mb-2"> Due date was: <span style="color:green;font-weight: bolder;">{{ task.due_datetime }}</span></h6>  
+            <h6 class="mb-2" style="color:rgb(234, 11, 41);font-weight: bolder;">Applied extension upto:{{ task.time_extension_requests.last.requested_extension_datetime }}</h6>   
+            <h6 class="mb-4">Requested by(user):{{ task.time_extension_requests.first.requested_by }}:reasoning:<span class="bg-info"> {{ task.time_extension_requests.first.time_extension_reason }}</span></h6>  
+            <hr>      
+              <form method="post" enctype="multipart/form-data" action="{% url 'tasks:approve_extension' task.id %}" id="add_category">
+                  {% csrf_token %} 
+                  {{ form.as_p }}
+                  <button type="submit" class="btn btn-success">Submit Approval</button>
+              </form>
+          </div>
+       </div>   
+      </div>
+      <div class="col-12 col-md-3"></div>
+    </div>
+  </div>
+
+
+
+  
+{% endblock %}

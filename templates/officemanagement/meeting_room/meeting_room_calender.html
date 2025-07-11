@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block content %}
+
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js'></script>
+
+
+
+<style>
+    /* Allow event text to wrap */
+    .fc-event-title {
+        white-space: normal !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        word-wrap: break-word;
+    }
+
+    /* Increase row height for better readability */
+    .fc-daygrid-event {
+        white-space: normal !important;
+        height: auto !important;
+        line-height: 1.2 !important;
+        padding: 2px !important;
+    }
+
+    /* Optional: Increase space for events */
+    .fc-daygrid-day {
+        min-height: 80px; /* Adjust this if needed */
+    }
+</style>
+
+
+
+
+<h2>Meeting Room: {{ room.name }}</h2>
+
+
+
+<h4 class="mb-5"><a href="{% url 'officemanagement:book_meeting_room' room.id %}">Book this Room</a></h4>
+
+
+<div id="calendar"></div>
+
+<script id="bookings-data" type="application/json">
+    {{ bookings_json|safe }}
+</script>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var calendarEl = document.getElementById("calendar");
+    var eventData = JSON.parse(document.getElementById("bookings-data").textContent);
+
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth", 
+        headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth,timeGridWeek,timeGridDay", 
+        },
+        events: eventData,
+        eventColor: "#007bff",
+        eventTextColor: "#fff",
+        dayMaxEventRows: true, 
+        navLinks: true, 
+ 
+        dateClick: function (info) {
+            calendar.changeView("timeGridDay", info.dateStr); 
+        },
+
+        slotDuration: "00:30:00", 
+        slotLabelInterval: "01:00", 
+        slotMinTime: "00:00:00", 
+        slotMaxTime: "24:00:00", 
+        allDaySlot: false, 
+        expandRows: true, 
+        height: "auto", 
+
+
+        // Render event with clickable link and formatted time
+        eventContent: function (arg) {
+            let eventTime = arg.event.start.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            }) + " - " +
+            arg.event.end.toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            });
+        // let eventStatus = arg.event.extendedProps.status || "No Status"; 
+
+            return {
+                html: `<div style="white-space: normal;">
+                            <strong>${eventTime}</strong><br>
+                            <a href="${arg.event.url}" style="color:blue; text-decoration:underline;">${arg.event.title}</a>
+                              
+                       </div>`,
+            };
+        },
+    });
+
+    calendar.render();
+
+    // Optional: Add a "Back to Month View" button
+    document.getElementById("back-to-month").addEventListener("click", function () {
+        calendar.changeView("dayGridMonth");
+    });
+});
+
+</script>
+
+
+
+
+
+
+
+{% endblock %}
+
+
+
+
+

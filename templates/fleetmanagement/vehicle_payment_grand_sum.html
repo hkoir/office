@@ -1,0 +1,255 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12">
+
+            <form method="GET" action="{% url 'transport:vehicle_grand_summary' %}">
+
+                <div class="container-fluid">
+                    <div class="row row-cols-2 row-cols-md-6">
+            
+                     <div class="col" >  Start Date:  {{ form.start_date }} </div>
+                     <div class="col" >  End Date:  {{ form.end_date }} </div>
+                     <div class="col" > No of days {{ form.days }} </div>
+                  
+                     <div class="col" >  Vehicle Number:{{ form.vehicle_number }} </div>   
+                     <div class="col" >  Month:{{ form.month }} </div>   
+                     <div class="col" >  Year:{{ form.year }} </div>   
+                       
+                     <div class="col" > <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                       
+                    </div>
+                </div>
+                  
+                </form>
+        </div>
+        <div class="col-12">
+
+
+            <div style="left:0px; margin-left:0px">
+                <h4 style="margin-top:40px; margin-left:0px">Data for
+                    {% if days %}
+                        the last {{ days }} days 
+                    {% elif start_date and end_date %}
+                        from: {{ start_date }} to {{ end_date }}
+                    {% endif %} :Vehicle summary
+                </h4>
+                    
+            </div>
+        </div>
+        <div class="col-12">
+
+
+            <div class="container-fluid" >
+                <div class="row">
+                    <div class="col-12 table-responsive">
+            
+              
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th  class="text-center p-2">view details</th>
+                                    <th  class="text-center p-2">view overtime</th>
+                                
+                                    <th class="text-center p-2">Vehicle Registration Number</th>
+                                                                   
+                                    <th class="text-center p-2">No of travel days</th>
+                                    <th class="text-center p-2">Vehicle Rent rate</th>
+                                
+                              
+                                
+                                    <th class="text-center p-2">Driver Over Time Rate</th>
+                                    <th class="text-center p-2">Body Over Time Rate</th>
+            
+                                
+                                    <th class="text-center p-2" >Vehicle running Hours</th>
+                                    <th class="text-center p-2" >Kilometer run from running data</th>
+                                    <th class="text-center p-2" >Kilometer run from refill data</th>
+                                    <th class="text-center p-2" >Fuel refill</th>
+                                    <th class="text-center p-2" >Fuel consumed</th>
+                                    <th class="text-center p-2" >Fuel balance</th>
+            
+                                    <th class="text-center p-2" >Fuel consumed from refill</th>
+                                    <th class="text-center p-2" >Fuel balance from refill</th>
+                                   
+                                
+            
+                                 
+                                    <th class="text-center p-2">Total overtime Hours</th>
+                                    <th class="text-center p-2">Total Fault Hours</th>                           
+            
+                                    <th class="text-center p-2" >Vehicle body Rent</th>
+                                    <th  class="text-center p-2" >Driver Overtime</th>
+                                    <th  class="text-center p-2" >Body Overtime</th>
+                                    <th  class="text-center p-2" >Total Vehicle bill amount</th>
+            
+            
+                                    <th class="text-center p-2" >CNG run bill</th>
+                                    <th  class="text-center p-2" >Gasoline run bill</th>
+                                    <th  class="text-center p-2"  >Total Kilometer bill</th>
+            
+                                    <th  class="text-center p-2" >Grand total bill</th>
+            
+                                    <th  class="text-center p-2">Click to pay</th>
+            
+                                    <th  class="text-center p-2">Total bill paid amount</th>
+                                  
+            
+                                   
+                                   
+            
+                                
+            
+                                </tr>
+                            </thead>
+                            <tbody>
+                          
+                              
+                                {% for vehicle_reg_number, data in page_obj %}
+                                <tr>
+                                  
+                                    <td class="text-center p-1" style="white-space: nowrap">
+                                        <a href="">View details</a>
+                                    </td>
+                                    <td class="text-center p-1" style="white-space: nowrap">
+                                        <a href="{% url 'transport:vehicle_overtime_calc'%}">View overtime</a>
+                                    </td>                     
+                                   
+                                    <td class="text-center p-1" style="white-space: nowrap;">{{ vehicle_reg_number }}</td>
+
+                                  
+                                    <td class="text-center p-1">{{ data.num_travel_dates }}</td>
+                                    <td class="text-center p-1">{{ data.vehicle_rental_rate|first|floatformat:'2' }}</td>                    
+                                                     
+                                    <td class="text-center p-1">{{ data.driver_overtime_rate|first }}</td>
+                                    <td class="text-center p-1">{{ data.vehicle_body_overtime_rate|first }}</td>
+            
+                                    <td class="text-center p-1">{{ data.total_running_hours|floatformat:'2' }}</td>
+                                    <td class="text-center p-1" >{{ data.total_kilometer_run }}</td>
+                                    <td class="text-center p-1" >{{ data.total_kilometer_run_from_refill}}</td>
+                                    <td class="text-center p-1" >{{ data.total_fuel_refil}}</td>
+                                    <td class="text-center p-1" >{{ data.total_fuel_consumed }}</td>
+                                    <td class="text-center p-1" >{{ data.total_fuel_balance }}</td>
+            
+                                    <td class="text-center p-1"style="background-color: rgb(170, 234, 21);">{{ data.total_fuel_consumed_from_refil }}</td>
+                                    <td class="text-center p-1"style="background-color: rgb(170, 234, 21);">{{ data.total_fuel_balance_from_refil}}</td>
+                                                                         
+                                    
+                                    <td class="text-center p-1">{{ data.total_overtime_run_hours|floatformat:'2' }}</td>
+                                    <td class="text-center p-1">{{ data.total_fault_hours|floatformat:'2' }}</td>
+                        
+                                    <td class="text-center p-1">{{ data.total_vehicle_rent_due|floatformat:'2' }}</td>
+                                    <td class="text-center p-1">{{ data.total_overtime_cost|floatformat:'2' }}</td>
+                                    <td class="text-center p-1">{{ data.vehicle_body_overtime_cost|floatformat:'2' }}</td>
+                                    <td class="text-center p-1" >{{ data.total_vehicle_bill_amount|floatformat:'2' }}</td>
+                                                
+                                    <td class="text-center p-1">{{ data.total_CNG_cost|floatformat:'2' }}</td>
+                                    <td class="text-center p-1">{{ data.total_gasoline_cost|floatformat:'2' }}</td>
+                                    <td class="text-center p-1">{{ data.total_kilometer_cost|floatformat:'2' }}</td>
+                                     <td class="text-center p-1">{{ data.grand_total_bill_amount|floatformat:'2' }}</td>
+                                    <td class="text-center p-1" ><a href="{% url 'transport:create_vehicle_payment' %}">Click to pay</a></td>                                 
+                                    <td class="text-center p-1" >{{ data.total_bill_paid |floatformat:'2' }}</td>
+                                    
+                                   
+                                   
+                                   
+                                   
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+            
+                    </div>
+                </div>
+            
+            
+                <!-- Pagination Controls -->
+                <div class="pagination">
+                    <span class="step-links">
+                        {% if page_obj.has_previous %}
+                            <a href="?page=1">&laquo; first</a>
+                            <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                        {% endif %}
+
+                        <span class="current">
+                            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}">next</a>
+                            <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                        {% endif %}
+                    </span>
+                </div>
+            
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+
+
+
+    
+<script>
+    $(document).ready(function(){      
+        var regionZoneMapping = {
+            'Sylhet': ['','Sylhet', 'Moulovibazar','Mymensingh','Kisorganj','Tangail'], 
+            'Rangpur': ['','Rangpur', 'Dinajpur','Bagura','Rajshahi'] ,                          
+            
+        };
+     
+        $('#id_region').change(function(){
+            var selectedRegion = $(this).val();
+            var zoneChoices = regionZoneMapping[selectedRegion];
+            $('#id_zone').empty();
+            $.each(zoneChoices, function(index, value){
+                $('#id_zone').append($('<option>').text(value).attr('value', value));
+            });
+        });
+              
+        var zoneMpMapping = {              
+            'Sylhet': ['','Sylhet','Taherpur','Sunamganj','Bianibazar','Dorbhost','Dherai','Chatak'], // Add more MPs for Sylhet zone
+            'Moulovibazar': ['','Moulovibazar', 'Saestaganj','Juri','Baniachong'],
+            'Mymensingh': ['','Mymensingh', 'Fulpur','Valuka'] ,
+            'Kisorganj': ['','Kisorganj','Katiadi','Netrokona','Mohonpur','Austogram'],
+            'Tangail': ['','Tangail','Madhupur','Jamalpur','Sherpur','Bakshihanj','Rowmari'],
+           
+            'Rangpur':['','Rangpur','Hatibandha','Gaibandha','Ulipur','Boropar','Polasbari'],
+            'Dinajpur':['','Dinajpur','Panchghor','Jaldhaka','Thakurgaon'],
+            'Rajshahi':['','Rajshahi','Bagura','Nachole','Natore','Chapai'],
+            'Bagura':['','Bagura'],
+            '': ['']
+           
+        };
+
+   
+        $('#id_zone').change(function(){
+            $('#id_mp').val('');
+            var selectedZone = $(this).val();
+            var mpChoices = zoneMpMapping[selectedZone];
+
+            $('#id_mp').empty();
+            $.each(mpChoices, function(index, value){
+                $('#id_mp').append($('<option>').text(value).attr('value', value));
+            });
+        });
+
+
+
+});          
+
+</script> 
+
+
+  {% endblock %}

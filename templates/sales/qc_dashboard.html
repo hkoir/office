@@ -1,0 +1,65 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <div class="col-12 table-responsive">
+                
+            <h2>Quality Control Dashboard</h2>
+
+            <table class="bg-light">
+                <thead class="bg-dark text-white">
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Customer</th>
+                        <th>Quantity</th>
+
+
+                        <th>Status</th>
+                        <th>Inspection</th>
+                    
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in pending_items %}
+                    <tr>
+                        <td>{{ item.dispatch_item.sale_order.order_id }}</td>
+                        <td>{{ item.dispatch_item.product.name }}</td>
+                        <td>{{ item.dispatch_item.sale_order.customer.name }}</td>
+                        <td>{{ item.dispatch_quantity }}</td>
+
+                        <td>{{ item.status }}</td>
+
+                        
+                        
+                        <td>
+                            {% if item.status == 'READY_FOR_DISPATCH' %}
+                                <a href="{% url 'sales:qc_inspect_item' item.id %}" class="btn btn-primary">Inspect</a>
+                            {% else %}
+                                <span>Goods not Ready</span>
+                            {% endif %}
+                        </td>
+                
+                    
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No items pending for quality control inspection.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+       </div>
+    </div>
+    <h4 style="height:20px"></h4>
+</div>
+
+
+
+{% endblock %}

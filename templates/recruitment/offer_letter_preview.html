@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid main-content">
+    <div class="row">    
+        <div class="col-12 col-md-1"></div>
+        <div class="col-12 col-md-10">        
+
+            <div class="card my-4">
+                <div class="card-body" style="background-color: beige;">
+                    <h5 class="card-title">Preview</h5>
+                    <div>
+                        <!-- Embed the PDF with full width and increased height -->
+                        <embed src="data:application/pdf;base64,{{ pdf_preview }}" width="100%" height="1450px" />
+                    </div>
+                </div>
+            </div> 
+        </div>
+        <div class="col-12 col-md-1"></div>
+     
+
+        <div class="col-12">
+            <div class="my-3">
+                <h5>What would you like to do?</h5>
+
+                <form method="post" action="{% url 'recruitment:send_offer_letter' candidate.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">Send Offer Letter to this Candidate</button>
+                </form>
+
+                <form method="post" action="{% url 'recruitment:send_offer_letters_to_selected_candidates' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary mt-2">Send Offer Letters to All required Candidates</button>
+                </form>
+
+                
+                <form method="post" action="{% url 'recruitment:handle_declines_and_offer_next_candidates' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary mt-2">Send offer letter against offer letter declining by user</button>
+                </form>
+            </div>
+
+            
+            <form method="post" action="{% url 'recruitment:handle_onboard_declines_and_offer_next_candidates' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-primary mt-2">Send Offer Letters against onboarding failure candidate</button>
+            </form>
+
+            <br>
+            <a href="{% url 'recruitment:selected_candidate' %}" class="btn btn-secondary my-5">Back to Candidate List</a>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+   
+
+
+
+
+{% endblock %}

@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+
+
+  
+  <div class="container-fluid main-content">
+    <div class="row">   
+       
+ 
+      <div class="col-12 col-md-4">      
+        <div class="card shadow-lg border-0 rounded-lg" style="width:100%">
+          <!-- Card Header -->
+          <div class="card-header bg-primary text-white text-center">
+              <h4 class="mb-0"><span style="color:white;font-weight: bold;">Appraisal Analysis</span> </h4>              
+          </div>
+          <div class="card-body" style="margin-left: 30px;">             
+            <hr>      
+              <form method="post" enctype="multipart/form-data" action="{% url 'tasks:increment_promotion_check' %}" id="add_category">
+                  {% csrf_token %} 
+                  {{ form.as_p }}
+                  <div class="d-grid">
+                  <button type="submit" class="btn btn-primary btn-lg">Submit</button>
+                </div>
+              </form>
+          </div>
+          <a href="{% url 'tasks:increment_promotion' %}" class="btn btn-success text-center">Go for final appraisal</a>
+          <a href="{% url 'tasks:increment_promotion_final_data' %}" class="btn btn-success text-center mt-2">See final result</a>
+       </div>   
+     
+      </div>
+
+      <div class="col-12 col-md-8" style="margin-top: 50px;">  
+        <h4 class="text-center mb-3" style="color: green;font-weight: bold;">Appraisal Budget analysis for year {{ appraisal_year }} for {{appraisal_type}} appraisal</h4> 
+        {% if report_data %}
+        <div class="container">
+            <div class="row">
+                <div class="col-6">
+                    <h6>
+                    <span style="color:blue;font-weight: bolder;">Assumptions:</span><br>
+                        Salary increment:{{ salary_increment_percentage|floatformat:2|intcomma }}%<br>
+                        Promotional increment:{{promotional_increment_percentage|floatformat:2|intcomma}}%<br>                      
+                        eligible score for promotion:{{eligible_score_for_promotion}}%<br>
+                        maxp promotion limit:{{max_promotion_limit|floatformat:2|intcomma}}% of eligibility<br>
+                    </h6>
+                    <hr>
+
+                    <h6>
+                        <span style="color:blue;font-weight: bolder;">Result:</span>:<br>
+                        Total Employees: {{ total_employee }}<br>
+                        Total eligible count: {{ all_eligible_count }}<br>
+                        Total eligible for promotion:{{all_eligible_count}}<br>
+                        Top eligible for promotion: {{ total_eligible }}<br>
+                         % of Top eligibility:{{ percentage_of_eligibility|floatformat:2|intcomma }}%<br>
+                        % of all eligibility: {{percentage_of_all_eligibility|floatformat:2|intcomma}}%
+                        </h6>
+                        <hr>
+
+                    <h6><span style="color:blue;font-weight: bolder;">Calculated Budget</span><br>
+                        Salary increment:{{ salary_increment|floatformat:2|intcomma }}<br>Promotional increment:{{ promotional_increment|floatformat:2|intcomma }}</h6>
+                    <h6>Total appraisal Budget={{ total_increment|floatformat:2|intcomma }}</h6>
+                </div>
+                <div class="col-3">                   
+                    <canvas id="incrementChart" width="400" height="400"></canvas>                 
+                </div>
+                <div class="col-3">                   
+                    <canvas id="incrementChart2" width="400" height="400"></canvas>                 
+                </div>
+            </div>
+        </div>
+      </div>
+      <hr class="mt-4">
+           
+         <div class="col-12 table-responsive col-md-6" style="margin-top: 50px;">           
+            <table class="table table-hover">
+                <thead class="table-dark">
+                <h4> Top Eligible Employee:Total={{ total_eligible }}</h4>
+               
+                    <tr>
+                        <th>Department</th>
+                        <th>Position</th>
+                        <th>Total Employees</th>
+                        <th>Top Eligible Employees</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in report_data %}
+                        <tr>
+                            <td>{{ row.department_name }}</td>
+                            <td>{{ row.position_name }}</td>
+                            <td>{{ row.total_count }}</td>
+                            <td>{{ row.eligible_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Eligible Employee Table -->
+            <h4 class="mt-4">Top Eligible Employee details: Total count ={{ total_eligible }}</h4>
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Employee Name</th>
+                        <th>Department</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in page_obj %} 
+                        <tr>
+                            <td>{{ employee.name }}</td>
+                            <td>{{ employee.department__name }}</td>
+                            <td>{{ employee.position__name }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>                
+            </table>
+            
+        {% else %}
+            <p>No data available for the selected criteria.</p>
+        {% endif %}
+          <!-- Pagination Controls -->
+          <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; first</a>
+                    <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}">next</a>
+                    <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+
+            </div> 
+                
+            <div class="col-12 col-md-6 mt-4 table-responsive">
+                {% if all_eligible_count %}
+                        <!-- All Eligible Employee Table -->
+                <h4 class="mt-4">All Eligible Employee Details: Total count = {{all_eligible_count}}</h4>
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Employee Name</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in page_obj2 %}
+                            <tr>
+                                <td>{{ employee.name }}</td>
+                                <td>{{ employee.department__name }}</td>
+                                <td>{{ employee.position__name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>No data available for the selected criteria.</p>
+            {% endif %}
+                  <!-- Pagination Controls -->
+      <div class="pagination">
+        <span class="step-links">
+            {% if page_obj2.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj2.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj2.number }} of {{ page_obj2.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj2.has_next %}
+                <a href="?page={{ page_obj2.next_page_number }}">next</a>
+                <a href="?page={{ page_obj2.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+                </div>           
+                            
+            
+    </div>
+  </div>
+      
+
+
+<script>
+    const chartData = JSON.parse('{{ chart_data|escapejs }}');
+    const chartData2 = JSON.parse('{{ chart_data2|escapejs }}');
+
+    const ctx = document.getElementById('incrementChart').getContext('2d');
+    const ctx2 = document.getElementById('incrementChart2').getContext('2d');
+
+    const incrementChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Increments',
+                data: chartData.values,
+                backgroundColor: [
+                    '#FF9999',  // Color for Promotional Increment
+                    '#66B2FF',  // Color for Salary Increment
+                    '#99FF99',  // Color for Total Increment               
+                ],
+                borderColor: ['#FFFFFF', '#FFFFFF', '#FFFFFF'],
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14 // Adjust font size if needed
+                        },
+                        color: '#000' // Set legend text color
+                    }
+                },
+            },
+        },
+    });
+
+
+    const incrementChart2 = new Chart(ctx2, {
+        type: 'pie',
+        data: {
+            labels: chartData2.labels,
+            datasets: [{
+                label: 'No of employees',
+                data: chartData2.values,
+                backgroundColor: [
+                    '#FF9999',  // Color for total employee
+                    '#66B2FF',  // Color for total eligible
+                    '#99FF99',  // Color for % of eligible            
+                ],
+                borderColor: ['#FFFFFF', '#FFFFFF', '#FFFFFF'],
+                borderWidth: 1,
+            }],
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        font: {
+                            size: 14 // Adjust font size if needed
+                        },
+                        color: '#000' // Set legend text color
+                    }
+                },
+            },
+        },
+    });
+</script>
+
+
+
+
+
+<script>
+ $(document).ready(function () {
+    function toggleFields() {
+        var incrementCategoryValue = $('#id_appraisal_category').val();
+        var incrementTypeValue = $('#id_appraisal_type').val();
+
+        // Helper function to hide/show field and label by targeting the <p> wrapping the field
+        function toggleField(fieldId, show) {
+            var fieldContainer = $(`#${fieldId}`).closest('p'); // Find the <p> container
+            if (show) {
+                fieldContainer.show();
+            } else {
+                fieldContainer.hide();
+            }
+        }
+
+        // Toggle fields based on increment category
+        toggleField('id_employee', incrementCategoryValue === 'BY_EMPLOYEE');
+        toggleField('id_department', incrementCategoryValue === 'BY_DEPARTMENT');
+        toggleField('id_position', incrementCategoryValue === 'BY_POSITION');
+
+        // Hide all increment type fields initially
+        toggleField('id_month', false);
+        toggleField('id_quarter', false);
+        toggleField('id_half_year', false);
+        toggleField('id_year', false);
+
+        // Show relevant fields based on increment type
+        if (incrementTypeValue === 'MONTHLY') {
+            toggleField('id_month', true);
+        } else if (incrementTypeValue === 'QUARTERLY') {
+            toggleField('id_quarter', true);
+        } else if (incrementTypeValue === 'HALF_YEARLY') {
+            toggleField('id_half_year', true);
+        } else if (incrementTypeValue === 'YEARLY') {
+            toggleField('id_year', true);
+        }
+    }
+
+    // Initialize and attach the change event to trigger field toggling when the value changes
+    toggleFields();
+    $('#id_appraisal_category, #id_appraisal_type').change(function () {
+        toggleFields();
+    });
+});
+
+</script>
+
+
+
+{% endblock %}

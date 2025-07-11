@@ -1,0 +1,194 @@
+{% extends 'base.html' %}  
+
+{% load custom_filters %}
+
+
+{% block extra_head %}
+    <style>
+
+    #warehousePieChart{
+        width:100%;   
+    }
+
+
+    #barChart{
+        width:100%;    
+    }
+</style>
+    
+{% endblock %}
+
+
+{% block content %}
+
+
+
+<div class="container main-content">
+    <h4 class="text-center" style="color:blue;font-weight: bold;">DOPS Inventory Summary</h4>
+    <div class="row">
+
+        <h4 class="text-center" style="margin-top: 20px; color: green;font-weight: bold;">
+            Current Stock Value: {{ grand_total_stock_value|add_commas }}&nbsp;&nbsp;
+           
+            <span style="font-size: 14px;">
+                <a href="{% url 'inventory:inventory_list' %}" class="btn btn-sm btn-primary">Product by warehouse</a>
+                <a href="{% url 'inventory:inventory_aggregate_list' %}" class="btn btn-sm btn-primary">Aggregated Prodcut</a>
+   
+            </span>
+            
+        
+        </h4>
+
+        <form method="GET" action="{% url 'inventory:inventory_executive_sum' %}">
+            <label for="valuation_method" class="text-success fw-bold">Choose Valuation Method:</label>
+            <select name="valuation_method" id="valuation_method" onchange="this.form.submit()">
+                <option value="FIFO" {% if valuation_method == 'FIFO' %}selected{% endif %}>FIFO</option>
+                <option value="LIFO" {% if valuation_method == 'LIFO' %}selected{% endif %}>LIFO</option>
+            </select>
+        </form>
+        
+
+        <!-- Bar Chart (Left) -->
+        <div class="col-md-8" style="margin-bottom: 20px;">
+            <div class="bg-light">
+                <canvas id="barChart" width="600" height="300"></canvas>
+                <div id="warehouseNames"></div>
+            </div>
+        </div>
+
+        <!-- Pie Chart (Right) -->
+        <div class="col-md-4">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-12 product-chart bg-light">                        
+                        <h4 class="text-center">Warehouse Stock</h4>
+                        <canvas class="mb-2" id="warehousePieChart"></canvas>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+       
+    </div>
+</div>
+
+
+
+<script>
+const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
+
+// Bar Chart
+const labels = chartData.map(data => data.warehouse);
+const stockValues = chartData.map(data => data.stock_value);
+
+const ctx = document.getElementById('barChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: 'Stock Value (in currency)',
+            data: stockValues,
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.7)', // Teal
+                'rgba(255, 99, 132, 0.7)', // Soft Red
+                'rgba(255, 206, 86, 0.7)', // Warm Yellow
+               
+                'rgba(54, 162, 235, 0.7)', // Sky Blue
+                'rgba(153, 102, 255, 0.7)', // Lavender Purple
+                'rgba(255, 159, 64, 0.7)', // Vibrant Orange
+                'rgba(101, 189, 44, 0.7)'  // Fresh Green
+            ],
+            
+            borderColor: [
+                'rgba(75, 192, 192, 1)', // Teal
+                'rgba(255, 99, 132, 1)', // Soft Red
+                'rgba(255, 206, 86, 1)', // Warm Yellow
+               
+                'rgba(54, 162, 235, 1)', // Sky Blue
+                'rgba(153, 102, 255, 1)', // Lavender Purple
+                'rgba(255, 159, 64, 1)', // Vibrant Orange
+                'rgba(101, 189, 44, 1)'  // Fresh Green
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: {
+                        size: 18
+                    },
+                    color: '#333' // Ensures label text is readable
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+const pieChartLabels = labels;  // Warehouse names
+const pieChartValues = stockValues;  // Corresponding stock values
+
+const pieChartCtx = document.getElementById('warehousePieChart').getContext('2d');
+new Chart(pieChartCtx, {
+    type: 'pie',
+    data: {
+        labels: pieChartLabels,
+        datasets: [{
+            data: pieChartValues,
+            backgroundColor: [
+                'rgba(75, 192, 192, 0.7)', // Teal
+                'rgba(255, 99, 132, 0.7)', // Soft Red
+                'rgba(101, 189, 44, 0.7)',  // Fresh Green               
+                'rgba(255, 206, 86, 0.7)', // Warm Yellow
+               
+                'rgba(54, 162, 235, 0.7)', // Sky Blue
+                'rgba(153, 102, 255, 0.7)', // Lavender Purple
+                'rgba(255, 159, 64, 0.7)', // Vibrant Orange
+                'rgba(101, 189, 44, 0.7)'  // Fresh Green
+            ],
+            borderColor: [
+                'rgba(75, 192, 192, 1)', // Teal
+                'rgba(255, 99, 132, 1)', // Soft Red
+                'rgba(101, 189, 44, 0.7)',  // Fresh Green
+                'rgba(255, 206, 86, 1)', // Warm Yellow
+               
+                'rgba(54, 162, 235, 1)', // Sky Blue
+                'rgba(153, 102, 255, 1)', // Lavender Purple
+                'rgba(255, 159, 64, 1)', // Vibrant Orange
+                'rgba(101, 189, 44, 1)'  // Fresh Green
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    font: {
+                        size: 18
+                    },
+                    color: '#333' // Ensures label text is readable
+                }
+            }
+        }
+    }
+});
+
+</script>
+
+
+
+{% endblock %}
+
+
+

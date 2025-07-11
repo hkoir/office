@@ -1,0 +1,241 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="container-fluid main-content">
+    <div class="row">
+        <h4 class="text-center">List of candidates</h4>       
+       
+        <div class="col-12 col-md-12 table-responsive">
+          
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th class="text-center p-2">Applicants</th>
+                        <th class="text-center p-2">Applied job</th>
+                         <th class="text-center p-2">CV image</th>
+                        <th class="text-center p-2">Photo Image</th>
+
+                        <th class="text-center p-2">CV score</th>
+                        <th class="text-center p-2">MCQ Exam score</th>
+                        <th class="text-center p-2"> BQ Exam score</th>
+                        <th class="text-center p-2">interview Score</th>                        
+                        <th class="text-center p-2">Total score</th>
+
+                        <th class="text-center p-2">CV score status</th>
+                        <th class="text-center p-2"> MCQ Exam score status</th>
+                        <th class="text-center p-2"> BQ Exam score status</th>
+                        <th class="text-center p-2">Interview score status</th>
+                        <th class="text-center p-2">Overall Status</th>
+
+                        <th class="text-center p-2">Offer status</th>
+                        <th class="text-center p-2">Confirmation status</th>
+                        <th class="text-center p-2">Expected joining date</th>
+                        <th class="text-center p-2">Onboard status</th>
+                        
+                                   
+                       
+                       
+                    </tr>
+                </thead>
+                <tbody>
+                
+                    {% for data in   page_obj %}
+                        <tr>
+
+                                                                                                       
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.full_name}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.applied_job}}</td>
+                            <td>
+                                {% if data.resume and data.resume.url %}
+                                <a href="{{ data.resume.url }}" target="_blank" style="text-decoration: None;">
+                                    View CV:
+                                </a>
+                                {% else %}
+                                <img src="{{ data.resume.url }}" style="height:20px;width:30px">
+                                {% endif %}
+                                <a href="{% url 'recruitment:candidate_details' data.id %}" style="text-decoration: None;">Digital CV</a>
+                            </td>
+
+                            <td>
+                                {% if data.pp_photo %}
+                                <img src="{{ data.pp_photo.url }}" style="height:20px;width:20px">
+                                {% endif %}
+                            </td>
+
+
+                            <td class="text-success fw-bold">{{ data.cv_screening_score }}</td>
+                            <td class="text-success fw-bold">{{ data.exam_score }}</td>
+                            <td class="text-success fw-bold">{{ data.bq_exam_score }}</td>
+                            <td>
+                                <a href="{% url 'recruitment:candidate_interview_scores' data.id %}" class="text-success fw-bold">
+                                    {{ data.interview_score }}
+                                 </a>
+                            </td>
+                            <td class="text-success fw-bold">{{ data.total_score }}</td>
+
+
+                            <td>
+                                {% if data.cv_screening_status == 'SHORT-LISTED' %}
+                                <i class="fas fa-check text-success fw-bold">Short Listed</i>
+                                {% else %}
+                                <i class="fas fa-times text-danger fw-bold">Rejected</i>
+                               {% endif %}
+                              </td>
+                            <td>
+                                {% if data.exam_status %}
+
+                                {% if data.exam_status == 'EXAM-PASS' %}
+                                <i class="fas fa-check text-success fw-bold">Pass</i>
+                                {% else %}
+                                <i class="fas fa-times text-danger fw-bold">Fail</i>
+                               {% endif %}
+                               {% else %}
+                               <span class="text-danger fw-bold">Not appeared</span>
+                               {% endif %}
+                              </td>
+
+                              <td>
+                                {% if data.bq_exam_status %}
+                                {% if data.b_exam_status == 'EXAM-PASS' %}
+                                <i class="fas fa-check text-success fw-bold">Pass</i>
+                                {% else %}
+                                <i class="fas fa-times text-danger fw-bold">Fail</i>
+                               {% endif %}
+                               {% else %}
+                               <span class="text-danger fw-bold">Not appeared</span>
+                               {% endif %}
+                              </td>         
+                              <td>
+                                {% if data.interview_status %}
+                                {% if data.interview_status == 'INTERVIEW-PASS' %}
+                                <i class="fas fa-check text-success fw-bold">Pass</i>
+                                {% else %}
+                                <i class="fas fa-times text-danger fw-bold">Fail</i>
+                               {% endif %}
+                               {% else %}
+                               <span class="text-danger fw-bold">Not appeared</span>
+                               {% endif %}
+                              </td>               
+                                        
+                            <td>
+                                {% if data.status == 'REJECTED' %}
+                                <i class="fas fa-times text-danger fw-bold">Rejected</i>
+                                {% else %}                            
+                                 <i class="fas fa-check text-success fw-bold">{{ data.get_status_display }}</i>
+                                 {% endif %}
+                            </td>
+
+                            <td>
+                                {% if data.offer_status %}
+                                <i class="fas fa-check text-primary fw-bold">Offered</i>
+                                {% else %}
+                                {{ data.get_offer_status_display }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if data.offer_status %}
+                                    {% if data.confirmation_status == 'accepted' %}
+                                    <i class="fas fa-check text-primary fw-bold">Confirmed</i>
+                                    {% else %}
+                                    <span class="text-primary fw-bold">Confirmation Pending</span>
+                                    {% endif %}
+                                {% else %}
+                               <span>Not offered yet</span>
+                              {% endif %}
+                                                            
+                               
+                            </td>
+                            <td class="text-primary fw-bold">{{ data.expected_joining_date }}</td>
+                            <td>
+                                {% if data.onboard_status %}
+                                <i class="fas fa-check text-primary fw-bold">Onboarded</i>
+                                {% else %}
+                                {{ data.get_onboard_status_display }}
+                                {% endif %}
+                               
+                            </td>
+                                                          
+                                                      
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="16" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                 
+                </tbody>
+                
+            </table>
+         
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
+
+             <!-- Delete Confirmation Modal -->
+             <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete the transport record: <strong id="modal-entity-name"></strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <form method="post" id="delete-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+    
+</div>
+
+
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/recruitment/delete_job/${entityId}/`;
+    });
+</script>
+
+
+
+
+{% endblock %}

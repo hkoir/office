@@ -1,0 +1,300 @@
+
+{% extends "recruitment_portal.html" %}
+{% load static %}
+
+{% block content %}
+
+</style>
+
+<div class="container-fluid main-content">
+    <div class="row"> 
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="text-center animate">Be a proud member of our family <br>
+                        Work with dignity and happiness in safe workplace
+                    </p>     
+                </div>
+                <div class="col-md-4">
+                    <p class="text-center animate">Be a proud member of our family <br>
+                        Work with dignity and happiness in safe workplace
+                    </p>     
+                </div>
+                <div class="col-md-4">
+                    <p class="text-center animate">Be a proud member of our family <br>
+                        Work with dignity and happiness in safe workplace
+                    </p>     
+                </div>
+            </div>
+        </div>        
+    
+      
+ 
+        <div class="col-12">
+        <form class="d-flex" method="GET" action="{% url 'customerportal:job_list_candidate_view' %}" style="margin-left:20px">
+
+            <input class="form-control me-2" type="search" placeholder="Search by job title, name, email" aria-label="Search" name="q">
+            <button class="btn btn-outline-success" type="submit" style="color:rgb(26, 7, 239);background:white">Search </button>
+        </form>
+    
+    </div>
+        
+            
+                 
+                                  
+        
+        
+        <div class="col-12 mt-4">            
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    
+                    <tr>
+                        <th class="text-center p-2">Pre exam waiting room</th> 
+                        <th class="text-center p-2">Exam status</th>  
+                        <th class="text-center p-2">Exam start time</th>                                            
+                        <th class="text-center p-2">Application</th>
+                        <th class="text-center p-2">Status</th>
+                        <th class="text-center p-2">Job Post</th>    
+                        <th class="text-center p-2">No of vacancies</th>                    
+                        <th class="text-center p-2">Job Descriptiont</th>
+                        <th class="text-center p-2">company</th>
+                        <th class="text-center p-2">Deadline</th>                                     
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in page_obj %}
+                        <tr>      
+                            
+                            
+                            <td>
+                                {% if data.is_active %}
+                                    {% if data.job_exam.first %}  
+                                    <a href="{% url 'customerportal:pre_take_exam' data.job_exam.first.id data.candidates.first.id %}">
+                                        Candidate: {{ candidate.full_name }}
+                                    </a><br>   
+                                    {% else %}
+                                    <span><i class="fas fa-hourglass-half"></i>&nbsp;In Process</span>
+                                     {% endif %}
+                                {% else %}
+                                <i class="fas fa-window-close">Close</i>
+                                {% endif %}  
+                                                                                             
+                           </td>
+                                              
+                            <td>
+                                {% if data.is_active %}
+                                        {% if data.job_exam.first %}
+                                                {% if exam_start_time > current_time %}
+                                                    <i>Exam time not reached</i>
+                                                {% elif exam_end_time < current_time %}
+                                                    <i>exam ended up</i>
+                                                {% elif data.job_exam.first.is_expired  %}
+                                                <i>Exam ended up</i>
+                                                {% else %}                              
+                                                No Active Exam Available
+                                                {% endif %}
+                                        {% else %}
+                                        <span><i class="fas fa-hourglass-half"></i>&nbsp;In Process</span>
+                                        {% endif %}
+                                {% else %}
+                                <i class="fas fa-window-close">Close</i>
+                                {% endif %}
+                            </td>  
+
+                        <td class="bg-primary text-white"> 
+                            {% if data.is_active %}                        
+                            <div id="countdown-container">
+                                <p id="exam-start-countdown" class="text-white"></p>
+                                <p id="exam-end-countdown" class="text-warning"></p>
+                            </div>   
+                            {% else %}   
+                            <span>Job is not active</span>  
+                            {% endif %}              
+                        </td>                        
+                            
+                            <td >
+                               {% if data.candidates.first %}
+                               <span><i class="fas fa-check text-success fw-bold">Applied</i></span>
+                             {% else %}
+                                <a href="{% url 'customerportal:job_application' data.id %}">Aply now</a>
+                                {% endif %}                              
+                            </td>
+                            <td>
+                                {% if data.candidates.first %}
+                               <span class="fw-bold">{{data.candidates.first.status}}</span>
+                                {% else %}
+                                <span class="text-danger fw-bold">No status found</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center p-1">{{ data.title }}</td>   
+                            <td class="text-center p-1">{{ data.no_of_vacancies }}</td>  
+                            <td>
+                                <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#jobModal" 
+                                    data-bs-title="{{ data.title }}" 
+                                    data-bs-description="{{ data.description }}" 
+                                    data-bs-requirements="{{ data.requirements }}">
+                                Click here
+                            </button>
+                              </td>                         
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.company.name}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{data.deadline}}</td>                                                     
+                           
+                        </tr>
+                        {% empty %}
+                        <tr>
+                        <td colspan="5" class="text-center">No records available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+                    
+            <!-- Pagination Controls -->
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
+
+             <!-- Delete Confirmation Modal -->
+             <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to delete the transport record: <strong id="modal-entity-name"></strong>?
+                        </div>
+                        <div class="modal-footer">
+                            <form method="post" id="delete-form">
+                                {% csrf_token %}
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+
+<!-- Job Description Modal -->
+<div class="modal fade" id="jobModal" tabindex="-1" aria-labelledby="jobModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="jobModalLabel">Job Details</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <h4 id="jobTitle"></h4>
+          <p><strong>Description:</strong> <span id="jobDescription"></span></p>
+          <p><strong>Requirements:</strong> <span id="jobRequirements"></span></p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+
+<script>
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget; 
+        const entityId = button.getAttribute('data-id');
+        const entityName = button.getAttribute('data-name');
+
+          const modalEntityName = deleteModal.querySelector('#modal-entity-name');
+        modalEntityName.textContent = entityName;
+  
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        deleteForm.action = `/recruitment/delete_job/${entityId}/`;
+    });
+</script>
+<script>
+    // Add event listener to update modal content when a job button is clicked
+    var jobModal = new bootstrap.Modal(document.getElementById('jobModal')); // Bootstrap 5 Modal initialization
+  
+    document.getElementById('jobModal').addEventListener('show.bs.modal', function (event) {
+      var button = event.relatedTarget; // Button that triggered the modal
+      var title = button.getAttribute('data-bs-title'); // Extract info from data-bs-* attributes
+      var description = button.getAttribute('data-bs-description');
+      var requirements = button.getAttribute('data-bs-requirements');
+  
+      // Update the modal's content
+      var modal = document.getElementById('jobModal');
+      modal.querySelector('#jobTitle').textContent = title;
+      modal.querySelector('#jobDescription').textContent = description;
+      modal.querySelector('#jobRequirements').textContent = requirements;
+    });
+  </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Adjust the exam start time and end time for the browser's local time zone
+        const startTime = new Date("{{ exam_start_time }}").getTime(); 
+        const endTime = new Date("{{ exam_end_time }}").getTime(); 
+
+        const startCountdownElement = document.getElementById("exam-start-countdown");
+        const endCountdownElement = document.getElementById("exam-end-countdown");
+
+        console.log("Start Time:", startTime); // Debug log
+        console.log("End Time:", endTime); // Debug log
+    
+        function updateCountdown() {
+            const now = new Date().getTime(); // Get the current time in milliseconds
+            const timeUntilStart = startTime - now; // Time remaining until exam starts
+            const timeUntilEnd = endTime - now; // Time remaining until exam ends
+
+            // Debug log
+            console.log("Current Time:", now);
+            console.log("Time Until Start:", timeUntilStart);
+            console.log("Time Until End:", timeUntilEnd);
+
+            if (timeUntilStart > 0) {           
+                const hours = Math.floor((timeUntilStart % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilStart % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeUntilStart % (1000 * 60)) / 1000);
+                startCountdownElement.textContent = `Starts in: ${hours}h ${minutes}m ${seconds}s`;
+                endCountdownElement.textContent = ""; // Hide end countdown until exam starts
+
+            } else if (timeUntilEnd > 0) {         
+                const hours = Math.floor((timeUntilEnd % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeUntilEnd % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeUntilEnd % (1000 * 60)) / 1000);
+                startCountdownElement.textContent = "Started!";
+                endCountdownElement.textContent = `Ends in: ${hours}h ${minutes}m ${seconds}s`;
+            } else {        
+                //startCountdownElement.textContent = "Started!";
+                endCountdownElement.textContent = "Ended!";
+            }
+        }
+    
+        // Update the countdown every second
+        setInterval(updateCountdown, 1000);
+    });
+</script>
+
+
+{% endblock %}

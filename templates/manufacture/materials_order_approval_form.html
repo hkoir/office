@@ -1,0 +1,34 @@
+
+
+
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col">
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                    <h4>Submit materials request for Order #{{ order.order_id }}</h4>
+                    <h4 class="card-title"><strong>Choose action</strong> </h4>
+                    <form method="post" enctype="multipart/form-data" action="" id="add_category">
+                        {% csrf_token %}
+                        Choose your role {{ form.approval_status }}<br>
+                        Remarks {{ form.remarks }}
+                        <button type="submit" name="add_to_basket" class="btn btn-primary">Submit</button>
+                    </form>
+                 </div>
+            </div>          
+
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}

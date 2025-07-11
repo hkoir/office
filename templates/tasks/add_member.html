@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+    <div class="row">  
+        <div class="col-12"> 
+
+           <div class="container-fluid">
+                <div class="row">
+                        <div class="col-4">                            
+                            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                                 <!-- Card Header -->
+                                <div class="card-header bg-primary text-white text-center">
+                                    <h3 class="mb-0"> Add member</h3>
+                                </div> 
+                                <div class="card-body">                       
+                                    <form method="post" enctype="multipart/form-data" action="" id="add_customer">
+                                        {% csrf_token %}
+                                        {{ form.as_p }}
+                                        <div class="d-grid">
+                                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg">Add member</button>
+                                        </div>
+                                    </form>
+                                 </div>
+                            </div>        
+                        </div>
+                        <div class="col-12 col-md-8 table-responsive">
+                            <form method="get">
+                                <label for="start_date">Start Date:</label>
+                                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                                
+                                <label for="end_date">End Date:</label>
+                                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                            
+                                <button type="submit" class="btn btn-primary">Filter</button>
+                            </form>
+                       
+			   
+			     <h2>Members List</h2>
+                            <table class="table table-hover">
+                                <thead class="table-dark">
+                                    <tr class="bg-primary text-white">
+                                        <th>Team ID</th>
+                                        <th>Team Name</th>
+                                        <th>member Name</th>
+                                        <th>Member type</th>
+                                        <th>Created at</th>
+                                        <th>Updated at</th>
+                                        <th>Delete Team</th>
+                
+                                       
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if members  %}
+                                    {% for team in page_obj %}
+                                    <tr>
+                                        <td>{{ team.team.team_id }}</td>
+                                        <td>{{ team.team.name }}</td>
+                                        <td>{{ team.member.name}}</td>
+                                      
+                                        <td>
+                                            {% if team.is_team_leader %}
+                                            <span>Team leader</span>
+                                            {% else %}
+                                            <span> member</span>
+                                            {% endif %}
+                                        </td>
+                                       
+                                        <td>{{ team.created_at }}</td>
+                                        <td>{{ team.updated_at}}</td>      
+                                        <td>
+                                            <a href="{% url 'tasks:delete_member' team.id%}">delete member</a>
+                                        </td>            
+                                      
+                                    
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" style="text-align: center;">No records found.</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% else %}
+                                    <span>No record found</span>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                                                    
+                            <!-- Pagination Controls -->
+                            <div class="pagination">
+                                <span class="step-links">
+                                    {% if page_obj.has_previous %}
+                                        <a href="?page=1">&laquo; first</a>
+                                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                                    {% endif %}
+
+                                    <span class="current">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                                    </span>
+
+                                    {% if page_obj.has_next %}
+                                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>           
+
+                  </div>
+             </div>
+
+         </div>
+    </div>
+    
+  
+
+</div>
+   
+      
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_product,#id_category').select2({
+            width: '50%',
+            placeholder: 'Search ...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search',
+            allowClear: true
+        });
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const messageModal = document.getElementById('messageModal');
+        const messagesContainer = document.getElementById('messagesContainer');
+        if (messageModal && messagesContainer && messagesContainer.children.length > 0) {
+            const modalInstance = new bootstrap.Modal(messageModal);
+            modalInstance.show();
+            setTimeout(() => {
+                    modalInstance.hide();
+                }, 5000)
+        }
+    });
+    </script>
+
+
+
+{% endblock %}

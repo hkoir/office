@@ -1,0 +1,152 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid main-content">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <div class="card shadow-lg p-4">
+                <h4 class="text-center fw-bold text-success mb-4">Candidate's screening result</h4>
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <h2 class="fw-bold">{{ candidate.full_name }}</h2>
+                    <p class="text-muted">{{ candidate.email }} | {{ candidate.phone }}</p>
+                    <h5 class="text-danger">Applied for:&nbsp;{{ candidate.applied_job.title }}</h5>
+                    <hr>
+                </div>
+
+                <!-- Candidate Information -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Age:</strong> {{ candidate.age|default:"Not Provided" }}</p>
+                        <p><strong>Status:</strong> {{ candidate.get_status_display }}</p>
+                        <p><strong>CV Screening Status:</strong> {{ candidate.get_cv_screening_status_display }}</p>
+                        <p><strong>MCQ Exam Status:</strong> {{ candidate.get_exam_status_display }}</p>
+                        <p><strong>BQQ Exam Status:</strong> {{ candidate.get_bq_exam_status_display }}</p>
+                        <p><strong>Interview Status:</strong> {{ candidate.get_interview_status_display }}</p>
+                        <p><strong>Hiring Status:</strong> 
+                            {% if candidate.hiring_status %} ✅ Hired {% else %} ❌ Not Hired {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        {% if candidate.resume %}
+                            <a href="{{ candidate.resume.url }}" target="_blank" class="btn btn-primary">📄 View Resume</a>
+                        {% else %}
+                            <p class="text-muted">No Resume Uploaded</p>
+                        {% endif %}
+                        <p class="text-muted"><strong>Applied At:</strong> {{ candidate.applied_at|date:"F j, Y, g:i a" }}</p>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Education -->
+                <h4 class="text-primary">🎓 Education</h4>
+                {% if candidate.education.all %}
+                    <ul class="list-group mb-3">
+                        {% for edu in candidate.education.all %}
+                            <li class="list-group-item">
+                                <strong>{{ edu.name }}</strong> - Score: {{ edu.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No education added</p>
+                {% endif %}
+
+                <!-- Institution -->
+                <h4 class="text-primary">🏫 Institutions</h4>
+                {% if candidate.institution_of_education.all %}
+                    <ul class="list-group mb-3">
+                        {% for inst in candidate.institution_of_education.all %}
+                            <li class="list-group-item">
+                                <strong>{{ inst.name }}</strong> - Score: {{ inst.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No institution added</p>
+                {% endif %}
+
+                <!-- Major Subject -->
+                <h4 class="text-primary">📚 Major Subjects</h4>
+                {% if candidate.subject_of_education.all %}
+                    <ul class="list-group mb-3">
+                        {% for sub in candidate.subject_of_education.all %}
+                            <li class="list-group-item">
+                                <strong>{{ sub.name }}</strong> - Score: {{ sub.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No major subject added</p>
+                {% endif %}
+
+                <!-- Skills -->
+                <h4 class="text-primary">🛠 Skills</h4>
+                {% if candidate.skills.all %}
+                    <ul class="list-group mb-3">
+                        {% for skill in candidate.skills.all %}
+                            <li class="list-group-item">
+                                <strong>{{ skill.name }}</strong> - Score: {{ skill.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No skills added</p>
+                {% endif %}
+
+                <!-- Languages -->
+                <h4 class="text-primary">🌍 Languages</h4>
+                {% if candidate.language_skill_level.all %}
+                    <ul class="list-group mb-3">
+                        {% for language in candidate.language_skill_level.all %}
+                            <li class="list-group-item">
+                                <strong>{{ language.language.name }}</strong> - Score: {{ language.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No language added</p>
+                {% endif %}
+
+                <!-- Experience -->
+                <h4 class="text-primary">💼 Experience</h4>
+                {% if candidate.experience.all %}
+                    <ul class="list-group mb-3">
+                        {% for exp in candidate.experience.all %}
+                            <li class="list-group-item">
+                                <strong>{{ exp.area_of_experience }}</strong> - {{ exp.year_of_experience }} years (Score: {{ exp.score }})
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No experience added</p>
+                {% endif %}
+
+                <!-- Certifications -->
+                <h4 class="text-primary">📜 Certifications</h4>
+                {% if candidate.certification.all %}
+                    <ul class="list-group mb-3">
+                        {% for cert in candidate.certification.all %}
+                            <li class="list-group-item">
+                                <strong>{{ cert.name }}</strong> - Score: {{ cert.score }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-muted">No certifications added</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <h4 style="height:10px"></h4>
+</div>
+
+    
+
+    <a href="{% url 'recruitment:selected_candidate' %}" class="btn btn-secondary">Back to List</a>
+</div>
+
+{% endblock %}
