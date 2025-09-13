@@ -26,7 +26,7 @@ from django.db.models.functions import TruncDate
 from collections import defaultdict
 import json
 
-
+from decimal import Decimal
 
 
 
@@ -52,7 +52,7 @@ def create_sale_request(request):
                 warehouse = form.cleaned_data['warehouse']
                 location = form.cleaned_data['location']
                 batch= form.cleaned_data['batch']
-                unit_selling_price = form.cleaned_data['unit_selling_price ']
+                unit_selling_price = form.cleaned_data['unit_selling_price']
 
 
                 customer_id = customer.id if customer else None              
@@ -98,7 +98,7 @@ def create_sale_request(request):
                         'quantity': quantity,
                         'sku': product_obj.sku,
                         'unit_price': float(batch.unit_price),
-                        'unit_selling_price':unit_selling_price ,
+                        'unit_selling_price': float(unit_selling_price), 
                         'total_amount': total_amount,
                         'customer_id': customer_id,
                         'batch_id': batch.id

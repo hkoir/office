@@ -1,5 +1,6 @@
 
 {% extends "base.html" %}
+{% load custom_filters %}
 {% block content %}
 
 
@@ -15,7 +16,7 @@
                 <div class="card-body">                    
                     <form method="post" enctype="multipart/form-data" action="" id="add_category">
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {{ form.as_p|form_control }}
                         <div class="d-grid">
                             <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">Submit</button>
                         </div>

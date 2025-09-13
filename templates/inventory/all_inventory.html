@@ -16,17 +16,17 @@
             <form method="GET" action="{% url 'inventory:all_inventory' %}">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Start Date: {{ form.start_date }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            End Date: {{ form.end_date }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Days: {{ form.days }}
+                       <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days|form_control }}
                         </div>
                        
-                        <div class="col-md-3 col-sm-6 mt-2">
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
                             <button type="submit" class="btn btn-primary">Generate Data</button> 
                            
                         </div>
@@ -73,7 +73,7 @@
                             <h5 style="color: blue;">Stock Value: {{ warehouse_total_stock_value|add_commas }}</h5>
                             
                         </div>
-                        
+                        <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
@@ -120,6 +120,7 @@
                                 {% endif %}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}

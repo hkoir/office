@@ -59,11 +59,27 @@ from django_tenants.utils import get_public_schema_name
 from.models import AllowedEmailDomain 
 from clients.models import Tenant
 
+from datetime import timedelta
+from .models import ActivityLog
 
 
 def home(request):
     return render(request,'accounts/home.html')
 
+
+def activity_log_view(request):
+    days = int(request.GET.get("days", 7))  
+    since = timezone.now() - timedelta(days=days)    
+    logs_list = ActivityLog.objects.filter(timestamp__gte=since).order_by('-timestamp')
+     
+    paginator = Paginator(logs_list, 8)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, "accounts/activity_log.html", {
+        "page_obj": page_obj,
+        "days": days,
+    })
 
 def send_tenant_email(email, username, password, subdomain):
     subject = "Your Credentials for login"

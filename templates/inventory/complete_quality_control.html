@@ -1,5 +1,5 @@
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -11,7 +11,7 @@
 
     <div class="form-group">
         <label for="id_warehouse" class="font-weight-bold">Select Warehouse:</label>
-        {{ form.warehouse }}
+        {{ form.warehouse|form_control }}
     </div>
 
     <div class="form-group mt-2">

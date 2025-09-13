@@ -5,6 +5,14 @@ import ast
 import os
 
 
+
+@register.filter(name='form_control')
+def form_control(field):
+    """Add Bootstrap form-control class to a form field widget"""
+    return field.as_widget(attrs={
+        "class": "form-control"
+    })
+
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(key) if dictionary else None

@@ -24,6 +24,13 @@ class SaleRequestForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
+    customer = forms.ModelChoiceField(
+        queryset=Customer.objects.all(),
+        label="Customer",
+        required=True,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     batch = forms.ModelChoiceField(
         queryset=Batch.objects.all(),
         label="Batch",
@@ -50,9 +57,7 @@ class SaleRequestForm(forms.ModelForm):
         min_value=1,
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
-
-   
-
+ 
     
     warehouse= forms.ModelChoiceField(
         queryset=Warehouse.objects.all(),

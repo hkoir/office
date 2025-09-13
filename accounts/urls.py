@@ -77,7 +77,9 @@ urlpatterns = [
     path('assign_user_to_group/', views.assign_user_to_group, name='assign_user_to_group'),
     path('assign_permissions_to_group/', views.assign_permissions_to_group, name='assign_permissions_to_group'),
     path('get_permissions_for_model/', views.get_permissions_for_model, name='get_permissions_for_model'),
-    path('search_all/', views.search_all, name='search_all')
+    path('search_all/', views.search_all, name='search_all'),
+
+     path("activity-log/", views.activity_log_view, name="activity_log"),
   
 
 ]

@@ -23,7 +23,7 @@ from django.contrib.auth import get_user_model
 from accounts.models import UserProfile  
 User = get_user_model() 
 
-
+from accounts.models import ActivityLog
 
 
 class CustomTenantAuthMiddleware(MiddlewareMixin):
@@ -58,4 +58,33 @@ class CustomTenantAuthMiddleware(MiddlewareMixin):
                     return redirect(f'https://www.{user_tenant.schema_name}.dopstech.pro')
                 return redirect('https://www.dopstech.pro')
 
+
+
+
+class ActivityLogMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+
+        if request.user.is_authenticated:
+            path = request.path
+
+            # skip logging for activity log itself, admin, static/media
+            skip_paths = [
+                "/activity-log",
+                "/admin",
+                "/static",
+                "/media",
+            ]
+
+            if not any(path.startswith(p) for p in skip_paths):
+                ActivityLog.objects.create(
+                    user=request.user,
+                    action=f"Visited {path}",
+                    ip_address=request.META.get("REMOTE_ADDR"),
+                )
+
+        return response
 

@@ -20,7 +20,7 @@
                 <div class="card-body">                    
                     <form method="get" enctype="multipart/form-data" action="" id="add_category">
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {{ form.as_p|form_control }}
                         <div class="d-grid">
                             <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">Submit</button>
                         </div>
@@ -57,7 +57,7 @@
             </table>
           
         </div>
-        <div class="col-12 col-md-6 bg-light">
+        <div class="col-12 col-md-6 bg-light table-responsive">
             <canvas id="transactionChart" width="400" height="200"></canvas>
         </div>
         {% endif %}

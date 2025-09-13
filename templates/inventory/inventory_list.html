@@ -1,5 +1,4 @@
 {% extends 'base.html' %}  
-
 {% load custom_filters %}
 {% load static %}
 
@@ -17,22 +16,22 @@
             <form method="GET" action="{% url 'inventory:inventory_list' %}">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Start Date: {{ form.start_date }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            End Date: {{ form.end_date }}
+                      <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Days: {{ form.days }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Warehouse Name: {{ form.warehouse_name }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Warehouse Name: {{ form.warehouse_name|form_control }}
                         </div> 
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Product Name: {{ form.product_name }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Product Name: {{ form.product_name|form_control }}
                         </div> 
-                        <div class="col-md-3 col-sm-6 mt-2">
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
                             <button type="submit" class="btn btn-primary">Generate Data</button> 
                            
                         </div>
@@ -67,7 +66,7 @@
      
 
 
-        <div class="col-12 my-3">   
+        <div class="col-12 my-3 table-responsive">   
             <div class="container-fluid">
                 <div class="row" style="overflow-x: auto">                   
                     <div id="chart-container" class="col-12 col-md-9 bg-light">
@@ -79,62 +78,19 @@
                 </div>
             </div>        
         </div>
-        
+                      
                  
-       
-        <div class="col-12 mt-4">                   
-                              
-         
-
-            
-            <h4> Inventory details</h4>
-                <!-- Column Selection Dropdown (Better UI) -->
-                <div class="dropdown mt-4">
-                <button class="btn btn-lg btn-secondary dropdown-toggle" type="button" id="columnDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    Select Columns
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="columnDropdown">
-                    <li><button class="btn btn-sm btn-primary" id="selectAll">Select All</button></li>
-                    <li><button class="btn btn-sm btn-danger" id="deselectAll">Deselect All</button></li>
-
-                    <li><input type="checkbox" class="column-checkbox" value="product">Product</li>
-
-                    <li><input type="checkbox" class="column-checkbox" value="total_stock"> Total Stock</li>
-                    <li><input type="checkbox" class="column-checkbox" value="total_purchase"> Total Purchase</li>
-                    <li><input type="checkbox" class="column-checkbox" value="total_sold"> Total Sold</li>
-                    <li><input type="checkbox" class="column-checkbox" value="total_available"> Total available</li>
-
-                    <li><input type="checkbox" class="column-checkbox" value="manufacture_in"> Manufacture IN</li>
-                    <li><input type="checkbox" class="column-checkbox" value="manufacture_out"> Manufacture Out</li>
-                    <li><input type="checkbox" class="column-checkbox" value="total_existing_in"> Total existing IN</li>
-                    <li><input type="checkbox" class="column-checkbox" value="operations_out"> Total operations out</li>
-
-                    <li><input type="checkbox" class="column-checkbox" value="transfer_in"> Transfer In</li>
-                    <li><input type="checkbox" class="column-checkbox" value="transfer_out"> Transfer Out</li>
-                    <li><input type="checkbox" class="column-checkbox" value="replacement_in"> Replacement IN</li>
-                    <li><input type="checkbox" class="column-checkbox" value="replacement_out"> Replacement Out</li>
-
-
-                    <li><input type="checkbox" class="column-checkbox" value="scrapped_in"> Scrapped IN</li>
-                    <li><input type="checkbox" class="column-checkbox" value="scrapped_out"> Scrapped Out</li>
-                    <li><input type="checkbox" class="column-checkbox" value="stock_value"> Stock valuet</li>
-                    <li><hr class="dropdown-divider"></li>
-                
-                </ul>
-            </div>   
-        </div>
-        
-
+                    
      <div class="col-12 table-responsive mt-4">
+         <h4> Inventory details</h4>   
         {% for warehouse, products, warehouse_total_stock_value in grouped_data %}            
                 
         <h6 style="font-weight: bold; color:blue">Warehouse: {{ warehouse }}</h6>                        
         <div>
             <h5 style="color: blue;">Stock Value: {{ warehouse_total_stock_value|add_commas }}</h5>
-            
         </div>
-        
-        <table class="table table-hover" id="batchTable">
+        <div class="table-responsive">      
+          <table class="table table-hover">
             <thead class="table-dark">
                 <tr class="bg-primary text-white">
 
@@ -200,6 +156,7 @@
             </tbody>
         </table>
     </div>
+    </div>
                 
     {% endfor %}
             
@@ -208,91 +165,70 @@
         <h5 class="text-center" style="color:blue">No inventory data available within specified criteria.Choose filter and  <b>"generate data"</b></h5>
     </div>
     {% endif %}     
-
-
 <!-- container row end here -->
     </div>  
 
-  
 
+        <!-- Pagination Controls -->
+        <div class="pagination">
+        <span class="step-links">
+            {% if product_wise_data.has_previous %}
+            <a href="?page=1">&laquo; first</a>
+            <a href="?page={{ product_wise_data.previous_page_number }}">previous</a>
+            {% endif %}
 
-         <!-- Pagination Controls -->
-         <div class="pagination">
-            <span class="step-links">
-                {% if product_wise_data.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ product_wise_data.previous_page_number }}">previous</a>
-                {% endif %}
-
-                <span class="current">
-                    Page {{ product_wise_data.number }} of {{ product_wise_data.paginator.num_pages }}.
-                </span>
-
-                {% if page_obj.has_next %}
-                <a href="?page={{ product_wise_data.next_page_number }}">next</a>
-                <a href="?page={{ product_wise_data.paginator.num_pages }}">last &raquo;</a>
-                {% endif %}
+            <span class="current">
+                Page {{ product_wise_data.number }} of {{ product_wise_data.paginator.num_pages }}.
             </span>
-        </div>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ product_wise_data.next_page_number }}">next</a>
+            <a href="?page={{ product_wise_data.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
 
 
 </div>
 
-
-
 <script>
-    document.getElementById("columnDropdown").addEventListener("click", function () {
-    let dropdown = new bootstrap.Dropdown(this);
-    dropdown.show();
-});
+document.addEventListener("DOMContentLoaded", function () {
+    const columnCheckboxes = document.querySelectorAll(".column-checkbox");
+    const selectAllBtn = document.getElementById("selectAll");
+    const deselectAllBtn = document.getElementById("deselectAll");
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const batchFilter = document.getElementById("batchFilter");
-        const columnCheckboxes = document.querySelectorAll(".column-checkbox");
-        const selectAllBtn = document.getElementById("selectAll");
-        const deselectAllBtn = document.getElementById("deselectAll");
+    // Hide all columns initially (for all tables)
+    document.querySelectorAll(".batchTable th, .batchTable td").forEach(col => col.style.display = "none");
 
-        // Hide all columns initially
-        document.querySelectorAll("#batchTable th, #batchTable td").forEach(col => col.style.display = "none");
-
-        // Show selected columns
-        columnCheckboxes.forEach(checkbox => {
-            checkbox.addEventListener("change", function () {
-                const columnClass = this.value;
-                const isChecked = this.checked;
-                document.querySelectorAll("." + columnClass).forEach(col => col.style.display = isChecked ? "" : "none");
-            });
-        });
-
-        // Select All
-        selectAllBtn.addEventListener("click", function () {
-            columnCheckboxes.forEach(checkbox => {
-                checkbox.checked = true;
-                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "");
-            });
-        });
-
-        // Deselect All
-        deselectAllBtn.addEventListener("click", function () {
-            columnCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
-                document.querySelectorAll("." + checkbox.value).forEach(col => col.style.display = "none");
-            });
-        });
-
-        // Batch Filter
-        batchFilter.addEventListener("change", function () {
-            const selectedBatch = batchFilter.value;
-            document.querySelectorAll("#batchTable tbody tr").forEach(row => {
-                if (selectedBatch === "" || row.dataset.batch === selectedBatch) {
-                    row.style.display = "";
-                } else {
-                    row.style.display = "none";
-                }
+    // Checkbox change → apply to all tables
+    columnCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener("change", function () {
+            const columnClass = this.value;
+            const isChecked = this.checked;
+            document.querySelectorAll(".batchTable ." + columnClass).forEach(col => {
+                col.style.display = isChecked ? "" : "none";
             });
         });
     });
+
+    // Select All
+    selectAllBtn.addEventListener("click", function () {
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.checked = true;
+            document.querySelectorAll(".batchTable ." + checkbox.value).forEach(col => col.style.display = "");
+        });
+    });
+
+    // Deselect All
+    deselectAllBtn.addEventListener("click", function () {
+        columnCheckboxes.forEach(checkbox => {
+            checkbox.checked = false;
+            document.querySelectorAll(".batchTable ." + checkbox.value).forEach(col => col.style.display = "none");
+        });
+    });
+});
 </script>
+
 
 <script>
 // Parse the JSON data passed from the view

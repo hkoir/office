@@ -30,26 +30,26 @@
             <form method="GET" action="{% url 'inventory:inventory_aggregate_list' %}">
                 <div class="container-fluid">
                     <div class="row">
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Start Date: {{ form.start_date }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Start Date: {{ form.start_date|form_control}}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            End Date: {{ form.end_date }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            End Date: {{ form.end_date|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Days: {{ form.days }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Days: {{ form.days|form_control }}
                         </div>
-                        <div class="col-md-3 col-sm-6 mb-2">
-                            Product Name: {{ form.product_name }}
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
+                            Product Name: {{ form.product_name|form_control }}
                         </div> 
-                        <div class="col-md-3 col-sm-6 mb-2">
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
                             <label for="valuation_method">Choose Valuation Method:</label>
                             <select name="valuation_method" id="valuation_method" onchange="this.form.submit()">                               
                                 <option value="LIFO" {% if valuation_method == 'LIFO' %}selected{% endif %}>LIFO</option>
                                 <option value="FIFO" {% if valuation_method == 'FIFO' %}selected{% endif %}>FIFO</option>
                             </select>
                         </div>
-                        <div class="col-md-3 col-sm-6 mt-2">
+                        <div class="col-6 col-md-3 col-sm-6 mb-2">
                             <button type="submit" class="btn btn-primary">Generate Data</button> 
                         </div>
                     </div>
@@ -80,7 +80,7 @@
     </h4>
    
 
-        <div class="col-12" style="margin-bottom: 20px;">
+        <div class="col-12 table-responsive" style="margin-bottom: 20px;">
             <div class="container-fluid">
                 <div class="row">
                     <div class="col-9 bg-light">

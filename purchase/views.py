@@ -126,7 +126,7 @@ def create_purchase_request(request):
                 product_required_stock = product_average_usage * product_obj.lead_time  
 
                 if total_available_stock > product_required_stock:
-                    messages.info(request, f'There is enough total stock for {product_obj.name}')
+                    messages.info(request, f'There is enough total stock for {product_obj.name}, current stock qty={total_available_stock}')
                     return redirect('purchase:create_purchase_request')
 
                 warehouse_messages = []
@@ -135,7 +135,7 @@ def create_purchase_request(request):
                     warehouse_required_stock = warehouse_avg_usage * product_obj.lead_time
 
                     if stock.quantity > warehouse_required_stock:
-                        warehouse_messages.append(f"{stock.product.name} in {stock.warehouse.name}")
+                        warehouse_messages.append(f"{stock.product.name} in {stock.warehouse.name}, total avaailable stoc={stock.quantity}")
               
                 if warehouse_messages:
                     messages.info(request, f'There is enough stock in these warehouses: {", ".join(warehouse_messages)}')

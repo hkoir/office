@@ -23,7 +23,7 @@
             <div class="container-fluid">
                 <div class="row">
                     {% for item in product_wise_data %}
-                    <div class="col-4 col-md-4">
+                    <div class="col-4 col-md-4 table-responsive">
                         <div id="pieChartsContainer">
                             <div class="product-chart">
                                 <h4>{{ item.product }}</h4>
@@ -42,7 +42,7 @@
         
                 {% for warehouse, products in grouped_data %}
                 <div class="row mt-4">
-                    <div class="col">
+                    <div class="col table-responsive">
                         <h5 class="text-center" style="font-weight: bold;">Warehouse: {{ warehouse }}</h5>
                         <table class="table table-hover">
                             <thead class="table-dark">
