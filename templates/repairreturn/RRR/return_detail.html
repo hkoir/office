@@ -1,19 +1,19 @@
-<!-- return_detail.html -->
-
 {% extends "base.html" %}
 
 {% block content %}
 
-
-
-<div class="container fluid main-content">
-    <div class="row">
-        <div class="col-3"></div>
-        <div class="col-6">     
-            <div class="card" style="padding:10px;background-color:aliceblue;">
-                <div class="card-body">
-                    <h2>Return Details for {{ return_instance.product.product_name }}</h2>
-                    <table class="table table-hover">
+<div class="container-fluid main-content my-4">
+    <div class="row justify-content-center">
+        <!-- Return Details Card -->
+        <div class="col-12 col-lg-8 mb-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        Return Details – {{ return_instance.product.product_name }}
+                    </h4>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
                                 <th>Field</th>
@@ -21,105 +21,59 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Customer</td>
-                                <td>{{ return_instance.customer }}</td>
-                            </tr>
-                            <tr>
-                                <td>Return Reason</td>
-                                <td>{{ return_instance.return_reason }}</td>
-                            </tr>
-                            <tr>
-                                <td>Quantity Returned</td>
-                                <td>{{ return_instance.quantity_returned }}</td>
-                            </tr>
-                            <tr>
-                                <td>Repair Status</td>
-                                <td>{{ return_instance.repair_status }}</td>
-                            </tr>
-                            <tr>
-                                <td>Inspected By</td>
-                                <td>{{ return_instance.inspected_by }}</td>
-                            </tr>
-                            <tr>
-                                <td>Inspection Date</td>
-                                <td>{{ return_instance.inspection_date }}</td>
-                            </tr>
-                            <tr>
-                                <td>Replacement Product</td>
-                                <td>{{ return_instance.replacement_product }}</td>
-                            </tr>
-                            <tr>
-                                <td>Replacement Quantity</td>
-                                <td>{{ return_instance.replacement_quantity }}</td>
-                            </tr>
-                            <tr>
-                                <td>Remarks</td>
-                                <td>{{ return_instance.remarks }}</td>
-                            </tr>
-                            <tr>
-                                <td>Requested Date</td>
-                                <td>{{ return_instance.requested_date }}</td>
-                            </tr>
-                            <tr>
-                                <td>Processed By</td>
-                                <td>{{ return_instance.processed_by }}</td>
-                            </tr>
-                            <tr>
-                                <td>Processed Date</td>
-                                <td>{{ return_instance.processed_date }}</td>
-                            </tr>
-                            <tr>
-                                <td>Created At</td>
-                                <td>{{ return_instance.created_at }}</td>
-                            </tr>
-                            <tr>
-                                <td>Updated At</td>
-                                <td>{{ return_instance.updated_at }}</td>
-                            </tr>
+                            <tr><td>Customer</td><td>{{ return_instance.customer }}</td></tr>
+                            <tr><td>Return Reason</td><td>{{ return_instance.return_reason }}</td></tr>
+                            <tr><td>Quantity Returned</td><td>{{ return_instance.quantity_returned }}</td></tr>
+                            <tr><td>Repair Status</td><td>{{ return_instance.repair_status }}</td></tr>
+                            <tr><td>Inspected By</td><td>{{ return_instance.inspected_by }}</td></tr>
+                            <tr><td>Inspection Date</td><td>{{ return_instance.inspection_date }}</td></tr>
+                            <tr><td>Replacement Product</td><td>{{ return_instance.replacement_product }}</td></tr>
+                            <tr><td>Replacement Quantity</td><td>{{ return_instance.replacement_quantity }}</td></tr>
+                            <tr><td>Remarks</td><td>{{ return_instance.remarks }}</td></tr>
+                            <tr><td>Requested Date</td><td>{{ return_instance.requested_date }}</td></tr>
+                            <tr><td>Processed By</td><td>{{ return_instance.processed_by }}</td></tr>
+                            <tr><td>Processed Date</td><td>{{ return_instance.processed_date }}</td></tr>
+                            <tr><td>Created At</td><td>{{ return_instance.created_at }}</td></tr>
+                            <tr><td>Updated At</td><td>{{ return_instance.updated_at }}</td></tr>
                         </tbody>
                     </table>
-
-                 </div>
-            </div>           
-        </div>
-        <div class="col-3">
-            <div class="actions">
-                <div class="container-fluid">
-                    <div class="row">
-                        <div class="col">
-                            <a href="{% url 'repairreturn:inspect_product' return_instance.pk %}">Inspect</a>
-                        </div>
-                        <div class="col">
-                            <a href="{% url 'repairreturn:repair_product' return_instance.pk %}">Repair</a>
-                        </div>
-                        <div class="col">
-                            <a href="{% url 'repairreturn:replace_product' return_instance.pk %}">Replace</a>
-                        </div>
-                        <div class="col">
-                            <a href="{% url 'repairreturn:scrap_product' return_instance.pk %}">Scrap</a>
-                        </div>
-                        <div class="col">
-                            <a href="{% url 'repairreturn:sale_order_list' %}" style="white-space: nowrap;">Raise Return</a>
-                        </div>
-                        <div class="col"></div>
-                    </div>
-                </div>            
-             
+                </div>
             </div>
         </div>
 
-
-
+        <!-- Actions Card -->
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a class="btn btn-outline-primary" 
+                           href="{% url 'repairreturn:inspect_product' return_instance.pk %}">
+                           Inspect
+                        </a>
+                        <a class="btn btn-outline-info" 
+                           href="{% url 'repairreturn:repair_product' return_instance.pk %}">
+                           Repair
+                        </a>
+                        <a class="btn btn-outline-success" 
+                           href="{% url 'repairreturn:replace_product' return_instance.pk %}">
+                           Replace
+                        </a>
+                        <a class="btn btn-outline-danger" 
+                           href="{% url 'repairreturn:scrap_product' return_instance.pk %}">
+                           Scrap
+                        </a>
+                        <a class="btn btn-outline-dark" 
+                           href="{% url 'repairreturn:sale_order_list' %}">
+                           Raise Return
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-
-
-
 {% endblock %}
-
-
-
-
-

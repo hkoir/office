@@ -14,13 +14,13 @@
             <form method="GET" action="{% url 'transport:management_summary_report' %}">
                 <div class="container-fluid">
                     <div class="row row-cols-1 row-cols-md-5">
-                        <div class="col"> Start Date: {{ form.start_date }} </div>
-                        <div class="col"> End Date: {{ form.end_date }} </div>
-                        <div class="col"> No of days {{ form.days }} </div>
-                        <div class="col"> Vehicle number: {{ form.vehicle_number }} </div>
-                        <div class="col"> Month {{ form.month }} </div>
-                        <div class="col"> Year {{ form.year }} </div>
-                        <div class="col"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                        <div class="col mb-2"> Start Date: {{ form.start_date|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> End Date: {{ form.end_date|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> No of days {{ form.days|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> Vehicle number: {{ form.vehicle_number|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> Month {{ form.month|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> Year {{ form.year|add_class:"form-control" }} </div>
+                        <div class="col mb-2"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
                     </div>
                 </div>
             </form>               
@@ -125,55 +125,56 @@
 
 
 <script>
+
     const chartData = JSON.parse('{{ chart_data|escapejs }}');       
-    const ctx = document.getElementById('incrementChart').getContext('2d');   
+const ctx = document.getElementById('incrementChart').getContext('2d');
 
-    const incrementChart = new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Amount',
-                data: chartData.values,
-                backgroundColor: [
-               
-                '#00FF00',  // Soft Blue
-                '#F0F00F',  // Soft Yellow
-                '#FF9F40',  // Soft Orange
+// Function to decide legend position based on screen size
+function getLegendPosition() {
+    return window.innerWidth < 768 ? 'bottom' : 'left';
+}
 
-               
-        
+const incrementChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: chartData.labels,
+        datasets: [{
+            label: 'Amount',
+            data: chartData.values,
+            backgroundColor: [
+                '#00FF00',
+                '#F0F00F',
+                '#FF9F40'
             ],
-            borderColor: [
-               
-                '#FFFFFF', 
-                '#FFFFFF', 
-                '#FFFFFF', 
-               
-            ],
-
-                borderWidth: 1,
-            }],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'left',
-                    labels: {
-                    color: '#333333',  // Set legend text color (e.g., dark gray)
+            borderColor: ['#FFFFFF', '#FFFFFF', '#FFFFFF'],
+            borderWidth: 1,
+        }],
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: getLegendPosition(),
+                labels: {
+                    color: '#333333',
                     font: {
-                        size: 14,      // Optional: Change font size
-                        family: 'Arial', // Optional: Change font family
-                        weight: 'bold',  // Optional: Change font weight
+                        size: 14,
+                        family: 'Arial',
+                        weight: 'bold',
                     },
-                },
                 },
             },
         },
-    });
-    
+    },
+});
+
+// Re-render legend position on window resize
+window.addEventListener('resize', () => {
+    incrementChart.options.plugins.legend.position = getLegendPosition();
+    incrementChart.update();
+});
+
   
 </script>
 

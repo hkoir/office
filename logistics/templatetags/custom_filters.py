@@ -5,6 +5,48 @@ import ast
 import os
 
 
+import ast
+import os
+from decimal import Decimal
+
+
+@register.filter
+def get_balance(balances, key):
+    """Safe get from balances dict"""
+    if not isinstance(balances, dict):
+        return 0
+    return balances.get(key, 0)
+
+
+@register.filter
+def multiply(value, arg):
+    try:
+        return float(value) * float(arg)
+    except (ValueError, TypeError):
+        return 0
+
+
+@register.filter
+def ait_per_item(item, sale=None):
+    """Calculate AIT as 10% of the line revenue (ignores proportional allocation)"""
+    total = item.quantity * item.unit_price
+    return (total * Decimal("0.10")).quantize(Decimal("0.01"))
+
+@register.filter
+def concat(a, b):
+    """Concatenate two values as strings"""
+    return f"{a}_{b}"
+
+
+@register.filter
+def profit(item):
+    return (item.unit_price - item.batch.purchase_price) * item.quantity
+
+@register.filter
+def dict_get(d, key):
+    return d.get(key, '')
+
+    
 
 @register.filter(name='form_control')
 def form_control(field):
@@ -31,9 +73,13 @@ def add_commas(value):
 
 @register.filter
 def in_list(value, arg):
-    if not isinstance(arg, list):
+    """
+    Checks if value is in a comma-separated string (arg), ignoring extra spaces.
+    """
+    if not value or not arg:
         return False
-    return value in arg
+    items = [x.strip() for x in arg.split(',')]
+    return value.strip() in items
 
 
 

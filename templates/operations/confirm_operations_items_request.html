@@ -9,6 +9,9 @@
 
     <h4>Items requested</h4>
     {% if basket %}
+    <div class="table-responsive">
+
+ 
     <table class="table table-hover">
         <thead class="table-dark">
             <tr class="bg-primary text-white">
@@ -33,6 +36,7 @@
             {% endfor %}
         </tbody>
     </table>
+       </div>
 
     <form method="post">
         {% csrf_token %}

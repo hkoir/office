@@ -9,6 +9,7 @@ app_name = 'finance'
 
 urlpatterns = [
     path('create_purchase_invoice/<int:order_id>/', views.create_purchase_invoice, name='create_purchase_invoice'),
+    path('create_purchase_invoice_from_quotation/<int:quotation_id>/', views.create_purchase_invoice_from_quotation, name='create_purchase_invoice_from_quotation'),
     path('create_purchase_payment/<int:invoice_id>/', views.create_purchase_payment, name='create_purchase_payment'),
     path('purchase_invoice_list/', views.purchase_invoice_list, name='purchase_invoice_list'),
     path('purchase_invoice_detail/<int:invoice_id>/', views.purchase_invoice_detail, name='purchase_invoice_detail'),

@@ -14,7 +14,7 @@
                         <h3 class="mb-0"> {% if instance %} Update Company {% else %} Add Company {% endif %}</h3>
                     </div>
                 
-                <form method="POST" class="p-2 m-3">
+                <form method="POST" class="mb-2">
                     {% csrf_token %}
                     {{ form.as_p }}
 

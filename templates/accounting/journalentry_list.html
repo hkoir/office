@@ -1,0 +1,115 @@
+{% extends "../base.html" %}
+{% load static %}
+{% block title %}Accounting{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+   
+   <div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'accounting:balance_sheet' %}" class="btn btn-sm btn-primary w-100">
+        Balance Sheet
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:balance_sheet_quarterly' %}" class="btn btn-sm btn-primary w-100">
+        Balance Sheet Quarterly
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:trial_balance' %}" class="btn btn-sm btn-primary w-100">
+        Trial Balance
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:profit_loss' %}" class="btn btn-sm btn-primary w-100">
+        Profit &amp; Loss
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:profit_loss_quarterly' %}" class="btn btn-sm btn-primary w-100">
+        Profit &amp; Loss Quarterly
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:journalentry_create' %}" class="btn btn-sm btn-primary w-100">
+        Journal Entry
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:journalentry_list' %}" class="btn btn-sm btn-primary w-100">
+        Journal Entry List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:account_create' %}" class="btn btn-sm btn-primary w-100">
+        Add Account
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:account_list' %}" class="btn btn-sm btn-primary w-100">
+        Account List
+      </a>
+    </div>
+  </div>
+</div>
+
+
+    
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="my-4">Journal Entries</h2>
+        <a href="{% url 'accounting:journalentry_create' %}" class="btn btn-success">
+            + Add Journal Entry
+        </a>
+    </div>
+
+    {% if entries %}
+    <div class="row">
+        <div class="table-responsive">
+            
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Reference</th>
+                        <th>Total Debits</th>
+                        <th>Total Credits</th>
+                        <th>Balanced</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ entry.date }}</td>
+                        <td>{{ entry.description }}</td>
+                        <td>{{ entry.reference }}</td>
+                        <td>{{ entry.total_debits|floatformat:2 }}</td>
+                        <td>{{ entry.total_credits|floatformat:2 }}</td>
+                        <td>
+                            {% if entry.is_balanced %}
+                                <span class="badge bg-success">Yes</span>
+                            {% else %}
+                                <span class="badge bg-danger">No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'accounting:journalentry_detail' entry.pk %}" class="btn btn-sm btn-primary">View</a>
+                            <a href="" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="" class="btn btn-sm btn-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No journal entries found. <a href="{% url 'accounting:journalentry_create' %}">Create one</a>.</p>
+        {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -10,14 +10,14 @@
         
         <form method="GET">
             <label>Start Date:</label>
-            <input type="date" name="start_date" value="{{ start_date }}">            
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">            
             <label>End Date:</label>
-            <input type="date" name="end_date" value="{{ end_date }}">                
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control">                
             
-            <button class="btn btn-primary" type="submit">Apply Filter</button>
+            <button class="btn btn-primary form-control my-4" type="submit">Apply Filter</button>
         </form>  
 
-        <div class="col-12 col-md-8 mt-2">
+        <div class="col-12 col-md-8 mt-2 table-responsive my-4">
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>

@@ -7,7 +7,7 @@ from .models import CustomerPerformance
 class AddCustomerForm(forms.ModelForm):   
     class Meta:
         model = Customer
-        exclude = ['customer_id','user']
+        exclude = ['customer_id']
 
 
 class AddLocationForm(forms.ModelForm):

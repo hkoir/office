@@ -12,6 +12,7 @@ urlpatterns = [
     path('core_dashboard/', views.core_dashboard, name='core_dashboard'),
     path('only_core_dashboard/', views.only_core_dashboard, name='only_core_dashboard'),
     path('view_employee/', views.view_employee, name='view_employee'),
+    path('basic_database_creation/', views.basic_database_creation, name='basic_database_creation'),
     path('employee_list/', views.employee_list, name='employee_list'),
    
     path('manage_department/', views.manage_department, name='manage_department'),  

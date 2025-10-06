@@ -1,5 +1,5 @@
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -11,7 +11,7 @@
                 <div class="d-flex align-items-center gap-2"> 
                     <label for="id_product_name" class="me-2">Product:</label>
                     <div class="flex-grow-1">
-                        {{ form.product_name }}
+                        {{ form.product_name|add_class:"form-control" }}
                     </div>
                     <button type="submit" class="btn btn-primary">Find item</button>
                 </div>
@@ -22,7 +22,7 @@
         <hr>
         </div>
         <div class="col-12 table-responsive">
-            <h4>Product List:
+            <h4 class=my-4>Product List:
                 &nbsp;<a href="{% url 'product:create_category' %}">Add new category</a>
                 &nbsp;<a href="{% url 'product:create_product' %}">Add new product</a></h4>
             <table class="table table-hover">

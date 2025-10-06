@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -12,7 +12,7 @@
 
            <div class="container-fluid">
                 <div class="row">
-                        <div class="col-4">                            
+                        <div class="col-12 col-md-4">                          
                             <div class="card shadow" style="padding:10px;background-color:aliceblue;">
                                   <!-- Card Header -->
                                   <div class="card-header bg-primary text-white text-center">
@@ -21,7 +21,18 @@
                                 <div class="card-body">                                   
                                     <form method="post" enctype="multipart/form-data" action="{% url 'tasks:create_team' %}" id="add_category">
                                         {% csrf_token %} 
-                                        {{ form.as_p }}
+                                      {% for field in form.visible_fields %}
+                                        <div class="mb-3">
+                                            {{ field.label_tag }}
+                                            {{ field|add_class:"form-control" }}
+                                            {% if field.help_text %}
+                                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                                            {% endif %}
+                                            {% for error in field.errors %}
+                                                <div class="text-danger">{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endfor %}
                                         <div class="d-grid">
                                         <button type="submit" name="add_to_basket" class="btn btn-primary bg-lg">Submit</button>
                                     </div>
@@ -29,13 +40,15 @@
                                  </div>
                             </div>        
                         </div>
-                        <div class="col-8 table-responsive">
+
+                        
+                        <div class="col-12 col-md-8 table-responsive mt-4">
                             <form method="get">
                                 <label for="start_date">Start Date:</label>
-                                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
                                 
                                 <label for="end_date">End Date:</label>
-                                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
                             
                                 <button type="submit" class="btn btn-primary">Filter</button>
                             </form>

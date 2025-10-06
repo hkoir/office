@@ -8,10 +8,50 @@ from customer.models import Customer
 from product.models import Product
 from django.db.models import Q
 from accounts.models import CustomUser
+from django.utils import timezone
+
+class CustomerQuotation(models.Model):
+    customer = models.ForeignKey("customer.Customer", on_delete=models.CASCADE)
+    quotation_number = models.CharField(max_length=30, unique=True, blank=True)
+    date = models.DateField(default=timezone.now)
+    valid_until = models.DateField(null=True, blank=True)
+    STATUS_CHOICES = [
+        ("draft", "Draft"),
+        ("sent", "Sent"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+    notes = models.TextField(blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.quotation_number:
+            count = CustomerQuotation.objects.count() + 1
+            self.quotation_number = f"CQ-{timezone.now().strftime('%Y%m%d')}-{count:04d}"
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.quotation_number} - {self.customer}"
+
+
+class CustomerQuotationItem(models.Model):
+    quotation = models.ForeignKey(CustomerQuotation, related_name="sales_quotation_items", on_delete=models.CASCADE)
+    product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    vat_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    vat_status = models.DecimalField(max_digits=5, decimal_places=2,choices={'inclusive':'inclusive','exclusive':'inclusive'},null=True,blank=True)
+    ait_status = models.DecimalField(max_digits=5, decimal_places=2,choices={'inclusive':'inclusive','exclusive':'inclusive'},null=True,blank=True)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.total_price = self.quantity * self.unit_price
+        super().save(*args, **kwargs)
 
 
 
 class SaleRequestOrder(models.Model):    
+    customer_quotation=models.ForeignKey(CustomerQuotation,related_name='customer_quotation',on_delete=models.CASCADE,null=True, blank=True)
     order_id = models.CharField(max_length=50)
     department = models.CharField(max_length=50,null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)

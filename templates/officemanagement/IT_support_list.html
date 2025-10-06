@@ -12,21 +12,21 @@
     <div class="row">    
         <form method="get">
             <label>Start Date:</label>
-            <input type="date" name="start_date" value="{{ start_date }}">
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
             
             <label>End Date:</label>
-            <input type="date" name="end_date" value="{{ end_date }}">
+            <input type="date" name="end_date" value="{{ end_date }}"class="form-control">
     
             <label>ID:</label>
-            <input type="text" name="ID" value="{{ ID }}">
+            <input type="text" name="ID" value="{{ ID }}"class="form-control">
 
             <label>Name:</label>
-            <input type="text" name="name" value="{{ name}}">
+            <input type="text" name="name" value="{{ name}}"class="form-control">
             
-            <button class="btn btn-primary" type="submit">Apply Filter</button>
+            <button class="btn btn-primary form-control my-4" type="submit">Apply Filter</button>
         </form>     
         
-        <div class="col table-responsive">       
+        <div class="col-12 table-responsive my-4">       
 
             <h4>IT support Tickets list</h4>
             <table class="table table-hover">

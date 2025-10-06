@@ -28,24 +28,26 @@ from .models import PurchaseInvoice, PurchaseInvoiceAttachment
 from .forms import PurchaseInvoiceAttachmentForm,PurchasePaymentAttachmentForm,SaleInvoiceAttachmentForm,SalePaymentAttachmentForm
 
 
+
+from accounting.models import JournalEntry, JournalEntryLine, Account,FiscalYear
+
+
+
+
 @login_required
 def create_purchase_invoice(request, order_id):
-    purchase_shipment = get_object_or_404(PurchaseShipment, id=order_id) 
+    purchase_shipment = get_object_or_404(PurchaseShipment, id=order_id)
 
     if purchase_shipment.shipment_invoices.count() > 0:
-        if purchase_shipment.shipment_invoices.filter(status__in=['SUBMITTED', 'PARTIALLY_PAYMENT', 'FULLY_PAYMENT']).count() == purchase_shipment.shipment_invoices.count():
+        if purchase_shipment.shipment_invoices.filter(
+            status__in=['SUBMITTED', 'PARTIALLY_PAID', 'FULLY_PAID']
+        ).count() == purchase_shipment.shipment_invoices.count():
             messages.error(request, "All invoices for this shipment have already been submitted or paid.")
             return redirect('purchase:purchase_order_list')
-    else:
-         pass     
 
-    try:       
-        if purchase_shipment.status != 'DELIVERED':
-            messages.error(request, "Cannot create an invoice: Shipment status is not 'Delivered yet'.")
-            return redirect('purchase:purchase_order_list') 
-    except PurchaseShipment.DoesNotExist:
-        messages.error(request, "Cannot create an invoice: No shipment found for this order.")
-        return redirect('purchase:purchase_order_list') 
+    if purchase_shipment.status != 'DELIVERED':
+        messages.error(request, "Cannot create an invoice: Shipment status is not 'Delivered yet'.")
+        return redirect('purchase:purchase_order_list')
 
     initial_data = {
         'purchase_shipment': purchase_shipment,
@@ -57,15 +59,206 @@ def create_purchase_invoice(request, order_id):
         if form.is_valid():
             invoice = form.save(commit=False)
             invoice.user = request.user
-            invoice.status ='SUBMITTED'
+            invoice.status = 'SUBMITTED'
             invoice.save()
-            messages.success(request, "Invoice created and submitted successfully.")
-            return redirect('purchase:purchase_order_list')  
+
+            # ---------------------------
+            # Create Journal Entry for Purchase Invoice
+            # ---------------------------
+            fiscal_year = FiscalYear.get_active()
+            journal_entry = JournalEntry.objects.create(
+                date=timezone.now().date(),
+                fiscal_year=fiscal_year,
+                description=f"Purchase Invoice {invoice.invoice_number}",
+                reference=f"purchase-invoice-{invoice.id}",
+            )
+
+            # Accounts
+            ap_account = Account.objects.get(code="2110")    # Accounts Payable
+            purchase_account = Account.objects.get(code="5140")  # Purchase Expense
+            inventory_account = Account.objects.get(code="1150")  # Purchase Expense
+            vat_account = Account.objects.get(code="1180")   # VAT Receivable (Input VAT, asset)
+            ait_account = Account.objects.get(code="1190")   # AIT Receivable (asset)
+
+            # Amounts
+            amount_due = invoice.amount_due or 0
+            vat_amount = invoice.vat_amount or 0
+            ait_amount = invoice.ait_amount or 0
+            total_invoice_amount = amount_due + vat_amount - ait_amount
+
+            # --- Debit Purchase Expense ---
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=inventory_account,
+                debit=amount_due,
+                credit=0
+            )
+
+            # --- Debit VAT (if any) ---
+            if vat_amount > 0:
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=vat_account,
+                    debit=vat_amount,
+                    credit=0
+                )
+
+            # --- Debit AIT Receivable (if any) ---
+            if ait_amount > 0:
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=ait_account,
+                    debit=ait_amount,
+                    credit=0
+                )
+
+            # --- Credit Accounts Payable ---
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=ap_account,
+                debit=0,
+                credit=total_invoice_amount
+            )
+
+            messages.success(request, "Invoice created and submitted successfully with journal entry.")
+            return redirect('purchase:purchase_order_list')
         else:
             messages.error(request, "Error creating invoice.")
     else:
         form = PurchaseInvoiceForm(initial=initial_data)
     return render(request, 'finance/purchase/create_invoice.html', {'form': form})
+
+
+
+from purchase.models import SupplierQuotation
+from.utils import convert_quotation_to_invoice
+
+@login_required
+def create_purchase_invoice_from_quotation(request, quotation_id):
+    quotation = get_object_or_404(SupplierQuotation, id=quotation_id)
+    shipment = quotation.supplier_quotations.first().purchase_shipment.first()
+    purchase_orders = quotation.supplier_quotations.all()
+    first_po = purchase_orders.first()
+    if not first_po:
+        messages.error(request, "No Purchase Order linked to this quotation.")
+        return redirect("purchase:quotation_detail", pk=quotation.id)
+
+    first_shipment = first_po.purchase_shipment.first()
+    if not first_shipment:
+        messages.error(request, "No Purchase Shipment linked to this Purchase Order.")
+        return redirect("purchase:purchase_order_detail", pk=first_po.id)
+    invoice = convert_quotation_to_invoice(quotation, user=request.user)   
+    invoice.purchase_shipment = first_shipment
+    invoice.save() 
+    messages.success(request, f"Invoice {invoice.invoice_number} created from quotation {quotation.quotation_number}.")
+    return redirect("finance:purchase_invoice_list")
+
+
+
+@login_required
+def create_purchase_payment(request, invoice_id):
+    invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
+
+    if invoice.status not in ["SUBMITTED", "PARTIALLY_PAID"]:
+        messages.error(request, "Cannot create a payment: Invoice is not submitted or is already fully paid.")
+        return redirect('purchase:purchase_order_list')
+
+    remaining_balance = invoice.remaining_balance
+
+    if request.method == 'POST':
+        form = PurchasePaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.purchase_invoice = invoice
+            payment.user = request.user
+
+            if payment.amount > remaining_balance:
+                messages.error(request, f"Payment cannot exceed the remaining balance of {remaining_balance}.")
+                return redirect('finance:create_purchase_payment', invoice_id=invoice.id)
+
+            payment.status = "PARTIALLY_PAID" if payment.amount < remaining_balance else "FULLY_PAID"
+            payment.save()
+
+            # ---------------------------
+            # Create Journal Entry for Payment
+            # ---------------------------
+            fiscal_year = FiscalYear.get_active()
+            journal_entry = JournalEntry.objects.create(
+                date=timezone.now().date(),
+                fiscal_year=fiscal_year,
+                description=f"Payment for Purchase Invoice {invoice.invoice_number}",
+                reference=f"purchase-invoice-{invoice.id}",
+            )
+
+            ap_account = Account.objects.get(code="2110")    # Accounts Payable
+            cash_account = Account.objects.get(code="1110")  # Cash/Bank
+            ait_account = Account.objects.get(code="1190")   # AIT Receivable
+
+            payment_amount = Decimal(payment.amount or 0)
+            ait_amount = Decimal(invoice.ait_amount or 0)
+            vat_amount = Decimal(invoice.vat_amount or 0)
+            purchase_amount = Decimal(invoice.amount_due or 0)
+
+            # Full liability includes VAT (AIT is separate)
+            total_ap = purchase_amount + vat_amount
+
+            # ---------------------------
+            # Journal Lines
+            # ---------------------------
+            journal_lines = [
+                # Dr Accounts Payable - clear full supplier liability
+                JournalEntryLine(
+                    entry=journal_entry,
+                    account=ap_account,
+                    debit=total_ap,
+                    credit=0,
+                    description="Clear accounts payable for supplier"
+                ),
+                # Cr Cash/Bank - actual cash paid
+                JournalEntryLine(
+                    entry=journal_entry,
+                    account=cash_account,
+                    debit=0,
+                    credit=payment_amount,
+                    description="Cash/Bank payment to supplier"
+                )
+            ]
+
+            # Cr AIT Receivable (if applicable)
+            if ait_amount > 0:
+                journal_lines.append(JournalEntryLine(
+                    entry=journal_entry,
+                    account=ait_account,
+                    debit=0,
+                    credit=ait_amount,
+                    description="AIT withheld and adjusted"
+                ))
+
+            JournalEntryLine.objects.bulk_create(journal_lines)
+
+            # ---------------------------
+            # Update Invoice Status
+            # ---------------------------
+            if invoice.is_fully_paid:
+                invoice.status = "FULLY_PAID"
+            elif invoice.remaining_balance > 0:
+                invoice.status = "PARTIALLY_PAID"
+            invoice.save()
+
+            messages.success(request, "Payment created successfully with journal entry.")
+            return redirect('finance:purchase_invoice_list')
+    else:
+        form = PurchasePaymentForm(initial={
+            'purchase_invoice': invoice,
+            'amount': remaining_balance
+        })
+
+    return render(request, 'finance/purchase/create_payment.html', {
+        'form': form,
+        'purchase_invoice': invoice.invoice_number,
+        'remaining_balance': remaining_balance
+    })
+
 
 
 @login_required
@@ -85,53 +278,6 @@ def add_purchase_invoice_attachment(request, invoice_id):
     return render(request, 'finance/attachmenet/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
-
-@login_required
-def create_purchase_payment(request, invoice_id):
-    invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
-
-    if invoice.status not in ["SUBMITTED", "PARTIALLY_PAID"]:
-        messages.error(request, "Cannot create a payment: Invoice is not submitted or partially paid.")
-        return redirect('purchase:purchase_order_list')
-
-    remaining_balance = invoice.remaining_balance
-
-    if request.method == 'POST':
-        form = PurchasePaymentForm(request.POST)
-        if form.is_valid():
-            payment = form.save(commit=False)
-            payment.purchase_invoice = invoice
-            payment.user = request.user
-
-            if payment.amount > remaining_balance:
-                messages.error(request, f"Payment cannot exceed the remaining balance of {remaining_balance}.")
-                return redirect('finance:create_purchase_payment', invoice_id=invoice.id)
-            
-            if payment.amount < remaining_balance:
-                payment.status = "PARTIALLY_PAID"
-            else:
-                payment.status = "FULLY_PAID"
-
-            payment.save()
-            if invoice.is_fully_paid:
-                invoice.status = "FULLY_PAID"
-            elif invoice.remaining_balance > 0:
-                invoice.status = "PARTIALLY_PAID"
-            invoice.save()
-
-            messages.success(request, "Payment created successfully.")
-            return redirect('finance:purchase_invoice_list')
-    else:       
-        form = PurchasePaymentForm(initial={
-            'purchase_invoice': invoice,  
-            'amount': remaining_balance
-        })
-
-    return render(request, 'finance/purchase/create_payment.html', {
-        'form': form,
-        'purchase_invoice': invoice.invoice_number,
-        'remaining_balance': remaining_balance
-    })
 
 
 @login_required
@@ -408,19 +554,21 @@ def purchase_invoice_detail(request, invoice_id):
 
 
 # ########################### sale invoices #################################################################
-
 @login_required
 def create_sale_invoice(request, order_id):
-    sale_shipment = get_object_or_404(SaleShipment, id=order_id)   
-    
+    sale_shipment = get_object_or_404(SaleShipment, id=order_id)
+
+    # Prevent duplicate invoicing
     if sale_shipment.is_fully_invoiced:
         messages.error(request, "All invoices for this shipment have already been submitted or paid.")
         return redirect('sales:sale_order_list')
 
-    if not sale_shipment.status in ['DELIVERED','REACHED']:
+    # Only allow invoicing for delivered shipments
+    if sale_shipment.status not in ['DELIVERED', 'REACHED']:
         messages.error(request, "Cannot create an invoice: Shipment status is not 'Delivered' yet.")
         return redirect('sales:sale_order_list')
-    
+
+    # Prepare initial form data
     initial_data = {
         'sale_shipment': sale_shipment,
         'amount_due': sale_shipment.sales_order.total_amount
@@ -433,12 +581,178 @@ def create_sale_invoice(request, order_id):
             invoice.user = request.user
             invoice.status = 'SUBMITTED'
             invoice.save()
-            messages.success(request, "Invoice created and submitted successfully.")
-            return redirect('sales:sale_order_list')  
+
+            # ---------------------------
+            # Create Journal Entry for Sales Invoice
+            # ---------------------------
+            fiscal_year = FiscalYear.get_active()
+            journal_entry = JournalEntry.objects.create(
+                date=timezone.now().date(),
+                fiscal_year=fiscal_year,
+                description=f"Sales Invoice {invoice.invoice_number}",
+                reference=f"Sale invoice-{invoice.id}",
+                created_by=request.user,
+            )
+
+            # Accounts
+            ar_account = Account.objects.get(code="1140")         # Accounts Receivable
+            sales_account = Account.objects.get(code="4100")      # Sales Revenue
+            vat_account = Account.objects.get(code="2131")        # Output VAT Payable
+            inventory_account = Account.objects.get(code="1150")  # Inventory
+            cogs_account = Account.objects.get(code="5100")       # COGS
+
+            # Amounts
+            invoice_amount = invoice.amount_due
+            vat_amount = invoice.vat_amount or 0
+
+            # 1️⃣ Debit Accounts Receivable (total amount including VAT)
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=ar_account,
+                debit=invoice_amount + vat_amount,
+                credit=0
+            )
+
+            # 2️⃣ Credit Sales Revenue (excluding VAT)
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=sales_account,
+                debit=0,
+                credit=invoice_amount
+            )
+
+            # 3️⃣ Credit VAT Payable
+            if vat_amount > 0:
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=vat_account,
+                    debit=0,
+                    credit=vat_amount
+                )
+
+            # ---------------------------
+            # 4️⃣ Record COGS and reduce Inventory
+            # ---------------------------
+            for item in sale_shipment.sales_order.sale_order.all():
+                cogs_amount = item.batch.discounted_price * item.quantity  # COGS = unit cost * quantity
+
+                # Debit COGS
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=cogs_account,
+                    debit=cogs_amount,
+                    credit=0
+                )
+
+                # Credit Inventory
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=inventory_account,
+                    debit=0,
+                    credit=cogs_amount
+                )
+
+            messages.success(request, "Invoice created and journal entry recorded successfully.")
+            return redirect('sales:sale_order_list')
     else:
         form = SaleInvoiceForm(initial=initial_data)
-    
+
     return render(request, 'finance/sales/create_invoice.html', {'form': form})
+
+
+
+@login_required
+def create_sale_payment(request, invoice_id):
+    invoice = get_object_or_404(SaleInvoice, id=invoice_id)
+    remaining_balance = invoice.remaining_balance
+
+    if remaining_balance <= 0:
+        messages.error(request, "All payments for this invoice have already been made.")
+        return redirect('sales:sale_order_list')
+
+    if request.method == 'POST':
+        form = SalePaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.sale_invoice = invoice
+            payment.user = request.user
+
+            # Validate payment amount
+            if payment.amount > remaining_balance:
+                messages.error(
+                    request,
+                    f"Payment cannot exceed the remaining balance of {remaining_balance}."
+                )
+                return redirect('sales:create_sale_payment', invoice_id=invoice.id)
+
+            # Determine payment status
+            payment.status = "FULLY_PAID" if payment.amount == remaining_balance else "PARTIALLY_PAID"
+            payment.save()
+
+            # ---------------------------
+            # Journal Entry for Sale Payment
+            # ---------------------------
+            fiscal_year = FiscalYear.get_active()
+            journal_entry = JournalEntry.objects.create(
+                date=timezone.now().date(),
+                fiscal_year=fiscal_year,
+                description=f"Payment received for Invoice {invoice.invoice_number}",
+                reference=f"Sale invoice-{invoice.id}",
+                created_by=request.user,
+            )
+
+            # Accounts
+            ar_account = Account.objects.get(code="1140")    # Accounts Receivable
+            cash_account = Account.objects.get(code="1110")  # Cash/Bank
+            ait_account = Account.objects.get(code="2132")   # AIT Payable (withholding tax)
+
+            # Amounts
+            payment_amount = payment.amount
+            ait_amount = invoice.ait_amount or 0
+            net_cash = payment_amount - ait_amount
+
+            # 1. Debit Cash/Bank
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=cash_account,
+                debit=net_cash,
+                credit=0
+            )
+
+            # 2. Debit AIT Payable if any
+            if ait_amount > 0:
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=ait_account,
+                    debit=ait_amount,
+                    credit=0
+                )
+
+            # 3. Credit Accounts Receivable
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=ar_account,
+                debit=0,
+                credit=payment_amount
+            )
+
+            # Update Invoice Status
+            invoice.status = "FULLY_PAID" if invoice.remaining_balance == 0 else "PARTIALLY_PAID"
+            invoice.save()
+
+            messages.success(request, "Payment recorded successfully with journal entry.")
+            return redirect('finance:sale_invoice_list')
+    else:
+        # Pre-fill form with remaining balance
+        form = SalePaymentForm(initial={'amount': remaining_balance})
+
+    return render(request, 'finance/sales/create_payment.html', {
+        'form': form,
+        'invoice': invoice,
+        'remaining_balance': remaining_balance
+    })
+
+
 
 
 
@@ -458,54 +772,6 @@ def add_sale_invoice_attachment(request, invoice_id):
     return render(request, 'finance/attachmenet/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
-
-@login_required
-def create_sale_payment(request, invoice_id):
-    invoice = get_object_or_404(SaleInvoice, id=invoice_id)
-    invoice_amount = invoice.net_due_amount
-
-    if invoice.sale_payment_invoice.first():
-        if invoice.sale_payment_invoice.first().is_fully_paid:
-            messages.error(request, "All payment already paid")
-            return redirect('sales:sale_order_list')
-
-    remaining_balance = invoice.remaining_balance
-
-    if request.method == 'POST':
-        form = SalePaymentForm(request.POST)
-        if form.is_valid():
-            payment = form.save(commit=False)
-            payment.sale_invoice = invoice       
-            payment.user = request.user
-
-            if payment.amount > remaining_balance:
-                messages.error(request, f"Payment cannot exceed the remaining balance of {remaining_balance}.")
-                return redirect('sales:create_sale_payment', invoice_id=invoice.id)
-                     
-            if payment.amount < remaining_balance:
-                payment.status = "PARTIALLY_PAID"
-            else:
-                payment.status = "FULLY_PAID"
-            
-            payment.save()
-
-            invoice.status = "FULLY_PAID" if invoice.is_fully_paid else "PARTIALLY_PAID"
-            invoice.save()
-
-            messages.success(request, "Payment created successfully.")
-            return redirect('finance:sale_invoice_list')
-    else:
-         form = SalePaymentForm(initial={
-            'sale_invoice': invoice,
-            'amount': remaining_balance
-        })
-
-    return render(request, 'finance/sales/create_payment.html', {
-        'form': form,
-        'invoice': invoice,
-        'invoice_amount':invoice_amount,
-        'remaining_balance': remaining_balance
-    })
 
 
 @login_required

@@ -4,6 +4,7 @@
 {% block content %}
   <h2>Customer Performance List</h2>
 
+  <div class="table-responsive">
   <table class="bg-light">
     <thead class="bg-dark text-white">
       <tr> 
@@ -44,6 +45,7 @@
     {% if page_obj.has_next %}
       <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Next</a>
     {% endif %}
+  </div>
   </div>
 
   <a href="{% url 'customer:create_performance' %}" class="btn btn-primary mt-3">Add New Performance</a>

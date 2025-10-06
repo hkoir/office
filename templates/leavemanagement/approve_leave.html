@@ -1,6 +1,6 @@
 
 {% extends 'base.html' %}
-
+{% load custom_filters %}
 {% block content %}
   
     <div class="container-fluid main-content mb-5">
@@ -21,7 +21,18 @@
                         
                         <form method="POST" class="ms-4 mt-5">
                             {% csrf_token %}
-                            {{ form.as_p }}
+                           {% for field in form.visible_fields %}
+                            <div class="mb-3">
+                                {{ field.label_tag }}
+                                {{ field|add_class:"form-control" }}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% for error in field.errors %}
+                                    <div class="text-danger">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
                             <div class="d-grid">
                                 <button type="submit" name="entity_submit"class="btn btn-primary my-2"> Approve</button>
                                 <a href="{% url 'leavemanagement:pending_leave_list' %}" class="btn btn-secondary">Cancel</a>

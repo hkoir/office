@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from.models import PurchaseRequestOrder,PurchaseRequestItem,PurchaseOrder,PurchaseOrderItem,ReceiveGoods,QualityControl
+from .models import Batch,SupplierQuotation,SupplierQuotationItem,RFQ,RFQItem
 
 
 
@@ -15,7 +16,12 @@ admin.site.register(PurchaseRequestItem)
 admin.site.register(QualityControl)
 admin.site.register(ReceiveGoods)
 
+
 admin.site.register(Batch)
+admin.site.register(RFQ)
+admin.site.register(RFQItem)
+admin.site.register(SupplierQuotation)
+admin.site.register(SupplierQuotationItem)
 
 
 

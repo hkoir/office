@@ -1,6 +1,6 @@
 
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 
 
 {% block content %}
@@ -19,16 +19,16 @@
             <div class="container">
                 <div class="row">   
                     <div class="col-6 col-md-3">
-                        Year{{ form.year }}
+                        Year{{ form.year|add_class:"form-control"  }}
                     </div>
                     <div class="col-6 col-md-3">
-                        Department(optional){{ form.department }}
+                        Department(optional){{ form.department|add_class:"form-control"  }}
                     </div>                
                     <div class="col-6 col-md-3">
-                        Employee{{ form.employee }}
+                        Employee{{ form.employee|add_class:"form-control"  }}
                     </div>
                     
-                    <div class="col-6 col-md-3">
+                    <div class="col-6 col-md-3 my-4">
                         <button type="submit" class="btn btn-primary">Generate Report</button>
                     </div>
                 </div>

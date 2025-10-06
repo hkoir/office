@@ -138,17 +138,28 @@ def tenant_expire_check(request):
     if not request.user.is_authenticated:       
         return redirect('clients:dashboard')
 
-    else:
+    else: 
+
         if is_public_schema:
             return redirect('clients:dashboard')
-        elif request.user.groups.filter(name='partner').exists():
+        elif request.user.role == 'corporate-user':
             return redirect('customerportal:partner_landing_page')
-        elif request.user.groups.filter(name='job_seeker').exists():
+        elif request.user.role == 'job-seeker':
             return redirect('customerportal:job_landing_page')
-        elif request.user.groups.filter(name='public').exists():
-             return redirect('customerportal:public_landing_page')
+        elif request.user.role == 'employee':
+             return redirect('core:dashboard')
+        elif request.user.is_staff:
+             return redirect('core:dashboard')   
+        elif request.user.role == 'manager':
+             return redirect('core:dashboard')
+        elif request.user.role == 'admin':
+             return redirect('core:dashboard')
+        elif request.user.role == 'superadmin':
+             return redirect('core:dashboard')             
+        elif request.user.role == 'customer':
+            return redirect('customerportal:public_landing_page')
         else:
-            return redirect('core:dashboard')
+            return redirect('clients:dashboard')
    
 
 

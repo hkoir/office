@@ -25,6 +25,7 @@ def create_customer(request, id=None):
 
     if request.method == 'POST' and form.is_valid():
         form_intance=form.save(commit=False)
+        form_instance.user = request.user
         form_intance.save()        
         messages.success(request, message_text)
         return redirect('customer:create_customer')  
@@ -63,7 +64,8 @@ def create_location(request, id=None):
 
     if request.method == 'POST' and form.is_valid():
         form_intance=form.save(commit=False)
-        form_intance.save()        
+        form_intance.save()   
+        form_instance.user = request.user     
         messages.success(request, message_text)
         return redirect('customer:create_location')  
 

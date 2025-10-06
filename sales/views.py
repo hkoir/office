@@ -28,11 +28,99 @@ import json
 
 from decimal import Decimal
 
+from django.core.exceptions import PermissionDenied
+from .models import CustomerQuotation
+from .utils import create_sale_request_from_quotation
+from.forms import CustomerQuotationItemForm,CustomerQuotationForm,CustomerQuotationItemFormSet
 
 
 @login_required
 def sale_dashboard(request):
     return render(request,'sales/sale_dashboard.html')
+
+
+
+
+
+
+
+@login_required
+def create_customer_quotation(request):
+    if request.method == "POST":
+        form = CustomerQuotationForm(request.POST)
+        formset = CustomerQuotationItemFormSet(request.POST)
+        if form.is_valid() and formset.is_valid():
+            quotation = form.save()
+            formset.instance = quotation
+            formset.save()
+            messages.success(request, f"Quotation {quotation.quotation_number} created.")
+            return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+    else:
+        form = CustomerQuotationForm()
+        formset = CustomerQuotationItemFormSet()
+    return render(request, "sales/quotations/create_customer_quotation.html", {"form": form, "formset": formset})
+
+
+
+
+def customer_quotation_detail(request, pk):
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    return render(request, 'sales/quotations/customer_quotation_detail.html', {
+        'quotation': quotation
+    })
+
+
+
+
+@login_required
+def customer_quotation_list(request):
+    quotations = CustomerQuotation.objects.all().order_by('-date')
+    return render(request, "sales/quotations/customer_quotation_list.html", {"quotations": quotations})
+
+
+
+@login_required
+def change_customer_quotation_status(request, pk, status):
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    valid_statuses = [choice[0] for choice in CustomerQuotation.STATUS_CHOICES]
+
+    if status not in valid_statuses:
+        messages.error(request, f"Invalid status '{status}'.")
+        return redirect("sales:customer_quotation_detail", pk=pk)
+    
+    user = request.user
+    if status == "sent" and not user.groups.filter(name="sales_staff").exists():
+        raise PermissionDenied("You are not authorized to send quotations.")
+    if status in ["accepted", "rejected"] and not user.groups.filter(name="sales_manager").exists():
+        raise PermissionDenied("Only a sales manager can accept or reject quotations.")
+
+    quotation.status = status
+    quotation.save()
+    messages.success(request, f"Quotation {quotation.quotation_number} status updated to {status.capitalize()}.")
+    return redirect("sales:customer_quotation_detail", pk=pk)
+
+
+@login_required
+def convert_quotation_to_sale_request(request, pk):
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    try:
+        sro = create_sale_request_from_quotation(
+            pk,
+            request.user,
+            department="Sales",  # or pass from form
+            remarks="Converted from quotation",
+        )
+        messages.success(request, f"Sale Request {sro.order_id} created from quotation {quotation.quotation_number}")
+        return redirect("sale_request_detail", pk=sro.pk)
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect("customer_quotation_detail", pk=quotation.pk)
+
+
+
+
+
+
 
 
 @login_required

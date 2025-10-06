@@ -24,22 +24,22 @@
             
             <div class="container-fluid">
                 <div class="row">                        
-                    <div class="col-12 col-md-6" >  
+                    <div class="col-12" >  
                             <div class="container">
                                 <form method="get">
                                     {% csrf_token %}
                                 <div class="row">
                                  
-                                    <div class="col-4">
-                                        Start date:{{ form.start_date }}
+                                    <div class="col-12 col-md-4">
+                                        Start date:{{ form.start_date|add_class:"form-control" }}
                                     </div>
-                                    <div class="col-4">
-                                        End_date:{{ form.end_date }}
+                                       <div class="col-12 col-md-4">
+                                        End_date:{{ form.end_date|add_class:"form-control" }}
                                     </div>
-                                    <div class="col-4">
+                                        <div class="col-12 col-md-4">
                                         Ticket ID{{ form.ticket_number }}
                                     </div>
-                                    <div class="col-4">
+                                       <div class="col-12 col-md-4 my-3">
                                         <button type="submit" class="btn btn-primary btn-sm">Filter</button>
                                     </div>
                               
@@ -48,33 +48,8 @@
                             </div>                      
                                                          
                         </div>
-                        <div class="col-12 col-md-6">  
-                            <div class="container">
-                                <div class="row">
-                                    <div class="col-4">
-                                        <p class="text-center animate">
-                                           Reliable Solutions, Guaranteed Satisfaction
-                                        </p> 
-                                    </div>
-                                    <div class="col-4">
-                                        <p class="text-center animate">
-                                           Exceptional Support, Quality Assured
-                                        </p> 
-                                    </div>
-                                    <div class="col-4">
-                                        <p class="text-center animate">
-                                          Innovating Customer Care Excellence
-                                        </p> 
-                                    </div>
-                                </div>
-                            </div>                          
-                        </div>
-                        
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 mt-4">        
+                       
+            <div class="col-12 mt-4 table-responsive">        
                                
                 <h4>Ticket List</h4>
                 {% if page_obj  %}

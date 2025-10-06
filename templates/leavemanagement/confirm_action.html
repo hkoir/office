@@ -1,0 +1,32 @@
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-body text-center p-5">
+            <h3 class="text-danger mb-4">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Confirm Action
+            </h3>
+
+            <p class="lead">
+                Are you sure you want to <strong>{{ action_name }}</strong>?
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4 d-flex justify-content-center gap-3">
+                    <button type="submit" class="btn btn-danger btn-lg">
+                        <i class="bi bi-check-circle"></i> Yes, Proceed
+                    </button>
+                    <a href="javascript:history.back()" class="btn btn-secondary btn-lg">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

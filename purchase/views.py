@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 from django.http import HttpResponseForbidden
 
 from.forms import PurchaseStatusForm,QualityControlForm,PurchaseOrderSearchForm,PurchaseOrderForm,PurchaseRequestForm
+
 from.models import PurchaseOrder,PurchaseOrderItem,PurchaseRequestOrder,PurchaseRequestItem
 from product.models import Product
 from logistics.models import PurchaseDispatchItem
@@ -21,7 +22,26 @@ from core.forms import CommonFilterForm
 from django.core.paginator import Paginator
 from myproject.utils import create_notification
 from.models import Batch
-from.forms import BatchForm
+
+
+
+
+from django.forms import formset_factory
+from .utils import create_purchase_order_from_quotation
+from .models import SupplierQuotation 
+from .forms import SupplierQuotationForm,SupplierQuotationItemFormSet,RFQForm,RFQItemFormSet,Batch,BatchForm
+from .models import RFQ
+from django.forms import modelformset_factory
+from.forms import BatchFormShort
+from inventory.models import InventoryTransaction,Inventory
+
+from django.core.files.base import ContentFile
+import qrcode
+from barcode import Code128
+from barcode.writer import ImageWriter
+from io import BytesIO
+from datetime import timedelta
+
 
 
 @login_required
@@ -29,6 +49,9 @@ def purchase_dashboard(request):
     return render(request,'purchase/purchase_dashboard.html')
 
 from django.db.models import F
+
+
+
 
 @login_required
 def manage_batch(request, id=None):  
@@ -85,6 +108,53 @@ def delete_batch(request, id):
 
 
 
+@login_required
+def batch_list(request):
+    query = request.GET.get("q", "")
+    batches = Batch.objects.all().order_by("-created_at")
+
+    if query:
+        batches = batches.filter(
+            Q(batch_number__icontains=query) |
+            Q(product__name__icontains=query)
+        )
+
+    datas = batches
+    paginator = Paginator(datas, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "purchase/batch_list.html", {
+        "batches": batches,
+        "query": query,
+        'page_obj':page_obj
+    })
+
+
+
+@login_required
+def generate_batch_codes(request, batch_id):
+    batch = get_object_or_404(Batch, id=batch_id)
+    if not batch.barcode:
+        batch.barcode = f"{batch.product.product_id}-{batch.batch_number}"
+    qr = qrcode.QRCode(version=1, box_size=10, border=2)
+    qr.add_data(batch.barcode)
+    qr.make(fit=True)
+    img = qr.make_image(fill="black", back_color="white")
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    batch.qr_code_image.save(f"{batch.batch_number}_qr.png", ContentFile(buffer.getvalue()), save=False)
+    barcode_img = Code128(batch.barcode, writer=ImageWriter())
+    barcode_buffer = BytesIO()
+    barcode_img.write(barcode_buffer)
+    batch.barcode_image.save(f"{batch.batch_number}_barcode.png", ContentFile(barcode_buffer.getvalue()), save=False)
+    batch.save(update_fields=['barcode', 'barcode_image', 'qr_code_image'])
+    messages.success(request, f"Barcode and QR code generated for batch {batch.batch_number}.")
+    return redirect("product:print_unit_labels", batch_id=batch.id)
+
+
+
+
 from datetime import timedelta
 from inventory.models import InventoryTransaction,Inventory
 
@@ -107,6 +177,7 @@ def calculate_average_usage(product, warehouse=None, days=30):
 
 @login_required
 def create_purchase_request(request):
+    
     if 'basket' not in request.session:
         request.session['basket'] = []
     form = PurchaseRequestForm(request.POST or None)
@@ -117,6 +188,7 @@ def create_purchase_request(request):
 
                 category = form.cleaned_data['category']
                 product_obj = form.cleaned_data['product']
+                batch_obj = form.cleaned_data['batch']
                 quantity = form.cleaned_data['quantity']
 
                 product_stocks = Inventory.objects.filter(product=product_obj)
@@ -143,7 +215,13 @@ def create_purchase_request(request):
 
                 basket = request.session.get('basket', [])
                 product_in_basket = next((item for item in basket if item['id'] == product_obj.id), None)
-                total_amount = float(quantity) * float(product_obj.unit_price)
+                unit_price = (
+                    float(batch_obj.purchase_price)
+                    if batch_obj and batch_obj.purchase_price is not None
+                    else float(product_obj.unit_price or 0)
+                )
+
+                total_amount = float(quantity) * unit_price
 
                 if product_in_basket:
                     product_in_basket['quantity'] += quantity
@@ -155,7 +233,7 @@ def create_purchase_request(request):
                         'category': category.name,
                         'quantity': quantity,
                         'sku': product_obj.sku,
-                        'unit_price': float(product_obj.unit_price),
+                        'unit_price':  unit_price,
                         'total_amount': total_amount
                     })
 
@@ -348,8 +426,356 @@ def process_purchase_request(request, order_id):
 
 
 
+
+
+
+
+
+###########################################################################################@login_required
+
+def create_rfq(request, request_order_id):
+    purchase_request_order = get_object_or_404(PurchaseRequestOrder, id=request_order_id)
+
+    if request.method == "POST":
+        form = RFQForm(request.POST)
+        formset = RFQItemFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                rfq = form.save(commit=False)
+                rfq.purchase_request_order = purchase_request_order
+                rfq.save()       
+                for form_data in formset.cleaned_data:
+                    if not form_data or form_data.get("DELETE"):
+                        continue
+                    product = form_data.get("product")
+                    qty_requested = form_data.get("quantity")
+
+                    try:
+                        pr_item = purchase_request_order.purchase_request_order.get(product=product)
+                    except:
+                        messages.error(request, f"{product} was not part of the purchase request.")
+                        return redirect("purchase:purchase_request_order_list")
+     
+                    if qty_requested > pr_item.quantity:
+                        messages.warning(
+                            request,
+                            f"Cannot assign {qty_requested} units for {product}, "
+                            f"requested only {pr_item.quantity}."
+                        )
+                        return redirect("purchase:purchase_request_order_list")
+                formset.instance = rfq
+                formset.save()
+
+            messages.success(request, f"RFQ {rfq.rfq_number} created successfully.")
+            return redirect("purchase:rfq_detail", pk=rfq.pk)
+    else:
+        form = RFQForm(initial={'purchase_request_order': purchase_request_order})
+        initial_data = [
+            {"product": item.product, "quantity": item.quantity}
+            for item in purchase_request_order.purchase_request_order.all()
+        ]
+        formset = RFQItemFormSet(initial=initial_data)
+
+    return render(
+        request,
+        "purchase/rfq/create_rfq.html",
+        {"form": form, "formset": formset, "purchase_request_order": purchase_request_order},
+    )
+
+
 @login_required
-def create_purchase_order(request, request_id):
+def rfq_detail(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)
+    return render(request, "purchase/rfq/rfq_detail.html", {"rfq": rfq})
+
+
+@login_required
+def rfq_list(request):
+    rfqs = RFQ.objects.all().order_by('-date')
+    return render(request, "purchase/rfq/rfq_list.html", {"rfqs": rfqs})
+
+
+
+@login_required
+def send_rfq(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)
+    if rfq.status == "draft":
+        rfq.status = "sent"
+        rfq.save()
+        messages.success(request, f"RFQ {rfq.rfq_number} marked as sent.")
+    else:
+        messages.warning(request, f"RFQ {rfq.rfq_number} is already {rfq.status}.")
+    return redirect("purchase:rfq_detail", pk=pk)
+
+
+
+@login_required
+def create_supplier_quotation(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)
+    supplier = Supplier.objects.filter(user=request.user).first()
+
+    initial_data = [
+        {"product": item.product, "quantity": item.quantity}
+        for item in rfq.items.all()
+    ]
+
+    if request.method == "POST":
+        form = SupplierQuotationForm(request.POST)
+        formset = SupplierQuotationItemFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            quotation = form.save(commit=False)
+            quotation.rfq = rfq
+            quotation.save()  # Save first to get pk for formset
+
+            formset.instance = quotation
+            formset.save()  # Save items
+
+            # --- Calculate totals AFTER items are saved ---
+            quotation.calculate_tax_amounts()
+            quotation.save(update_fields=['total_amount', 'vat_amount', 'ait_amount', 'net_due_amount'])
+
+            messages.success(request, f"Quotation {quotation.quotation_number} created.")
+            return redirect("purchase:supplier_quotation_detail", pk=quotation.pk)
+        else:
+            print("Form errors:", form.errors)
+            print("Formset errors:", formset.errors)
+    else:
+        form = SupplierQuotationForm(initial={'supplier': supplier})
+        formset = SupplierQuotationItemFormSet(initial=initial_data)
+
+    return render(
+        request,
+        "purchase/quotations/create_supplier_quotation.html",
+        {"form": form, "formset": formset, "rfq": rfq},
+    )
+
+
+def supplier_quotation_detail(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    return render(request, 'purchase/quotations/supplier_quotation_detail.html', {
+        'quotation': quotation
+    })
+
+
+
+@login_required
+def supplier_quotation_list(request):
+    quotations = SupplierQuotation.objects.all().order_by('-date')
+    return render(request, "purchase/quotations/supplier_quotation_list.html", {"quotations": quotations})
+
+
+
+from.utils import compare_supplier_quotations
+
+@login_required
+def supplier_quotation_comparison(request, rfq_id):
+    comparison_data = compare_supplier_quotations(rfq_id)
+    rfq = RFQ.objects.get(pk=rfq_id)
+    
+    return render(request, "purchase/quotations/supplier_quotation_comparison.html", {
+        "comparison_data": comparison_data,
+        "rfq": rfq,
+    })
+
+
+
+
+@login_required
+def send_supplier_quotation(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    if quotation.status == "draft":
+        quotation.status = "sent"
+        quotation.save()
+        messages.success(request, f"Quotation {quotation.quotation_number} has been sent to supplier.")
+    else:
+        messages.warning(request, f"Quotation {quotation.quotation_number} is not in draft status.")
+    return redirect("purchase:supplier_quotation_detail", pk=pk)
+
+from django.db import models
+
+@login_required
+def approve_supplier_quotation(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    if quotation.status in ["sent", "draft"]:
+        quotation.status = "approved"
+        # ✅ update total_amount if needed
+        total = quotation.purchase_quotation_items.aggregate(
+            total=models.Sum('total_price')
+        )['total'] or 0
+        quotation.total_amount = total
+        quotation.save()
+        messages.success(request, f"Quotation {quotation.quotation_number} has been approved.")
+    else:
+        messages.warning(request, f"Quotation {quotation.quotation_number} cannot be approved (current: {quotation.status}).")
+    return redirect("purchase:supplier_quotation_detail", pk=pk)
+
+
+@login_required
+def reject_supplier_quotation(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    if quotation.status in ["sent", "draft"]:
+        quotation.status = "rejected"
+        quotation.save()
+        messages.success(request, f"Quotation {quotation.quotation_number} has been rejected.")
+    else:
+        messages.warning(request, f"Quotation {quotation.quotation_number} cannot be rejected (current: {quotation.status}).")
+    return redirect("purchase:supplier_quotation_detail", pk=pk)
+
+
+
+@login_required
+def convert_quotation_to_po(request, quotation_id):
+    quotation = get_object_or_404(SupplierQuotation, pk=quotation_id)
+    try:
+        po = create_purchase_order_from_quotation(quotation_id, request.user)
+        messages.success(request, f"Purchase Order {po.order_id} created. Please enter batch details.")
+        return redirect("purchase:add_batch_details", po_id=po.id)
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect(request.META.get("HTTP_REFERER", "purchase:supplier_quotation_list"))
+
+
+@login_required
+def add_batch_details2(request, po_id):
+    print('start adding batch')
+
+    po_items = PurchaseOrderItem.objects.filter(
+        purchase_order_id=po_id, batch__isnull=True
+    )
+    if not po_items.exists():
+        print('no po items exist')
+        messages.info(request, "All items already have batches.")
+        return redirect("purchase:purchase_order_list")
+
+    # ✅ Define formset factory first
+    BatchFormSet = modelformset_factory(Batch, form=BatchFormShort, extra=len(po_items))
+
+    # Prepare initial data
+    initial_data = []
+    for po_item in po_items:
+        quotation_item = po_item.purchase_order.supplier_quotation.purchase_quotation_items.filter(
+            product=po_item.product
+        ).first()
+        purchase_price = quotation_item.unit_price if quotation_item else 0
+        initial_data.append({
+            "quantity": po_item.quantity,
+            "product": po_item.product,
+            "purchase_price": purchase_price
+        })
+
+    # ✅ Now safely initialize the formset
+    if request.method == "POST":
+        formset = BatchFormSet(request.POST)
+        if formset.is_valid():
+            print("Formset is valid. Start saving batches...")
+            for form, po_item in zip(formset.forms, po_items):
+                batch = form.save(commit=False)
+                batch.product = po_item.product
+                batch.supplier = po_item.supplier
+                batch.save()
+                po_item.batch = batch
+                po_item.save()
+                print(f"Saved batch {batch.id}, product {batch.product.name}")
+            print("All batches saved, now redirecting...")
+            messages.success(request, "Batch details saved successfully.")
+            return redirect("purchase:purchase_order_list")
+        else:
+            print('form errors', formset.errors)
+            messages.error(request, "There was an error submitting the batch details. Check server logs for details.")
+    else:
+        formset = BatchFormSet(queryset=Batch.objects.none(), initial=initial_data)
+
+    return render(request, "purchase/add_batch_details.html", {
+        "formset": formset,
+        "po": po_items.first().purchase_order,
+    })
+
+
+@login_required
+def add_batch_details(request, po_id):
+    po_items = PurchaseOrderItem.objects.filter(purchase_order_id=po_id)
+
+    if not po_items.exists():
+        messages.info(request, "No items found for this purchase order.")
+        return redirect("purchase:purchase_order_list")
+
+    # Formset for all PO items
+    BatchFormSet = modelformset_factory(Batch, form=BatchFormShort, extra=len(po_items))
+
+    # Prepare initial data for the formset
+    initial_data = []
+    for po_item in po_items:
+        quotation_item = po_item.purchase_order.supplier_quotation.purchase_quotation_items.filter(
+            product=po_item.product
+        ).first()
+        purchase_price = quotation_item.unit_price if quotation_item else 0
+        initial_data.append({
+            "product": po_item.product,
+            "quantity": po_item.quantity,
+            "purchase_price": purchase_price,
+        })
+
+    if request.method == "POST":
+        formset = BatchFormSet(request.POST)
+        if formset.is_valid():
+            for form in formset:
+                # Extract form data
+                product = form.cleaned_data.get("product")
+                quantity = form.cleaned_data.get("quantity") or 0
+                manufacture_date = form.cleaned_data.get("manufacture_date")
+                expiry_date = form.cleaned_data.get("expiry_date")
+                purchase_price = form.cleaned_data.get("purchase_price")
+                regular_price = form.cleaned_data.get("regular_price")
+                discounted_price = form.cleaned_data.get("discounted_price")
+
+                # Check if a similar batch exists (same product, same supplier, same dates)
+                existing_batch = Batch.objects.filter(
+                    product=product,
+                    supplier__in=po_items.values_list('supplier', flat=True),
+                    manufacture_date=manufacture_date,
+                    expiry_date=expiry_date,
+                    purchase_price = purchase_price
+                ).first()
+
+                if existing_batch:
+                    # Update quantity
+                    existing_batch.quantity += quantity
+                    existing_batch.purchase_price = purchase_price  # optional: update price
+                    existing_batch.regular_price = regular_price
+                    existing_batch.discounted_price = discounted_price
+                    existing_batch.save()
+                else:
+                    # Create new batch
+                    batch = form.save(commit=False)
+                    # Assuming each po_item has the same supplier as the product in the form
+                    batch.supplier = po_items.filter(product=product).first().supplier
+                    batch.save()
+
+                # Link PO items to the batch
+                po_item = po_items.filter(product=product).first()
+                if po_item:
+                    po_item.batch = existing_batch if existing_batch else batch
+                    po_item.save()
+
+            messages.success(request, "Batch details saved/updated successfully.")
+            return redirect("purchase:purchase_order_list")
+        else:
+            messages.error(request, "There was an error in the batch form. Check input data.")
+    else:
+        formset = BatchFormSet(queryset=Batch.objects.none(), initial=initial_data)
+
+    return render(request, "purchase/add_batch_details.html", {
+        "formset": formset,
+        "po": po_items.first().purchase_order,
+    })
+
+
+
+
+@login_required
+def create_purchase_order2(request, request_id):
     request_instance = get_object_or_404(PurchaseRequestOrder, id=request_id)
 
     if 'basket' not in request.session:
@@ -521,6 +947,88 @@ def confirm_purchase_order(request):
     return render(request, 'purchase/confirm_purchase_order.html', {'basket': basket})
 
 
+
+@login_required
+def create_purchase_order(request, request_id):
+    request_instance = get_object_or_404(PurchaseRequestOrder, id=request_id)
+    PurchaseOrderFormSet = formset_factory(PurchaseOrderForm, extra=0, can_delete=True)
+
+    if request.method == 'POST':        
+        formset = PurchaseOrderFormSet(
+            request.POST,
+            form_kwargs={'request_instance': request_instance}
+        )
+        if formset.is_valid():
+            try:
+                with transaction.atomic():
+                    # Create one PurchaseOrder per request instance
+                    purchase_order = PurchaseOrder.objects.create(
+                        purchase_request_order=request_instance,
+                        total_amount=0,
+                        status='IN_PROCESS',
+                        user=request.user,
+                        order_date=timezone.now()
+                    )
+
+                    total_amount = 0
+                    for form in formset:
+                        if form.cleaned_data and not form.cleaned_data.get('DELETE'):
+                            order_item = form.cleaned_data['order_item_id']
+                            product = form.cleaned_data['product']
+                            batch = form.cleaned_data['batch']
+                            supplier = form.cleaned_data['supplier']
+                            quantity = form.cleaned_data['quantity']
+
+                            item_total = float(quantity) * float(batch.purchase_price if batch else product.unit_price)
+                            total_amount += item_total
+
+                            # Save PurchaseOrderItem
+                            PurchaseOrderItem.objects.create(
+                                order_item_id=order_item,
+                                purchase_order=purchase_order,
+                                product=product,
+                                batch=batch,
+                                supplier=supplier,
+                                quantity=quantity,
+                                total_price=item_total,
+                                user=request.user,
+                                status='IN_PROCESS'
+                            )
+
+                    # Update total amount in purchase order
+                    purchase_order.total_amount = total_amount
+                    purchase_order.supplier=supplier
+                    purchase_order.save()
+
+                messages.success(request, "Purchase order created successfully!")
+                return redirect('purchase:purchase_order_list')
+
+            except Exception as e:
+                messages.error(request, f"Error creating purchase order: {e}")
+        else:
+            print("❌ Formset errors:", formset.errors)
+
+    else:
+        # Pre-fill formset with all request items
+        initial_data = [
+            {
+                'order_item_id': item,
+                'category': item.product.category,
+                'product': item.product,
+                'quantity': item.quantity
+            }
+            for item in request_instance.purchase_request_order.all()
+        ]
+        formset = PurchaseOrderFormSet(
+            initial=initial_data,
+            form_kwargs={'request_instance': request_instance}
+        )
+
+    return render(
+        request,
+        'purchase/create_purchase_order.html',
+        {'formset': formset, 'request_instance': request_instance}
+    )
 
 
 

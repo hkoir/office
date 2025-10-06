@@ -9,21 +9,21 @@
     <div class="row">       
         <form method="GET">
             <label>Start Date:</label>
-            <input type="date" name="start_date" value="{{ start_date }}">
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
             
             <label>End Date:</label>
-            <input type="date" name="end_date" value="{{ end_date }}">
+            <input type="date" name="end_date" value="{{ end_date }}"class="form-control">
     
             <label>Title:</label>
-            <input type="text" name="title" value="{{ title }}">
+            <input type="text" name="title" value="{{ title }}"class="form-control">
             <label>Department:</label>
-            <input type="text" name="department" value="{{ department }}">
+            <input type="text" name="department" value="{{ department }}"class="form-control">
             
             
-            <button class="btn btn-primary" type="submit">Apply Filter</button>
+            <button class="btn btn-primary form-control my-4" type="submit">Apply Filter</button>
         </form>     
         
-        <div class="col-12 col-md-12 table-responsive">   
+        <div class="col-12 table-responsive mt-4">   
             <h4 class="text-center text-primary fw-bold">List of documents uploaded</h4>    
             <table class="table table-hover">
                 <thead class="table-dark">

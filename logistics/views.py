@@ -87,8 +87,11 @@ def purchase_shipment_detail(request, shipment_id):
 
 
 @login_required
-def create_purchase_dispatch_item(request, dispatch_id):
+def create_purchase_dispatch_item2(request, dispatch_id):
     purchase_shipment = get_object_or_404(PurchaseShipment, id=dispatch_id)
+    purchase_order=purchase_shipment.purchase_order
+    purchase_oder_items = purchase_order.purchase_order_item.all()
+
     if 'basket' not in request.session:
         request.session['basket'] = []
     form = PurchaseDispatchItemForm(request.POST,purchase_shipment=purchase_shipment)    
@@ -180,6 +183,114 @@ def create_purchase_dispatch_item(request, dispatch_id):
     })
 
 
+
+@login_required
+def create_purchase_dispatch_item(request, dispatch_id):
+    purchase_shipment = get_object_or_404(PurchaseShipment, id=dispatch_id)
+    purchase_order = purchase_shipment.purchase_order
+    purchase_order_items = purchase_order.purchase_order_item.all()
+
+    # Initialize basket from purchase order items if it's empty
+    if 'basket' not in request.session or not request.session['basket']:
+        basket = []
+        for item in purchase_order_items:
+            basket.append({
+                'id': item.id,
+                'name': item.product.name,
+                'quantity': 0,  # default 0, user can update the quantity
+                'dispatch_date': None,
+                'delivery_date': None,
+                'purchase_shipment_id': purchase_shipment.id
+            })
+        request.session['basket'] = basket
+        request.session.modified = True
+
+    form = PurchaseDispatchItemForm(request.POST or None, purchase_shipment=purchase_shipment)
+
+    if request.method == 'POST':
+        # Handle adding/updating/deleting items or confirming dispatch
+        if 'add_to_basket' in request.POST:
+            if form.is_valid():
+                dispatch_item = form.cleaned_data['dispatch_item']
+                dispatch_quantity = form.cleaned_data['dispatch_quantity']
+                dispatch_date = form.cleaned_data['dispatch_date']
+                delivery_date = form.cleaned_data['delivery_date']
+
+                # Calculate dispatched quantity total including current session basket
+                dispatched_quantity_total = (
+                    dispatch_item.order_dispatch_item.aggregate(total=Sum('dispatch_quantity'))['total'] or 0
+                )
+                total_in_basket = sum(
+                    item['quantity'] for item in request.session['basket'] if item['id'] == dispatch_item.id
+                )
+
+                if dispatched_quantity_total + total_in_basket + dispatch_quantity > dispatch_item.quantity:
+                    messages.error(request, f"Cannot add {dispatch_quantity} units of '{dispatch_item.product.name}' to the dispatch. The total would exceed ordered quantity.")
+                    return redirect('logistics:create_purchase_dispatch_item', dispatch_id=dispatch_id)
+
+                # Update session basket
+                dispatch_date_str = dispatch_date.strftime('%Y-%m-%d') if dispatch_date else None
+                delivery_date_str = delivery_date.strftime('%Y-%m-%d') if delivery_date else None
+                basket = request.session.get('basket', [])
+                product_in_basket = next((item for item in basket if item['id'] == dispatch_item.id), None)
+
+                if product_in_basket:
+                    product_in_basket['quantity'] += dispatch_quantity
+                    product_in_basket['dispatch_date'] = dispatch_date_str
+                    product_in_basket['delivery_date'] = delivery_date_str
+                else:
+                    basket.append({
+                        'id': dispatch_item.id,
+                        'name': dispatch_item.product.name,
+                        'quantity': dispatch_quantity,
+                        'dispatch_date': dispatch_date_str,
+                        'delivery_date': delivery_date_str,
+                        'purchase_shipment_id': purchase_shipment.id
+                    })
+
+                request.session['basket'] = basket
+                request.session.modified = True
+                messages.success(request, f"Added '{dispatch_item.product.name}' to the dispatch basket")
+                return redirect('logistics:create_purchase_dispatch_item', dispatch_id=dispatch_id)
+
+        elif 'action' in request.POST:
+            action = request.POST['action']
+            product_id = int(request.POST.get('product_id', 0))
+            basket = request.session.get('basket', [])
+
+            if action == 'update':
+                new_quantity = int(request.POST.get('quantity', 1))
+                for item in basket:
+                    if item['id'] == product_id:
+                        item['quantity'] = new_quantity
+                        break
+            elif action == 'delete':
+                basket = [item for item in basket if item['id'] != product_id]
+
+            request.session['basket'] = basket
+            request.session.modified = True
+            messages.success(request, "Basket updated successfully.")
+            return redirect('logistics:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
+
+        elif 'confirm_dispatch' in request.POST:
+            basket = request.session.get('basket', [])
+            if not basket:
+                messages.error(request, "The dispatch basket is empty. Add items before confirming.")
+                return redirect('logistics:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
+
+            return redirect('logistics:confirm_purchase_dispatch_item')
+
+    # GET request: show form with initialized basket
+    basket = request.session.get('basket', [])
+    form = PurchaseDispatchItemForm(purchase_shipment=purchase_shipment,initial={'purchase_shipment':purchase_shipment})
+
+    return render(request, 'logistics/purchase/create_purchase_dispatch_item.html', {
+        'form': form,
+        'basket': basket,
+        'purchase_shipment': purchase_shipment,
+    })
+
+
 @login_required
 def confirm_purchase_dispatch_item(request):
     basket = request.session.get('basket', [])
@@ -207,20 +318,22 @@ def confirm_purchase_dispatch_item(request):
                         user=request.user,
                     )
 
-                create_notification(request.user,message=f'Items for purchase Shipment number:{purchase_shipment.shipment_id} has been dispatched by vendor:{purchase_shipment.purchase_order.supplier}',notification_type='SHIPMENT-NOTIFICATION')
-
+                create_notification(
+                    request.user,
+                    message=f'Items for purchase Shipment number: {purchase_shipment.shipment_id} have been dispatched by vendor: {purchase_shipment.purchase_order.supplier}',
+                    notification_type='SHIPMENT-NOTIFICATION'
+                )
+   
                 request.session['basket'] = []
                 request.session.modified = True
-
-
-                messages.success(request, "Purchase dispatch confirmed and created successfully.")
-                return redirect('logistics:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
-
+                messages.success(request, "Purchase dispatch confirmed and created successfully.")                        
+                return redirect('purchase:purchase_order_list')
         except Exception as e:
             messages.error(request, f"An error occurred while confirming the dispatch: {str(e)}")
             return redirect('logistics:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
-
     return render(request, 'logistics/purchase/confirm_purchase_dispatch_item.html', {'basket': basket})
+
+
 
 
 @login_required

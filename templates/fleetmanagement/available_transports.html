@@ -13,24 +13,24 @@
                     <div class="container">
                         <div class="row">
                             <div class="col-6 col-md-3">
-                                Start Date:{{ form.start_date }}   
+                                Start Date:{{ form.start_date|add_class:"form-control" }}   
                             </div>
                             <div class="col-6 col-md-3">
-                                End date:{{ form.end_date }}   
+                                End date:{{ form.end_date|add_class:"form-control" }}   
                             </div>
                             <div class="col-6 col-md-3">
-                                Vehicle Code:{{ form.vehicle_code }}   
+                                Vehicle Code:{{ form.vehicle_code|add_class:"form-control" }}   
                             </div>
                             <div class="col-6 col-md-3">
-                                Vehicle number:{{ form.vehicle_registration_number }}   
+                                Vehicle number:{{ form.vehicle_registration_number|add_class:"form-control" }}   
                             </div>
                             <div class="col-6 col-md-3">
-                                Status:{{ form.status }}   
+                                Status:{{ form.status|add_class:"form-control" }}   
                             </div>
                         </div>
                     </div>
                                    
-                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>
+                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary my-4"> Filter</button>
                 </form>
         </div>
         <hr>
@@ -39,16 +39,16 @@
             <div class="container-fluid">
                 <div class="row">
                     
-                    <div class="col-6 col-md-3 text-center text-white bg-primary fw-bold">
+                    <div class="col-12 col-md-3 text-center text-white bg-primary fw-bold">
                         Total:{{ total_vehicles }}
                     </div>
-                    <div class="col-6 col-md-3  text-center text-primary bg-info fw-bold">
+                    <div class="col-12 col-md-3  text-center text-primary bg-info fw-bold">
                         in use:{{ total_in_service_vehicles }}
                     </div>
-                    <div class="col-6 col-md-3 text-center text-white fw-bold bg-success">
+                    <div class="col-12 col-md-3 text-center text-white fw-bold bg-success">
                         available:{{ total_available_vehicles }}
                     </div>
-                    <div class="col-6 col-md-3 text-center text-primary fw-bold bg-warning">
+                    <div class="col-12 col-md-3 text-center text-primary fw-bold bg-warning">
                         Faulty:{{ total_faulty_vehicles }}
                     </div>
                 </div>

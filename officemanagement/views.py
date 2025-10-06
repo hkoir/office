@@ -1278,7 +1278,7 @@ def update_it_feedback(request,support_id):
         if task.assigned_to is None:
             messages.info(request,'You have not assigned to update this ticket yet, Please ask your manager to assign this ticket as task in task list dashboard')
             return redirect('officemanagement:IT_support_list')
-        if task.assigned_to_employee.user_profile != request.user.user_profile:
+        if task.assigned_to_employee.user_profile != request.user:
             messages.info(request, "Your manager has assigned this task to another person.")
             return redirect('officemanagement:IT_support_list')
 
@@ -1585,7 +1585,7 @@ def expense_advance_approval(request,submission_id):
         form = ExpenseAdvanceApprovalForm(request.POST,instance = order_instance)
         if form.is_valid():
             form = form.save(commit=False)
-            form.approved_by = request.user.user_profile.employee_user_profile.first()
+            form.approved_by = request.user
             form.save()
             return redirect('officemanagement:expense_advance_list')
         
@@ -1611,10 +1611,8 @@ def manage_expense_order(request, id=None):
             if form_instance.advance_ref and ExpenseSubmissionOrder.objects.filter(advance_ref=form_instance.advance_ref).exists():
                 messages.error(request, "An ExpenseSubmissionOrder already exists for this advance reference.")
                 return redirect('officemanagement:create_expense_order') 
-            form_instance.user = request.user
-            if hasattr(request.user, "user_profile") and hasattr(request.user.user_profile, "employee_user_profile"):
-                form_instance.submitted_by = request.user.user_profile.employee_user_profile.first()
-            form_instance.user = request.user
+            form_instance.user = request.user       
+            form_instance.submitted_by = request.user           
             form_instance.save()     
         
             messages.success(request, message_text)
@@ -1742,7 +1740,7 @@ def expense_approval(request,submission_id):
         form = ExpenseSubmissionOrderUpdateForm(request.POST,instance = order_instance)
         if form.is_valid():
             form = form.save(commit=False)
-            form.approved_by = request.user.user_profile.employee_user_profile.first()
+            form.approved_by = request.user
             form.save()
             return redirect('officemanagement:expense_order_list')
         
@@ -1845,7 +1843,7 @@ def manage_office_document(request, id=None):
     if request.method == 'POST' and form.is_valid():
         form_instance=form.save(commit=False)
         form_instance.user = request.user
-        form_instance.uploaded_by = request.user.user_profile.employee_user_profile.first()
+        form_instance.uploaded_by = request.user
         form_instance.save()        
         messages.success(request, message_text)
         return redirect('officemanagement:create_office_document')  

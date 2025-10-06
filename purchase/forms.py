@@ -13,15 +13,30 @@ from accounts.models import CustomUser
 from.models import Batch
 
 
+
+
 class BatchForm(forms.ModelForm):
     class Meta:
         model = Batch
-        exclude=['user','remaining_quantity']
+        exclude=['user','remaining_quantity','sale_price','unit_price','selling_price','shelf']
 
         widgets={
             'manufacture_date':forms.DateInput(attrs={'type':'date'}),
             'expiry_date':forms.DateInput(attrs={'type':'date'})
         }
+
+
+class BatchFormShort(forms.ModelForm):
+    class Meta:
+        model = Batch
+        fields=['product','quantity','manufacture_date','expiry_date','purchase_price','regular_price','discounted_price']
+
+        widgets={
+            'manufacture_date':forms.DateInput(attrs={'type':'date'}),
+            'expiry_date':forms.DateInput(attrs={'type':'date'}),
+             'purchase_price': forms.NumberInput(attrs={'readonly': 'readonly'}),
+        }
+
 
 
 
@@ -44,6 +59,11 @@ class PurchaseRequestForm(forms.ModelForm):
     product = forms.ModelChoiceField(
         queryset=Product.objects.all(),
         label="Product",
+        widget=forms.Select(attrs={'class': 'form-control'})
+         )
+    batch = forms.ModelChoiceField(
+        queryset=Batch.objects.all(),
+        label="Batch",
         widget=forms.Select(attrs={'class': 'form-control'})
          )
     product_type = forms.ChoiceField(
@@ -138,6 +158,76 @@ class PurchaseOrderForm(forms.ModelForm):
         self.fields['order_item_id'].widget.attrs.update({
             'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
         })
+
+
+
+
+
+
+
+
+from .models import RFQ, RFQItem
+from django.forms import inlineformset_factory
+from .models import SupplierQuotation, SupplierQuotationItem
+
+
+class RFQForm(forms.ModelForm):
+    class Meta:
+        model = RFQ
+        fields = ["purchase_request_order","date", "valid_until", "notes", "status"]
+        widgets={          
+            'valid_until': forms.DateInput(attrs={'type':'date'}),  
+             'date': forms.DateInput(attrs={'type':'date'}),
+            'notes':forms.TextInput(attrs={
+                'style':'height:50px'
+            }),         
+        }
+
+class RFQItemForm(forms.ModelForm):
+    class Meta:
+        model = RFQItem
+        fields = ["product", "quantity", "notes"]
+        widgets={
+            'notes':forms.TextInput(attrs={
+                'style':'height:50px'
+            }),
+           
+        }
+RFQItemFormSet = inlineformset_factory(RFQ, RFQItem, form=RFQItemForm, extra=1, can_delete=True)
+
+
+class SupplierQuotationForm(forms.ModelForm):
+    class Meta:
+        model = SupplierQuotation
+        fields = ["supplier", "date","AIT_rate","AIT_type", "valid_until", "status", "notes"]
+        widgets={
+            'notes':forms.TextInput(attrs={
+                'style':'height:50px'
+            }),
+            'valid_until': forms.DateInput(attrs={'type':'date'}),
+             'date': forms.DateInput(attrs={'type':'date'})
+        }
+
+
+class SupplierQuotationItemForm(forms.ModelForm):
+    class Meta:
+        model = SupplierQuotationItem
+        fields = ["product", "quantity", "unit_price","VAT_rate","VAT_type",]
+
+SupplierQuotationItemFormSet = inlineformset_factory(
+    SupplierQuotation,
+    SupplierQuotationItem,
+    form=SupplierQuotationItemForm,
+    extra=2,
+    can_delete=True
+)
+
+
+
+
+
+
+
 
 
 class QualityControlForm(forms.ModelForm):

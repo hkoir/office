@@ -3,23 +3,33 @@
 {% block content %}
 
 <div class="container-fluid main-content">
-    <h4 class="text-center">{% if user.is_authenticated %}
-        <a href="{% url 'leavemanagement:carry_forward_leave' %}" class="btn btn-primary">
-            Run in January every year for carry forward
-        </a>
-    {% endif %}
-
         {% if user.is_authenticated %}
-            <a href="{% url 'leavemanagement:update_leave_balances_for_all' %}" class="btn btn-primary">
-            Run once at every month to update all accrued leaves
-            </a>
+        <div class="card shadow-sm border-0 my-3">
+            <div class="card-header bg-primary text-white text-center">
+                <h5 class="mb-0">Leave Management Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 text-center">
+                    <div class="col-12 col-md-4">
+                        <a href="{% url 'leavemanagement:carry_forward_leave' %}" class="btn btn-outline-primary w-100">
+                            Run in January every year<br>for carry forward
+                        </a>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <a href="{% url 'leavemanagement:update_leave_balances_for_all' %}" class="btn btn-outline-primary w-100">
+                            Run once every month<br>to update accrued leaves
+                        </a>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <a href="{% url 'leavemanagement:check_and_deduct_late_leaves' %}" class="btn btn-outline-primary w-100">
+                            Run every day
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endif %}
 
-        {% if user.is_authenticated %}
-        <a href="{% url 'leavemanagement:check_and_deduct_late_leaves' %}" class="btn btn-primary">
-        Run every day
-        </a>
-    {% endif %}</h4>
 
       
 
@@ -27,6 +37,7 @@
 
 
     {% if pending_with_balance %}
+    <div class="table-responsive">
         <table class="table table-hover table-striped mt-3">
             <thead class="table-dark">
                 <tr>
@@ -63,5 +74,6 @@
     {% else %}
         <div class="alert alert-info">No pending leave applications.</div>
     {% endif %}
+        </div>
 </div>
 {% endblock %}

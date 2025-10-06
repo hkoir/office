@@ -48,7 +48,40 @@
 </div>
 
 
-
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'purchase:create_purchase_request' %}" class="btn btn-sm btn-success">Request for Purchase</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:purchase_request_order_list' %}" class="btn btn-sm btn-success">Request Order List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:rfq_list' %}" class="btn btn-sm btn-success">RFQ List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:supplier_quotation_list' %}" class="btn btn-sm btn-success">Supplier Quotation List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:purchase_order_list' %}" class="btn btn-sm btn-success">Purchase Order List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:create_batch' %}" class="btn btn-sm btn-success">Create Batch</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:purchase_shipment_list' %}" class="btn btn-sm btn-success">Purchase Shipment</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:batch_list' %}" class="btn btn-sm btn-success">Batch List</a>
+    </div>
+      <div class="col-auto">
+        <a href="{% url 'finance:purchase_invoice_list' %}" class="btn btn-sm btn-success">Purchase Invoice List</a>
+        </div>
+         <div class="col-auto">
+        <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success">Sale Invoice List</a>
+        </div>
+  </div>
+</div>
 
 <h4>Payment History: 
     {% if invoice.is_fully_paid %}

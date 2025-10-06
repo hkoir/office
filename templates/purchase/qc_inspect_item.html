@@ -4,15 +4,15 @@
 
 
 
-<h4>Quality Control Inspection:&nbsp;
-    Purchase order ID: {{ purchase_order }}; &nbsp;
+<h4>Quality Control Inspection:&nbsp;<br>
+    Purchase order ID: {{ purchase_order }}; &nbsp;<br>
     Shipment ID: {{purchase_shipment }}
 </h4>
 <div class="card mt-4">
     <div class="card-body">       
-        <p><strong>Product:</strong> {{ purchase_dispatch_item.dispatch_item.product.name }}</p>
-        <p><strong>Supplier:</strong> {{ purchase_order.supplier.name }}</p>
-        <p><strong>Total Quantity:</strong> {{  purchase_dispatch_item.dispatch_item.quantity }}</p>
+        <p><strong>Product:</strong> {{ purchase_dispatch_item.dispatch_item.product.name }}<br>
+        <strong>Supplier:</strong> {{ purchase_order.supplier.name }}<br>
+        <strong>Total Quantity:</strong> {{  purchase_dispatch_item.dispatch_item.quantity }}</p>
     </div>
 </div>
 

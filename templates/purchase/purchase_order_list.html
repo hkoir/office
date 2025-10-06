@@ -12,8 +12,44 @@
 
 
 <div class="container-fluid main-content">
-    <div class="row">  
-        <div class="col">     
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'purchase:create_purchase_request' %}" class="btn btn-sm btn-success">Request for Purchase</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:purchase_request_order_list' %}" class="btn btn-sm btn-success">Request Order List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:rfq_list' %}" class="btn btn-sm btn-success">RFQ List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:supplier_quotation_list' %}" class="btn btn-sm btn-success">Supplier Quotation List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:purchase_order_list' %}" class="btn btn-sm btn-success">Purchase Order List</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:create_batch' %}" class="btn btn-sm btn-success">Create Batch</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:purchase_shipment_list' %}" class="btn btn-sm btn-success">Purchase Shipment</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'purchase:batch_list' %}" class="btn btn-sm btn-success">Batch List</a>
+    </div>
+       <div class="col-auto">
+        <a href="{% url 'finance:purchase_invoice_list' %}" class="btn btn-sm btn-success">Purchase Invoice List</a>
+        </div>
+         <div class="col-auto">
+        <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success">Sale Invoice List</a>
+        </div>
+  </div>
+</div>
+
+    <div class="row mt-4">  
+
+        <div class="col-12">     
             <div class="container">
                 <div class="row">
                     <div class="col-7">
@@ -33,9 +69,9 @@
                         {% endif %}
                     
                     </div>
+
                 </div>
             </div>
-
         </div> 
      
        
@@ -69,20 +105,19 @@
         </div>
 
            
-            <div class="col-12 table-responsive">  
+        <div class="col-12 table-responsive">  
             <table class=" table">
                 <thead class="table-dark">
                     <tr class="btn-primary text-white">
+
+                          <th class="text-center p-2">Product Batch</th>   
                    
                         <th class="text-center p-2">Purchase Order Number</th>                      
                          <th class="text-center p-2">Request Order Number</th>
-                        <th class="text-center p-2">Total amount Due</th> 
-                    
+                        <th class="text-center p-2">Total amount Due</th>                   
+                        <th class="text-center p-2">Total amount Paid</th>  
 
-                        <th class="text-center p-2">Total amount Paid</th>
-                                     
-                        <th class="text-center p-2">Status</th>
-                
+                        <th class="text-center p-2">Status</th>                
                         <th class="text-center p-2">Prepared by</th>
                         <th class="text-center p-2">Order items</th>
                         <th class="text-center p-2">Submission</th>
@@ -90,18 +125,18 @@
                         <th class="text-center p-2">Reviewal</th>
                         <th class="text-center p-2">Approval</th>                                     
                         <th class="text-center p-2">Create Parent schedule</th>
-
                         <th class="text-center p-2">Add child schedule</th>
+
                         <th class="text-center p-2" style="background-color: rgb(235, 109, 12);">Update Shipment</th> 
                         <th class="text-center p-2">Dispatched Items</th>
                         <th class="text-center p-2">QC Dashboard</th>                        
                         <th class="text-center p-2">Create Invoice</th>
 
                         <th class="text-center p-2">Payment Status</th>
-                        <th class="text-center p-2">Make payment</th>
-                       
+                        <th class="text-center p-2">Make payment</th>                       
                         <th class="text-center p-2">Download invoice</th> 
                         <th class="text-center p-2">Upload invoice</th> 
+
                         <th class="text-center p-2">Upload Payment Docs</th> 
                         <th class="text-center p-2">View invoice</th> 
                         <th class="text-center p-2">View payment Doc</th> 
@@ -111,14 +146,18 @@
                 <tbody>
                     {% for order in page_obj %}
                   
-                        <tr>                           
+                        <tr>          
+                        <td>
+                            {% if not order.purchase_order_item.first.batch %}
+                                <a href="{% url 'purchase:add_batch_details' order.id %}" class="btn btn-primary">Add batch details</a>
+                                {% else %}
+                                <span>{{ order.purchase_order_item.first.batch.batch_number }}</span>
+                                {% endif %}
+                        </td>                 
                          
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.order_id }}</td>                            
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.purchase_request_order.order_id }}</td>
-                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>
-                           
-
-
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>                         
                             <td class="text-center p-2" style="white-space: nowrap;">
                                 {% with shipment=order.purchase_shipment.first %}
                                     {% if shipment %}
@@ -135,8 +174,10 @@
                                     {% endif %}
                                 {% endwith %}
                             </td>
+                                                         
                             
-                                               
+
+
                             <td>
                                 {% if order.is_fully_delivered %}   
                                 <i class="fas fa-check" style="color:green;font-weight: bold;">Delivered</i>
@@ -159,6 +200,8 @@
                         {% endif %}
                         </td>
 
+
+
                         <!-- Reviewer Button -->
                         <td>
                             {% if order.requester_approval_status != 'SUBMITTED'  %}   
@@ -173,9 +216,9 @@
                         </td>
 
                         <!-- Approver Button -->
-                        <td>
-                            {% if order.reviewer_approval_status != 'REVIEWED'  %}
-                            <button class="btn btn-secondary" disabled>Pending review</button>
+                    <td>
+                        {% if order.reviewer_approval_status != 'REVIEWED'  %}
+                        <button class="btn btn-secondary" disabled>Pending review</button>
                         {% elif order.approver_approval_status == 'APPROVED'  %}
                         <strong><i class="fas fa-check" style="color:green">Approved</i></strong> 
                         {% elif order.approver_approval_status == 'CANCELLED'  %}
@@ -183,43 +226,42 @@
                         {% else %}
                         <a href="{% url 'purchase:process_purchase_order' order.id %}" class="btn btn-primary">Approve Request</a>
                         {% endif %}
-                        </td>                        
+                    </td>                        
 
-                        <!-- Shipment section -->
-                         {% if not order.purchase_shipment.first %}
+                        <!-- Shipment section -->                    
                          <td class="text-center p-2" style="white-space: nowrap;">
-                             <a href="{% url 'logistics:create_purchase_shipment' order.id %}" class="btn btn-sm btn-primary">Create</a>
-                         </td>
-                         {% else %}
-                         <td>
+                            {% if not order.purchase_shipment.first %}
+                             <a href="{% url 'logistics:create_purchase_shipment' order.id %}" class="btn btn-sm btn-primary">Create</a>                       
+                         {% else %}                       
                              <i class="fas fa-check" style="color:green;font-weight: bold;">Created</i>
-                         </td>
-                         {% endif %}                       
-                        
-
-                  <!-- Dispatch item schedule -->                            
+                           {% endif %}  
+                        </td>                                       
+                                                 
+                      <td> 
                          {% if order.approver_approval_status != 'APPROVED' %}
-                    <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
+                        <button class="btn btn-secondary" disabled>Pending Approval</button>
                         {% else %}                           
                         {% with shipment=order.purchase_shipment.first %}
                         {% if shipment %}
                                 {% if shipment.is_fully_shipped %}
-                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">All Scheduled</i></td>
+                        <i class="fas fa-check" style="color:green;font-weight: bold;">All Scheduled</i>
                             {% else %}
-                            <td class="text-center p-2" style="white-space: nowrap;">
+                            
                                 <a href="{% url 'logistics:create_purchase_dispatch_item' shipment.id %}" class="btn btn-sm btn-primary">Add</a>
-                            </td>
+                            
                             {% endif %}
                             {% else %}
-                        <td>Make shipment first</td>
+                        Make shipment first
                         {% endif %}
                         {% endwith %}
                     {% endif %}
+                    </td>
+
 
 
                     <td style="background-color: aquamarine;">
                         {% if order.approver_approval_status != 'APPROVED' %}
-                            <span>Approval Pending</span>>
+                            <span>Approval Pending</span>
                          
                             {% elif order.is_fully_delivered %}
 
@@ -231,108 +273,123 @@
                         {% endif %}
                     </td>
 
-                    <td>
-                        
-                        <a href="{% url 'logistics:dispatch_item_list' order.id %}">Items</a>
-                                    
-                    </td>
-                                          
+                    <td>                        
+                        <a href="{% url 'logistics:dispatch_item_list' order.id %}">Items</a>                                    
+                    </td>                                         
 
                  <!-- QC Dashboard section -->
                  <td>
                     {% if order.is_full_delivered %}                   
                         <i class="fas fa-check" style="color:green; font-weight: bold;">QC completed</i>
                      {% else %}                        
-                            <a href="{% url 'purchase:qc_dashboard_with_order' order.id %}" class="btn btn-sm btn-primary">QC Dashboard</a>
-                        {% endif %}
-                   
-                </td>
-                
+                        <a href="{% url 'purchase:qc_dashboard_with_order' order.id %}" class="btn btn-sm btn-primary">QC Dashboard</a>
+                    {% endif %}                   
+                </td>              
 
-                    <!-- Invoice section -->
+                <!-- Invoice section -->                 
+                <td> 
                     {% if order.approver_approval_status != 'APPROVED' %}
-                        <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
-                        {% else %}                                                    
-                            {% with shipment=order.purchase_shipment.first %}
-                                {% if shipment %}
-                                    {% with invoices=shipment.shipment_invoices %}
-                                        {% if invoices.exists %}
-                                            {% if shipment.is_fully_invoiced %}
-                                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">Fully Invoiced</i></td>
-                                            {% else %}
-                                                <td><i class="fas fa-check" style="color:green;font-weight: bold;">Partially Invoiced</i></td>
-                                                <td class="text-center p-2" style="white-space: nowrap;">
-                                                    <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Another Invoice</a>
-                                                </td>
-                                            {% endif %}
-                                        {% else %}
-                                            <td class="text-center p-2" style="white-space: nowrap;">
-                                                <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
-                                            </td>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    <td><button class="btn btn-sm btn-secondary" disabled>Make shipment first</button></td>
-                                {% endif %}
-                            {% endwith %}   
+                        
+                        <button class="btn btn-secondary" disabled>Pending Approval</button>
+                    {% else %}                                                    
+                        {% with shipment=order.purchase_shipment.first %}
+                            {% if shipment %}
+                                {% with invoices=shipment.shipment_invoices %}
+                                    {% if invoices.exists %}
+                                        {% if shipment.is_fully_invoiced %}
+                                        <i class="fas fa-check" style="color:green;font-weight: bold;">Fully Invoiced</i>
+                                    {% else %}
+                                        <i class="fas fa-check" style="color:green;font-weight: bold;">Partially Invoiced</i>                                          
+                                        <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">
+                                            Create Another Invoice
+                                        </a>
+                                        
+                                    {% endif %}
+
+                                    {% else %}                                            
+                                    <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
+                                        
+                                    {% endif %}
+                                {% endwith %}
+                            {% else %}
+                                <button class="btn btn-sm btn-secondary" disabled>Make shipment first</button>
+                            {% endif %}
+                        {% endwith %}   
+                {% endif %}
+
+               {% with shipment=order.purchase_shipment.first %}
+                    {% if order.supplier_quotation %}
+                        {% if not shipment or not shipment.shipment_invoices.first %}
+                            <a href="{% url 'finance:create_purchase_invoice_from_quotation' order.supplier_quotation.id %}"
+                            class="btn btn-primary"
+                            onclick="return confirm('Convert this quotation to Invoice?')">
+                                Convert to Invoice
+                            </a>
+                        {% endif %}
                     {% endif %}
+                {% endwith %}
 
 
-                   <!-- Payment status section -->
-               <td>
-                   {% if invoice.is_fully_paid %}
-                   <span style="color:green; font-weight: bold;">Fully Paid</span>
-               {% elif invoice.total_paid == 0 %}
-                   <span style="color:red; font-weight: bold;">No Payment Made</span>
-               {% elif invoice.total_paid > 0 and invoice.remaining_balance < invoice.amount_due %}
-                   <span style="color:orange; font-weight: bold;">Partially Paid</span>
-               {% else %}
-                   <span style="color:red; font-weight: bold;">No Payment Made</span>
-               {% endif %}
-            </td>
-               
 
-                    <!-- Make_Payment section -->
-                    <td class="text-center p-2" style="white-space: nowrap;">
-                        {% if order.approver_approval_status != 'APPROVED' %}
-                            <span>Approval pending</span>
+             </td>
+
+
+                <!-- Payment status section -->
+                    <td>
+                    {% with status=order.get_payment_status %}
+                        {% if status == "FULLY_PAID" %}
+                            <span class="text-success fw-bold">Fully Paid</span>
+                        {% elif status == "PARTIALLY_PAID" %}
+                            <span class="text-warning fw-bold">Partially Paid</span>
+                        {% elif status == "NO_PAYMENT" %}
+                            <span class="text-danger fw-bold">No Payment Made</span>
+                        {% elif status == "NO_INVOICE" %}
+                            <span class="text-muted fw-bold">No Invoice Issued</span>
+                        {% elif status == "NO_SHIPMENT" %}
+                            <span class="text-muted fw-bold">No Shipment</span>
                         {% else %}
-                            {% with shipment=order.purchase_shipment.first %}
-                                {% if shipment %}
-                                    {% with invoice=shipment.shipment_invoices.first %}
-                                        {% if invoice %}
-                                            {% with payment=invoice.purchase_payment_invoice.first %}
-                                                {% if payment %}
-                                                    {% if payment.is_fully_paid %}
-                                                        <span>
-                                                            <i class="fas fa-check" style="color: green; font-weight: bold;">Fully Paid</i>
-                                                        </span>
-                                                    {% else %}
-                                                        <a href="{% url 'finance:create_purchase_payment' invoice.id %}" class="btn btn-sm btn-primary">Make Payment</a>
-                                                    {% endif %}
-                                                {% else %}
-                                                    <a href="{% url 'finance:create_purchase_payment' invoice.id %}" class="btn btn-sm btn-primary">Make Payment</a>
-                                                {% endif %}
-                                            {% endwith %}
-                                        {% else %}
-                                            <span>No invoice found</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    <span>No shipment found</span>
-                                {% endif %}
-                            {% endwith %}
+                            <span class="text-secondary fw-bold">Unknown</span>
                         {% endif %}
-                    </td>                    
-                   
-                    <td>      
-                        {% if  order.purchase_shipment.first.shipment_invoices.first.status == 'SUBMITTED' %}                
-                        <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=preview" target="_blank">Preview</a> 
-                        <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=download">Download</a>
-                        {% else %}
-                        <span>Invoice Not submitted</span>
-                        {% endif %}
+                    {% endwith %}
+                </td>               
+
+                  <td class="text-center p-2" style="white-space: nowrap;">
+                        {% with action=order.get_payment_action %}
+                            {% if action.status == "APPROVAL_PENDING" %}
+                                <span class="text-muted">Approval pending</span>
+                            {% elif action.status == "NO_SHIPMENT" %}
+                                <span class="text-muted">No shipment found</span>
+                            {% elif action.status == "NO_INVOICE" %}
+                                <span class="text-muted">No invoice found</span>
+                            {% elif action.status == "NO_PAYMENT" or action.status == "PARTIAL" %}
+                                <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
+                                class="btn btn-sm btn-primary">
+                                    Make Payment
+                                </a>
+                            {% elif action.status == "FULLY_PAID" %}
+                                <span class="text-success fw-bold">
+                                    <i class="fas fa-check"></i> Fully Paid
+                                </span>
+                            {% endif %}
+                        {% endwith %}
                     </td>
+
+                  <td>                      
+                       
+                {% if order.get_first_invoice.status|in_list:"SUBMITTED,PARTIALLY_PAID,FULLY_PAID" %}
+                    <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=preview" target="_blank">
+                        Preview
+                    </a>
+                    <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=download">
+                        Download
+                    </a>
+                    {% else %}
+                        <span>Invoice Not Submitted (Current: {{ invoice.status }})</span>
+                    {% endif %}                        
+                       
+                    </td>
+
+
 
                     <td>
                         {% if order.purchase_shipment.first.shipment_invoices.first and not order.purchase_shipment.first.shipment_invoices.first.purchase_invoice_attachment.first %}
@@ -344,6 +401,9 @@
                         {% endif %}
                     </td>
 
+
+
+
                     <td>
                         {% if order.purchase_shipment.first.shipment_invoices.first and not order.purchase_shipment.first.shipment_invoices.first.purchase_payment_attachment.first %}
                         <a href="{% url 'finance:add_purchase_payment_attachment' order.purchase_shipment.first.shipment_invoices.first.id %}">Upload Payment Docs</a>
@@ -353,9 +413,7 @@
                         <span> Payment not made yet</span>
                         {% endif %}
                     
-                    </td>
-                    
-
+                    </td>                  
 
                     <!-- view  attachement -->
                     <td>
@@ -386,29 +444,29 @@
             </table>
 
         </div>
-       
-        
+               
+
+            
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
+
     </div>
-
-     
-    <div class="pagination">
-        <span class="step-links">
-            {% if page_obj.has_previous %}
-                <a href="?page=1">&laquo; first</a>
-                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-            {% endif %}
-
-            <span class="current">
-                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-            </span>
-
-            {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">next</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-            {% endif %}
-        </span>
-    </div>
-
 
 </div>      
 

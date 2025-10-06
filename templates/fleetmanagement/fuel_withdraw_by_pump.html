@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-
+{% load custom_filters %}
 
 {% block content %}
 
@@ -26,9 +26,9 @@
                <div class="row row-cols-2 row-cols-md-3">
                 
          
-                <div class="col"> Start date: {{ form.start_date }}</div>
-                <div class="col">End date {{ form.end_date }}</div>
-                <div class="col"> <button class="btn btn-primary" type="submit">Search</button></div>
+                <div class="col"> Start date: {{ form.start_date|add_class:"form-control" }}</div>
+                <div class="col">End date {{ form.end_date|add_class:"form-control" }}</div>
+                <div class="col"> <button class="btn btn-primary my-4" type="submit">Search</button></div>
                  
                </div>
             </div>

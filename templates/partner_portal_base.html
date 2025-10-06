@@ -234,13 +234,14 @@
                                 <form action="{% url 'accounts:logout' %}" method="post" >
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item" style="text-decoration: none;"> <i class="fa fa-sign-out-alt" aria-hidden="true"></i>&nbsp;Logout</button>
+                                     <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i>&nbsp; Corporate Register</a></li>
                                 </form>
                             </li>
                            
                             <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}" style="text-decoration: none;"><i class="fas fa-key"></i>&nbsp;Change Password </a></li>
                             {% else %}
                             <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="fa fa-sign-in-alt" aria-hidden="true">&nbsp; Login</a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:register_partner_job_seeker' %}"><i class="fas fa-user-plus me-2"></i>&nbsp; Register</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i>&nbsp; Corporate Register</a></li>
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'accounts:pwdreset' %}" style="text-decoration: none;"><i class="fas fa-lock"></i>&nbsp; Forgot Password</a></li>
                             {% endif %}

@@ -9,20 +9,21 @@
 
 
 <div class="container-fluid main-content">
-    <form method="GET">
-        <label>Start Date:</label>
-        <input type="date" name="start_date" value="{{ start_date }}">
-        
-        <label>End Date:</label>
-        <input type="date" name="end_date" value="{{ end_date }}">
+        <form method="GET">
+            <label>Start Date:</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+            
+            <label>End Date:</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
 
-        <label>Order number/ID:</label>
-        <input type="text" name="order_id" value="{{ order_id }}">
-        
-        <button class="btn btn-primary" type="submit">Apply Filter</button>
-    </form>
+            <label>Order number/ID:</label>
+            <input type="text" name="order_id" value="{{ order_id }}" class="form-control">
+            
+            <button class="btn btn-primary form-control my-4" type="submit">Apply Filter</button>
+        </form>
 
-    <div class="row">        
+
+    <div class="row my-4">        
         <div class="col table-responsive">       
             <h4>Requested Order list</h4>
             <table class="table table-hover">

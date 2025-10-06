@@ -1,0 +1,174 @@
+{% extends "base_print.html" %}
+{% load static %}
+
+{% block content %}
+<style>
+/* ------------------- Print Styles ------------------- */
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .label {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+    .print-btn, .quantity-form {
+        display: none;
+    }
+}
+
+/* ------------------- Page Styles ------------------- */
+body {
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+}
+
+.quantity-form {
+    margin: 10px auto 20px;
+    text-align: center;
+}
+
+.quantity-form input {
+    width: 80px;
+    margin: 0 5px;
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.quantity-form button {
+    padding: 6px 15px;
+    border-radius: 4px;
+}
+
+/* ------------------- Labels Container ------------------- */
+.labels-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 0;
+}
+
+/* ------------------- Individual Label ------------------- */
+.label {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    padding: 10px;
+    width: 190px;
+    height: 160px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+    font-size: 12px;
+}
+
+.label-header {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 4px;
+}
+
+.label-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.label-body img {
+    object-fit: contain;
+}
+
+.barcode {
+    width: 120px;
+    height: 40px;
+}
+
+.qrcode {
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ccc;
+    padding: 2px;
+    background: white;
+}
+
+.label-footer {
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+/* ------------------- Buttons ------------------- */
+.print-btn {
+    margin: 20px 10px;
+    padding: 10px 20px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.print-btn:hover {
+    background: #0056b3;
+}
+</style>
+
+<!-- Quantity Form -->
+<form method="post" class="quantity-form">
+    {% csrf_token %}
+    <label for="quantity">Number of labels to print:</label>
+    <input type="number" name="quantity" id="quantity"
+           value="{{ selected_quantity }}" min="1" max="{{ max_quantity }}" required>
+    <button type="submit" class="btn btn-primary">Generate Labels</button>
+</form>
+
+<!-- Labels -->
+{% if batch.barcode_image or batch.qr_code_image %}
+<div class="labels-container">
+    {% for i in "x"|rjust:quantity_to_print %}
+    <div class="label">
+        <div class="label-header">{{ batch.product.name|default:"Product" }}</div>
+        <div class="label-body">
+            {% if batch.barcode_image %}
+                <img src="{{ batch.barcode_image.url }}" alt="Barcode" class="barcode">
+            {% else %}
+                <span class="text-danger">No Barcode</span>
+            {% endif %}
+
+            {% if batch.qr_code_image %}
+                <img src="{{ batch.qr_code_image.url }}" alt="QR Code" class="qrcode">
+            {% else %}
+                <span class="text-danger">No QR Code</span>
+            {% endif %}
+        </div>
+        <div class="label-footer">
+            Batch: {{ batch.batch_number }}<br>
+            Exp: {{ batch.expiry_date|date:"M d, Y" }}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Print Buttons -->
+<div class="text-center mt-3">
+    <button onclick="window.print()" class="print-btn">Print Labels</button>
+    <a href="{% url 'purchase:batch_list' %}" class="btn btn-sm btn-success">Batch List</a>  
+</div>
+
+{% else %}
+<div class="text-center my-4">
+    <h2>No barcode/QR code has been generated for this batch.</h2>
+    <p>You can generate them manually now.</p>
+    <a href="{% url 'purchase:generate_batch_codes' batch.id %}" class="btn btn-success">
+        Generate Barcodes & QR Codes
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

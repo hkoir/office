@@ -207,7 +207,7 @@ def delete_member(request, team_id):
 def create_task(request):
     tasks = Task.objects.all().order_by('-created_at')
 
-    if not request.user.groups.filter(name='managers').exists():
+    if not request.user.groups.filter(name='Approver').exists():
         messages.success(request, 'You are not authorized to create a task.')
         return redirect('tasks:tasks_dashboard')
     

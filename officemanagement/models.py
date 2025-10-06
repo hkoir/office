@@ -283,7 +283,7 @@ class OfficeAdvance(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.advance_id}-{self.user.user_profile.employee_user_profile.first().name} - ${self.amount}"
+        return f"{self.advance_id}-{self.user.username} - ${self.amount}"
     
 
 from django.db.models import Sum

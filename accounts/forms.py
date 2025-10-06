@@ -71,29 +71,47 @@ class CustomLoginForm(AuthenticationForm):
 
 
 class TenantUserRegistrationForm(UserCreationForm):
-    profile_picture = forms.ImageField(required=False)
-
+    email = forms.EmailField(required=False)
+    phone_number = forms.CharField(required=False)
+        
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'password1', 'password2', 'profile_picture']
+        fields = ['role','user_department','user_position','biometrict_id','username', 'email', 'phone_number','password1', 'password2', 'photo_id']  
 
     def __init__(self, *args, **kwargs):
-        tenant = kwargs.pop('tenant', None)         
-        super(TenantUserRegistrationForm, self).__init__(*args, **kwargs)      
-        if tenant:
-            self.tenant = tenant
+        self.tenant = kwargs.pop('tenant', None)  # Store tenant in the form instance
+        super().__init__(*args, **kwargs)
+
+        # Optional Bootstrap classes
+        for field in self.fields:
+            self.fields[field].widget.attrs.update({'class': 'form-control'})
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password1'])
-   
-        if hasattr(self, 'tenant') and self.tenant:
-            user.tenant = self.tenant
 
         if commit:
             user.save()
 
         return user
+    
+    def clean_phone_number(self):
+        phone = self.cleaned_data.get('phone_number')
+        if CustomUser.objects.filter(phone_number=phone).exists():
+            raise forms.ValidationError("Phone number already exists.")
+        return phone
+
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+
+        if role in ['customer', 'job-seeker']:
+            cleaned_data['user_department'] = None
+            cleaned_data['user_position'] = None
+            cleaned_data['biometrict_id'] = None
+
+        return cleaned_data
+
 
 
     

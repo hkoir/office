@@ -10,56 +10,58 @@
 </form>
 
 
-<form method="POST">
+<form method="POST" class="mt-4">
     {% csrf_token %}
-    <table class="table table-hover">
-        <thead class="table-dark">
-            <tr>               
-                <th>Product</th>
-                <th>Requested Quantity</th>
-                <th>Batch</th>
-                <th>Warehouse</th>
-                <th>Location</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in purchase_request_items %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead class="table-dark">
+                <tr>               
+                    <th>Product</th>
+                    <th>Requested Quantity</th>
+                    <th>Batch</th>
+                    <th>Warehouse</th>
+                    <th>Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in purchase_request_items %}
 
-            <tr>
-              
-                <td>
-                    {{ item.product_name }}
-                    <input type="hidden" name="product_id_{{ forloop.counter }}" value="{{ item.product_id }}">
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>
-                    <select name="batch_{{ forloop.counter }}" class="form-select">
-                        <option value="" selected disabled>Select Product Batch</option>
-                        {% for batch in item.batches %}
-                        <option value="{{ batch.id }}">{{ batch.batch_number }} (Product:{{ batch.stationary_product }}) (Quanity: {{ batch.quantity }})</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td>
-                    <select name="warehouse_{{ forloop.counter }}" class="form-select">
-                        <option value="" selected disabled>Select warehouse</option>
-                        {% for warehouse in warehouses %}
-                        <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td>
-                    <select name="location_{{ forloop.counter }}" class="form-select">
-                        <option value="" selected disabled>Select Location</option>
-                        {% for location in locations %}
-                        <option value="{{ location.id }}">{{ location.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                <tr>
+                
+                    <td>
+                        {{ item.product_name }}
+                        <input type="hidden" name="product_id_{{ forloop.counter }}" value="{{ item.product_id }}">
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <select name="batch_{{ forloop.counter }}" class="form-select">
+                            <option value="" selected disabled>Select Product Batch</option>
+                            {% for batch in item.batches %}
+                            <option value="{{ batch.id }}">{{ batch.batch_number }} (Product:{{ batch.stationary_product }}) (Quanity: {{ batch.quantity }})</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="warehouse_{{ forloop.counter }}" class="form-select">
+                            <option value="" selected disabled>Select warehouse</option>
+                            {% for warehouse in warehouses %}
+                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td>
+                        <select name="location_{{ forloop.counter }}" class="form-select">
+                            <option value="" selected disabled>Select Location</option>
+                            {% for location in locations %}
+                            <option value="{{ location.id }}">{{ location.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
 
     <button type="submit" class="btn btn-primary">Confirm warehouse Entry</button>
 </form>

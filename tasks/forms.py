@@ -52,13 +52,30 @@ class TeamForm(forms.ModelForm):
     class Meta:
         model = Team
         fields = ['department','name','manager']
+        widgets = {
+            'department': forms.Select(attrs={'class': 'form-control'}),  # keep dropdown
+            'name': forms.TextInput(attrs={'class': 'form-control'}),    # text input
+            'manager': forms.Select(attrs={'class': 'form-control'}),    # dropdown if ForeignKey
+        }
+        
 
 class AddMemberForm(forms.ModelForm):
-    team = forms.ModelChoiceField(queryset=Team.objects.all(), required=True, label='Team')
-    member = forms.ModelChoiceField(queryset=Employee.objects.all(), required=True, label='Member')
+    team = forms.ModelChoiceField(
+        queryset=Team.objects.all(),
+        required=True,
+        label='Team',
+        widget=forms.Select(attrs={'class': 'form-control'})  # styled dropdown
+        )
+    member = forms.ModelChoiceField(
+        queryset=Employee.objects.all(),
+        required=True,
+        label='Member',
+        widget=forms.Select(attrs={'class': 'form-control'})  # styled dropdown
+       )
     class Meta:
         model = TeamMember
         exclude=['user']
+       
 
 
 

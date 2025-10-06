@@ -1,6 +1,6 @@
 
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 {% block content %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,19 +15,19 @@
             <div class="container">
                 <div class="row">    
                     <div class="col-6 col-md-3">
-                        Start Year{{ form.start_year}}
+                        Start Year{{ form.start_year|add_class:"form-control"}}
                     </div>
                     <div class="col-6 col-md-3">
-                        End Year{{ form.end_year}}
+                        End Year{{ form.end_year|add_class:"form-control"}}
                     </div>
                     <div class="col-6 col-md-3">
-                        Department(optional){{ form.department }}
+                        Department(optional){{ form.department|add_class:"form-control" }}
                     </div>               
                     <div class="col-6 col-md-3">
-                        Employee{{ form.employee_name }}
+                        Employee{{ form.employee_name|add_class:"form-control" }}
                     </div>
                    
-                    <div class="col-6 col-md-3 p-2">
+                    <div class="col-6 col-md-3 my-4">
                         <button type="submit" class="btn btn-primary">Generate Report</button>
                     </div>
                 </div>

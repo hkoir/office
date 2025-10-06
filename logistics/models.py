@@ -14,6 +14,7 @@ from django.utils import timezone
 
 #######################################################################################################
 
+
 class PurchaseShipment(models.Model):
     shipment_id = models.CharField(max_length=50,null=True,blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_shipment_user')
@@ -46,12 +47,13 @@ class PurchaseShipment(models.Model):
         total = shipment_items.aggregate(
             total=Sum(
                 ExpressionWrapper(
-                    F('dispatch_quantity') * F('dispatch_item__product__unit_price'),  
+                    F('dispatch_quantity') * F('dispatch_item__batch__purchase_price'),  
                     output_field=DecimalField()
                 )
             )
         )['total'] or 0
         return total
+
 
     @property
     def is_fully_shipped(self):

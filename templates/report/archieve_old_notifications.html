@@ -1,5 +1,5 @@
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -16,13 +16,13 @@
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-md-3 col-sm-6 mb-2">
-                            Start Date: {{ form.start_date }}
+                            Start Date: {{ form.start_date|add_class:"form-control" }}
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
-                            End Date: {{ form.end_date }}
+                            End Date: {{ form.end_date|add_class:"form-control" }}
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
-                            Days: {{ form.days }}
+                            Days: {{ form.days|add_class:"form-control" }}
                         </div>
                         
                         <div class="col-md-3 col-sm-6 mt-2">

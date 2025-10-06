@@ -40,6 +40,7 @@
 
         <h3>🚨 Overdue Visitors (Security Risk)</h3>
         {% if overdue_visitors %}
+        <div class="table-responsive">
             <table class="table table-bordered table-striped">
                 <thead class="table-info">
                 <tr>
@@ -56,6 +57,7 @@
                     </tr>
                 {% endfor %}
             </table>
+            </div>
         {% else %}
             <p>No overdue visitors.</p>
         {% endif %}

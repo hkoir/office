@@ -1,5 +1,5 @@
 {% extends 'base.html' %}  
-
+{% load custom_filters %}
 {% block content %}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -8,13 +8,13 @@
 <div class="container-fluid main-content"> 
         <form method="get" action="{% url 'tasks:group_performance_chart' %}" class="mb-2">
             <label class="p-1"> Position</label>
-            {{ form.position}}
+            {{ form.position|add_class:"form-control"}}
             <label class="p-1"> Department</label>
-            {{ form.department}}
+            {{ form.department|add_class:"form-control"}}
             <label class="p-1"> Stat Date</label>
-            {{ form.start_date}}
+            {{ form.start_date|add_class:"form-control"}}
             <label class="p-1"> End date</label>
-            {{ form.end_date}}
+            {{ form.end_date|add_class:"form-control"}}
             <button type="submit" class="btn btn-primary m-2">Filter</button>
         </form>       
     

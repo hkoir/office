@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<div class="container-fluid">
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'sales:create_customer_quotation' %}" class="btn btn-sm btn-success w-100">
+        Create Customer Quotation
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:customer_quotation_list' %}" class="btn btn-sm btn-success w-100">
+        Customer Quotation List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_request_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sales Request Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:sale_shipment_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Shipment List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Invoice List
+      </a>
+    </div>
+  </div>
+</div>
+
+    <div class="row">
+
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Customer Quotation #{{ quotation.quotation_number }}</h2>
+                <a href="{% url 'sales:convert_customer_quotation' quotation.id %}" 
+                class="btn btn-success"
+                onclick="return confirm('Convert this quotation to a Sale Request Order?')">
+                    Convert to Sale Request Order
+                </a>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p>
+                    <strong>Customer:</strong> {{ quotation.customer.name }}<br>
+                    <strong>Quotation Date:</strong> {{ quotation.date }}<br>
+                    <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
+                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Status:</strong> {{ quotation.status }}<br>
+                    <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">Quotation Items</div>
+                <div class="card-body p-0">
+                    <div class="col table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>                               
+                                <th>Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in quotation.sales_quotation_items.all %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.unit_price }}</td>                              
+                                <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No items</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        
+    </div>
+</div>
+{% endblock %}

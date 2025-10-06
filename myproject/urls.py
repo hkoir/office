@@ -34,6 +34,9 @@ urlpatterns = [
     path('recruitment/',include('recruitment.urls',namespace='recruitment')),
     path('officemanagement/',include('officemanagement.urls',namespace='officemanagement')),
     path('leavemanagement/',include('leavemanagement.urls',namespace='leavemanagement')),
+
+    path('accounting/',include('accounting.urls',namespace='accounting')),  
+   
    
     
 ]

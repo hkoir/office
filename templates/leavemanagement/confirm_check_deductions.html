@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg border-0">
+        <div class="card-body text-center">
+            <h2 class="text-danger">⚠️ Confirm Deduction Process</h2>
+            <p class="lead">This will check all employees for late arrivals and early-outs, and may deduct salary or leave days automatically.</p>
+            <p><strong>Are you sure you want to proceed?</strong></p>
+            
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-lg">✅ Yes, Run Deductions</button>
+                <a href="{% url 'leavemanagement:leave_dashboard' %}" class="btn btn-secondary btn-lg">❌ Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

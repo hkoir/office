@@ -1,11 +1,12 @@
 
 {% extends "base.html" %}
 {% load static %}
-
+{% load custom_filters %}
 {% block content %}
 
 
 <div class="container-fluid main-content">
+    <a href="{% url 'core:create_company' %}" class="btn btn-success text-center">Create Company</a>
     <div class="row">
         <div class="col-12 my-3">  
                                                
@@ -16,57 +17,41 @@
                 </div> 
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" id="add_category" autocomplete="off">
-                        {% csrf_token %} 
-                    <div class="container">                       
-                        <div class="row">
-                           
-                            <div class="col-6 col-md-3">
-                                Name: {{ form.name }}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                Company: {{ form.company }}
-                             </div>
-                            <div class="col-6 col-md-3">
-                                hra percentage: {{ form.hra_percentage }}
-                            </div>
-                            <div class="col-6 col-md-3">
-                                Medical allowance: {{ form.medical_allowance_percentage }}
-                             </div>
-                            <div class="col-6 col-md-3">
-                                conveyance allowance percentage: {{ form.conveyance_allowance_percentage }}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                performance bonus percentage {{ form.performance_bonus_percentage }}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                festival bonus percentage: {{ form.festival_bonus_percentage}}
-                             </div>
-                             <div class="col-6 col-md-3 p-1">
-                                provident fund percentage: {{ form.provident_fund_percentage }}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                professional tax: {{ form.professional_tax }}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                grauity percentage: {{ form.grauity_percentage}}
-                             </div>
-                             <div class="col-6 col-md-3">
-                                leave travel allowance performance: {{ form.leave_travel_allowance_performance}}
-                             </div>
-                            
-                             <div class="col-6 col-md-3">
-                                <button type="submit" name="add_to_basket" class="btn btn btn-primary mt-4">Submit</button>
-                             </div>
-                          
+                         <div class="row">
+                            {% for field in form.visible_fields %}
+                                <div class="col-lg-3 col-md-3 col-sm-12">
+                                    {% if field.field.widget.input_type == "checkbox" %}
+                                        <div class="form-check mt-2">
+                                            {{ field }}
+                                            {{ field.label_tag }}
+                                        </div>
+                                    {% else %}
+                                        {{ field.label_tag }}
+                                        {{ field|add_class:"form-control" }}
+                                    {% endif %}
 
-                            </div>
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid mt-4">
+                            <button type="submit" name="entity_submit" class="btn btn-primary btn-lg">
+                                Submit
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
     </div>
                 
-        <div class="col-12">
+        <div class="col-12 table-responsive">
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>

@@ -1,6 +1,6 @@
 {% extends 'base.html' %}  
 
-
+{% load custom_filters %}
 
 {% block content %}
 
@@ -9,7 +9,7 @@
 <div class="container-fluid main-content">
     <div class="row">  
 
-        <div class="col">
+        <div class="col-12">
            
 
             <div class="container">
@@ -19,23 +19,23 @@
                 <div class="row">     
 
                     <div class="col-12 col-md-4 p-1">
-                        Employee{{ form.employee }}
+                        Employee{{ form.employee|add_class:"form-control" }}
                     </div>
 
                     <div class="col-12 col-md-4 p-1">
-                        Start date{{ form.start_date }}
+                        Start date{{ form.start_date|add_class:"form-control" }}
                     </div>
 
                     <div class="col-12 col-md-4 p-1">
-                    End date{{ form.end_date }}
+                    End date{{ form.end_date|add_class:"form-control" }}
                     </div>
 
                     <div class="col-12 col-md-4 p-1">
-                        Department{{ form.department }}
+                        Department{{ form.department|add_class:"form-control" }}
                     </div>
 
                     <div class="col-12 col-md-4 p-1">
-                        Position{{ form.position }}
+                        Position{{ form.position|add_class:"form-control" }}
                     </div>
                     <div class="col-12 col-md-4 mt-2">
                         <button type="submit" class="btn btn-primary">Generate Report</button>
@@ -45,7 +45,9 @@
                 </form>
             </div>
          </div>
-        <div class="col mt-4 table-responsive">       
+
+
+        <div class="col-12 mt-4 table-responsive">       
                          
             <h4>Evaluation Data</h4>
             <table class="table bg-dark">
@@ -123,7 +125,7 @@
                     {% endif %}
                 </tbody>
             </table>
-        </div>  
+    
 
     </div>
     <!-- Pagination Controls -->
@@ -144,7 +146,7 @@
             {% endif %}
         </span>
     </div>
-<h4 style="height:10px"></h4>
+
 
 </div>
 

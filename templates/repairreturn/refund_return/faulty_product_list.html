@@ -13,7 +13,7 @@
                     <div class="col-7">
                         <form method ="GET" action="">
                             <label for="id_sale_order_id"> Sale Order</label>
-                             {{ form.sale_order_id }}
+                             {{ form.sale_order_id|add_class:"form-control" }}
                             <button type="Submit" class="btn btn-primary">Search</button>                           
                         </form>           
                     </div>
@@ -30,7 +30,7 @@
 
         </div>      
         <hr class="mt-2">
-        <div class="col">
+        <div class="col table-responsive">
 
             <H4> Requested refund Faulty product list</H4>
             <table class="table table-hover">

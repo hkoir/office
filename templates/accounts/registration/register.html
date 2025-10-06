@@ -1,31 +1,100 @@
 {% extends "sub_base.html" %}
-{% load custom_filters %}
+{% load static %}
+
 {% block content %}
-<div class="container mt-5">
+
+<div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-12 col-md-6">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <!-- Card Header -->
-                <div class="card-header bg-primary text-white text-center">
-                    <h3 class="mb-0">Register New User</h3>
+        <div class="col-12 col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <!-- Header -->
+                <div class="card-header bg-primary text-white text-center rounded-top-4">
+                    <h3 class="mb-0 fw-bold">Register New User</h3>
                 </div>
-                
-                <!-- Card Body -->
-                <div class="card-body" style="background-color: #f8f9fa;">
-                    <form method="POST" enctype="multipart/form-data" class="needs-validation p-4" novalidate>
+
+                <!-- Body -->
+                <div class="card-body bg-light p-4">
+                    <form method="POST" enctype="multipart/form-data" novalidate>
                         {% csrf_token %}
-                        {{ form.as_p }}
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">Register</button>
+
+                        <!-- Role -->
+                        <div class="mb-3">
+                            <label for="id_role" class="form-label fw-semibold">Select Role</label>
+                            {{ form.role }}
+                        </div>
+
+                        <!-- Employee Fields -->
+                        <div id="employee-fields">
+                            <div class="mb-3">
+                                <label for="id_user_department" class="form-label fw-semibold">Department</label>
+                                {{ form.user_department }}
+                                {% if form.user_department.help_text %}
+                                    <small class="text-muted">{{ form.user_department.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_user_position" class="form-label fw-semibold">Position</label>
+                                {{ form.user_position }}
+                                {% if form.user_position.help_text %}
+                                    <small class="text-muted">{{ form.user_position.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="id_biometrict_id" class="form-label fw-semibold">Biometric ID</label>
+                                {{ form.biometrict_id }}
+                                {% if form.biometrict_id.help_text %}
+                                    <small class="text-muted">{{ form.biometrict_id.help_text }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- General Fields -->
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label fw-semibold">Username</label>
+                            {{ form.username }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label fw-semibold">Email</label>
+                            {{ form.email }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_phone_number" class="form-label fw-semibold">Phone Number</label>
+                            {{ form.phone_number }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password1" class="form-label fw-semibold">Password</label>
+                            {{ form.password1 }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password2" class="form-label fw-semibold">Confirm Password</label>
+                            {{ form.password2 }}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_photo_id" class="form-label fw-semibold">Photo ID</label>
+                            {{ form.photo_id }}
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-3">
+                                <i class="fas fa-user-plus me-2"></i> Register
+                            </button>
                         </div>
                     </form>
                 </div>
-                
-                <!-- Card Footer -->
-                <div class="card-footer text-center bg-light">
+
+                <!-- Footer -->
+                <div class="card-footer bg-white text-center py-3 rounded-bottom-4">
                     <p class="mb-0">
-                        Already have an account? 
-                        <a href="{% url 'accounts:login' %}" class="text-primary text-decoration-none fw-bold">Login Here</a>
+                        Already have an account?
+                        <a href="{% url 'accounts:login' %}" class="text-primary fw-semibold text-decoration-none">Login here</a>
                     </p>
                 </div>
             </div>
@@ -33,7 +102,34 @@
     </div>
 </div>
 
+<style>
+/* Ensure consistent spacing & mobile design */
+@media (max-width: 576px) {
+    .card {
+        border-radius: 0.75rem;
+        margin: 0 1rem;
+    }
+}
+</style>
 
-    <div style="height:800px"></div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const roleSelect = document.querySelector('#id_role');
+    const employeeFields = document.querySelector('#employee-fields');
+
+    function toggleEmployeeFields() {
+        const role = roleSelect.value;
+        if (role === 'customer' || role === 'job-seeker') {
+            employeeFields.style.display = 'none';
+            employeeFields.querySelectorAll('input, select').forEach(f => f.value = '');
+        } else {
+            employeeFields.style.display = 'block';
+        }
+    }
+
+    roleSelect.addEventListener('change', toggleEmployeeFields);
+    toggleEmployeeFields();
+});
+</script>
 
 {% endblock %}

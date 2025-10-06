@@ -60,9 +60,11 @@ urlpatterns = [
           ),
 
    ####################################################################################################
-  
+ 
    # Custom views
     path('register/', views.register_view, name='register'), 
+    path('register_employee_corporate_user/', views.register_employee_corporate_user, name='register_employee_corporate_user'), 
+    path('register_corporate_user_only/', views.register_corporate_user_only, name='register_corporate_user_only'),
     path('register_partner_job_seeker/', views.register_partner_job_seeker, name='register_partner_job_seeker'),
     # path('register_job_seeker/', views.register_job_seeker, name='register_job_seeker'), 
     path('register_public/', views.register_public, name='register_public'),   
@@ -80,6 +82,10 @@ urlpatterns = [
     path('search_all/', views.search_all, name='search_all'),
 
      path("activity-log/", views.activity_log_view, name="activity_log"),
+
+      path('send_otp/', views.send_otp, name='send_otp'),   
+    path('resend_otp/<str:phone_number>/', views.send_otp, name='resend_otp'),
+    path('verify_otp/', views.verify_otp, name='verify_otp'),   
   
 
 ]

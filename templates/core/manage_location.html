@@ -1,13 +1,13 @@
 
 {% extends "base.html" %}
 {% load static %}
-
+{% load custom_filters %}
 {% block content %}
 
 
 <div class="container-fluid main-content">
     <div class="row">
-        <div class="col-12 col-md-4">
+        <div class="col-12">
             <div class="card shadow-lg border-0 rounded-lg">
                 <div class="card-body">
                     <div class="card-header bg-primary text-white text-center mb-4">
@@ -16,17 +16,41 @@
                 
                 <form method="POST" class="p-2 m-3">
                     {% csrf_token %}
-                    {{ form.as_p }}
+                    <div class="row">
+                        {% for field in form.visible_fields %}
+                            <div class="col-lg-2 col-md-2 col-sm-12 mb-3">
+                                {% if field.field.widget.input_type == "checkbox" %}
+                                    <div class="form-check mt-2">
+                                        {{ field }}
+                                        {{ field.label_tag }}
+                                    </div>
+                                {% else %}
+                                    {{ field.label_tag }}
+                                    {{ field|add_class:"form-control" }}
+                                {% endif %}
+
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <div class="text-danger small">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
 
                     <div class="d-grid mt-4">
-                        <button type="submit" name="entity_submit"class="btn btn-primary btn-lg"> {% if instance %} Update {% else %} Add {% endif %}</button>
-                    </div>   
-                    
+                        <button type="submit" name="entity_submit" class="btn btn-primary btn-lg">
+                            {% if instance %} Update {% else %} Add {% endif %}
+                        </button>
+                    </div>
                 </form>
+
             </div>
         </div>
         </div>
-        <div class="col-12 col-md-8">
+        <div class="col-12 table-responsive">
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr class="bg-primary text-white">
@@ -70,7 +94,15 @@
                                     data-name="{{ entity.name }}"
                                     data-company="{{ entity.company }}"
                                     data-company-id="{{ entity.company.id }}"
-                                    data-address="{{ entity.address }}">
+                                    data-address="{{ entity.address }}"
+                                    data-phone="{{ entity.phone }}"
+                                    data-email="{{ entity.email }}"
+                                    data-city="{{ entity.city }}"
+                                    data-state="{{ entity.state }}"
+                                    data-country="{{ entity.country }}"
+                                    data-postal_code="{{ entity.postal_code }}"
+                                    >
+                                    
                                     Update
                                     </button>
 
@@ -142,11 +174,34 @@
                             {% endfor %}
                         </select>
                     </div>
-                    
+                 
                     <div class="mb-3">
                         <label for="entity_address" class="form-label">Address</label>
                         <input type="text" class="form-control" id="entity_address" name="address" required>
-
+                    </div>
+                     <div class="mb-3">
+                        <label for="entity_phone" class="form-label">Phone</label>
+                        <input type="text" class="form-control" id="entity_phone" name="phone" required>
+                    </div>
+                      <div class="mb-3">
+                        <label for="entity_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="entity_email" name="email" required>
+                    </div>
+                      <div class="mb-3">
+                        <label for="entity_city" class="form-label">City</label>
+                        <input type="text" class="form-control" id="entity_city" name="city" required>
+                    </div>
+                      <div class="mb-3">
+                        <label for="entity_state" class="form-label">State</label>
+                        <input type="text" class="form-control" id="entity_state" name="state" required>
+                    </div>
+                     <div class="mb-3">
+                        <label for="entity_country" class="form-label">Country</label>
+                        <input type="text" class="form-control" id="entity_country" name="country" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="entity_postal_code" class="form-label">Postal Code</label>
+                        <input type="text" class="form-control" id="entity_postal_code" name="postal_code" required>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -183,7 +238,6 @@
 </div>
 
 
-
 <script>
         document.addEventListener('DOMContentLoaded', function () {
             // Update Modal Logic
@@ -196,14 +250,29 @@ if (updateModal) {
         var entityAddress = button.getAttribute('data-address');
         var entityCompanyId = button.getAttribute('data-company-id');
 
+        var entityPhone = button.getAttribute('data-phone');
+        var entityEmail = button.getAttribute('data-email');
+        var entityCity = button.getAttribute('data-city');
+        var entityState = button.getAttribute('data-state');
+        var entityCountry = button.getAttribute('data-country');
+         var entityPostalCode = button.getAttribute('data-postal_code');
+        
+
         var modal = updateModal;
         modal.querySelector('#entity_id').value = entityId;
         modal.querySelector('#entity_name').value = entityName;
         modal.querySelector('#entity_address').value = entityAddress;
         modal.querySelector('#entity_company').value = entityCompanyId;
+
+        modal.querySelector('#entity_phone').value = entityPhone;
+        modal.querySelector('#entity_email').value = entityEmail;
+        modal.querySelector('#entity_city').value = entityCity;
+        modal.querySelector('#entity_state').value = entityState;
+         modal.querySelector('#entity_country').value = entityCountry;
+        modal.querySelector('#entity_postal_code').value = entityPostalCode;
     });
 }
-
+ 
 
     // Delete Modal Logic
     var deleteModal = document.getElementById('deleteEntityModal');

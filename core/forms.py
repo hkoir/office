@@ -98,7 +98,7 @@ class ManageLocationForm(forms.ModelForm):
 
     class Meta:
         model = Location
-        fields = ['company', 'name', 'address']
+        exclude = ['user']
         widgets={
             'address':forms.Textarea(attrs={
                 'class': 'form-control custom-textarea',

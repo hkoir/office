@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -12,10 +12,10 @@
                 <div class="row">
                     
                     <div class="col-6 col-md-3">
-                        Start Date:{{ form.start_date }}   
+                        Start Date:{{ form.start_date|add_class:"form-control" }}   
                     </div>
                     <div class="col-6 col-md-3">
-                        End date:{{ form.end_date }}   
+                        End date:{{ form.end_date|add_class:"form-control" }}   
                     </div>
                     <div class="col-6 col-md-3">
                     <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>

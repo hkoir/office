@@ -22,43 +22,43 @@
                     {% csrf_token %}
                     <div class="container">
                         <div class="row">
-                            <div class="col-6 col-md-3 form-group">
-                                Vehicle: {{ form.vehicle }}
+                            <div class="col-12 col-md-3 form-group">
+                                Vehicle: {{ form.vehicle|add_class:"form-control" }}
                             </div>
                             <div class="col-6 col-md-3 form-group">
-                                Refill type: {{ form.refill_type }}
+                                Refill type: {{ form.refill_type|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Pump: {{ form.pump }}
+                            <div class="col-12 col-md-3 form-group">
+                                Pump: {{ form.pump|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Fuel type: {{ form.fuel_type }}
+                           <div class="col-12 col-md-3 form-group">
+                                Fuel type: {{ form.fuel_type|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Fuel rate: {{ form.fuel_rate }}
+                           <div class="col-12 col-md-3 form-group">
+                                Fuel rate: {{ form.fuel_rate|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Refill amount: {{ form.refill_amount }}
+                           <div class="col-12 col-md-3 form-group">
+                                Refill amount: {{ form.refill_amount|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Vehicle Reading: {{ form.vehicle_kilometer_reading }}
+                            <div class="col-12 col-md-3 form-group">
+                                Vehicle Reading: {{ form.vehicle_kilometer_reading|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Fuel slip: {{ form.refill_supporting_documents }}
+                           <div class="col-12 col-md-3 form-group">
+                                Fuel slip: {{ form.refill_supporting_documents|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Fuel supplier: {{ form.fuel_supplier_name }}
+                             <div class="col-12 col-md-3 form-group">
+                                Fuel supplier: {{ form.fuel_supplier_name|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Supplier Phone: {{ form.fuel_supplier_phone }}
+                            <div class="col-12 col-md-3 form-group">
+                                Supplier Phone: {{ form.fuel_supplier_phone|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Supplier address: {{ form.fuel_supplier_address }}
+                            <div class="col-12 col-md-3 form-group">
+                                Supplier address: {{ form.fuel_supplier_address|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3 form-group">
-                                Refill date: {{ form.refill_date }}
+                            <div class="col-12 col-md-3 form-group">
+                                Refill date: {{ form.refill_date|add_class:"form-control" }}
                             </div>
-                            <div class="col-6 col-md-3">
+                             <div class="col-12 col-md-3 form-group">
                                 <button type="submit" name="add_to_basket" class="btn btn-primary mt-4">Submit</button>
                             </div>
                         </div>
@@ -94,8 +94,7 @@
     
             <table class="table table-hover">
                 <thead class="table-dark">
-                    <tr>
-                    
+                    <tr>                    
                         <th class="text-center p-2">Update</th>
                         <th class="text-center p-2">Date</th>
                         <th class="text-center p-2">User</th>

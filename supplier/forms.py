@@ -8,7 +8,7 @@ from.models import Supplier,Location
 class AddSupplierForm(forms.ModelForm):   
     class Meta:
         model = Supplier
-        exclude = ['supplier_id','user','history']
+        exclude = ['supplier_id','history']
 
 
 

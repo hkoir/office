@@ -7,6 +7,41 @@
 
 
 <div class="container-fluid main-content">
+    <div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'sales:create_customer_quotation' %}" class="btn btn-sm btn-success w-100">
+        Create Customer Quotation
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:customer_quotation_list' %}" class="btn btn-sm btn-success w-100">
+        Customer Quotation List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_request_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sales Request Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:sale_shipment_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Shipment List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Invoice List
+      </a>
+    </div>
+  </div>
+</div>
+
     <div class="row">    
         <div class="col-12">     
             <div class="container">

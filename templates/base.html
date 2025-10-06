@@ -748,16 +748,17 @@ li a {
                                 <button type="submit" class="dropdown-item" style="text-decoration: none;"><i class="fas fa-sign-out-alt"></i>&nbsp;Logout</button>
                             </form>
                         </li>
+
                         
-                        <li><a class="dropdown-item" href="{% url 'accounts:register' %}" style="text-decoration: none;"><i class="fas fa-user-plus"></i>&nbsp;Register </a></li>
-                        <li><a class="dropdown-item" href="{% url 'accounts:register_partner_job_seeker' %}" style="text-decoration: none;"><i class="fas fa-user-plus"></i>&nbsp;Register partner </a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:register' %}" style="text-decoration: none;"><i class="fas fa-user-plus"></i>&nbsp;Register as public </a></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:register_employee_corporate_user' %}" style="text-decoration: none;"><i class="fas fa-user-plus"></i>&nbsp;Register Employee Corp User </a></li>
 
                         <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}" style="text-decoration: none;"><i class="fas fa-key"></i>&nbsp;Change Password </a></li>
                         <li><a class="dropdown-item" href="{% url 'accounts:pwdreset' %}" style="text-decoration: none;"><i class="fas fa-lock"></i> &nbsp;Forgot Password</a></li>
                         {% else %}
                         <li><a class="dropdown-item" href="" style="text-decoration: none;"><i class="fas fa-user"></i></a>&nbsp;Your account</li>
                         <li><a class="dropdown-item" href="{% url 'accounts:login' %}" style="text-decoration: none;"><i class="fas fa-sign-in-alt"></i> &nbsp;Login</a></li>
-                     
+                        <li><a class="dropdown-item" href="{% url 'accounts:register_employee_corporate_user' %}" style="text-decoration: none;"><i class="fas fa-user-plus"></i>&nbsp;Register Employee Corp User </a></li>
                         <li><a class="dropdown-item" href="{% url 'accounts:pwdreset' %}" style="text-decoration: none;"><i class="fas fa-lock"></i>&nbsp;Forgot Password </a></li>
                         {% endif %}
                     </ul>                 
@@ -825,13 +826,12 @@ li a {
                     <i class="fs-5 bi-house"></i><span class="ms-1 text-dark">Home</span></a></li>
   
 
-
                 <li><a href="#submenu1" data-bs-toggle="collapse" class="nav-link text-truncate">
 		           <i class="fs-5 bi-speedometer2"></i><span class="ms-1 text-dark">Dashboard</span> </a></li>
                 
 		      <li class="dropdown"><a href="#" class="nav-link dropdown-toggle  text-truncate" id="dropdown" data-bs-toggle="dropdown" aria-expanded="false"> 
-                    <i class="fas fa-pills text-success"></i><i class="fas fa-vial text-danger"></i><span 
-			     class="ms-1 text-success">SCM</span> </a>
+                    <i class="fas fa-pills text-success"></i><i class="fas fa-vial text-danger"></i>
+                    <span class="ms-1 text-success">SCM</span> </a>
                     <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdown">
                           {% if request.user.is_staff %}
                          <li><a class="dropdown-item" href="" style="text-decoration: none;"><i class="fas fa-plus-square"></i>&nbsp;HR</a></li>  
@@ -842,7 +842,7 @@ li a {
 
                <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle dropdown_caret_color"href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span style="color:gray">Office</span>
+                       <i class="fas fa-box text-success"></i> <span class="ms-1 text-success">Office</span>
                     </a>
     
 
@@ -901,7 +901,7 @@ li a {
                     </ul> 
                 </li> 
 
-                
+                                
 		       <li class="dropdown"><a href="#" class="nav-link dropdown-toggle  text-truncate" id="dropdown" data-bs-toggle="dropdown" aria-expanded="false"> 
                     <i class="fas fa-users text-success"></i><span class="ms-1 text-success">Leave Management</span> </a>
                     <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdown">
@@ -911,6 +911,23 @@ li a {
                          {% endif %} 
                           <li><a class="dropdown-item" href="" style="text-decoration: none;"><i class="fas fa-plus-square"></i>&nbsp;Upcoming</a></li>  
                           <li><a class="dropdown-item" href="" style="text-decoration: none;"><i class="fas fa-plus-square"></i>&nbsp;Upcoming</a></li>       
+                    </ul>
+                </li>
+
+                 <li class="dropdown"><a href="#" class="nav-link dropdown-toggle  text-truncate" id="dropdown" data-bs-toggle="dropdown" aria-expanded="false"> 
+                    <i class="fas fa-coins text-success"></i><span class="ms-1 text-success">Purchase</span> </a>
+                    <ul class="dropdown-menu text-small shadow" aria-labelledby="dropdown">
+                        <li><a class="dropdown-item" href="{% url 'purchase:create_purchase_request' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Purchase Request </a></li>
+                        <li><a class="dropdown-item" href="{% url 'purchase:purchase_request_order_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Purchase request order list </a></li> 
+                        <li><a class="dropdown-item" href="{% url 'purchase:rfq_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;RFQ List </a></li>
+                        <li><a class="dropdown-item" href="{% url 'purchase:supplier_quotation_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Supplier Quotation </a></li>
+                        <li><a class="dropdown-item" href="{% url 'purchase:purchase_order_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Purchase Order list </a></li> 
+                         <li><a class="dropdown-item" href="{% url 'inventory:inventory_dashboard' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Inventory dashboard </a></li>                         
+                        <li><a class="dropdown-item" href="{% url 'purchase:qc_dashboard' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;QC dashboard</a></li>                        
+                        <li><a class="dropdown-item" href="{% url 'purchase:create_batch' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Batch</a></li>   
+                         <li><a class="dropdown-item" href="{% url 'sales:create_customer_quotation' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Sales Quotation</a></li>   
+			                                                     
+                           
                     </ul>
                 </li>
                 

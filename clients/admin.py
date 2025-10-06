@@ -1,7 +1,10 @@
 from django.contrib import admin
 from.models import Client,Domain,Tenant,TenantInfo,SubscriptionPlan,Subscription,DemoRequest,PaymentProfile
-from.models import UserRequestLog
+from.models import UserRequestLog,TenantSMSConfig,GlobalSMSConfig
 
+
+admin.site.register(TenantSMSConfig)
+admin.site.register(GlobalSMSConfig)
 
 class DomainAdmin(admin.ModelAdmin):
     def get_model_perms(self, request):

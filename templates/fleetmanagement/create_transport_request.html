@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
   
 
@@ -9,15 +9,16 @@
         <div class="col-12">
             <form method="get">
                 <div class="row">
-                    <div class="col-6 col-md-3">
+                    <div class="col-12 col-md-3">
                         <label for="start_date">Start Date:</label>
                         <input type="date" id="start_date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
                     </div>
-                    <div class=" col-6 col-md-3">
+                    <iv class="row">
+                    <div class="col-12 col-md-3">
                         <label for="end_date">End Date:</label>
                         <input type="date" id="end_date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
                     </div>
-                    <div class=" col-6 col-md-3">
+                      <div class="col-12 col-md-3">
                         <label for="end_date">Vehicle Reg number:</label>
                         <input type="text" id="vehicle_number" name="vehicle_number" class="form-control" value="{{ vehicle_number }}">
                     </div>
@@ -43,27 +44,27 @@
                 <div class="container">                       
                     <div class="row">
                        
-                        <div class="col-6 col-md-3 form-group">
-                            Vehicle {{ form.vehicle }}
+                        <div class="col-12 col-md-3 form-group">
+                            Vehicle {{ form.vehicle|add_class:"form-control" }}
                          </div>
-                         <div class="col-6 col-md-3 form-group">
-                            transport type {{ form.transport_type }}
+                         <div class="col-12 col-md-3 form-group">
+                            transport type {{ form.transport_type|add_class:"form-control" }}
                          </div>
-                        <div class="col-6 col-md-3 form-group">
-                            item description: {{ form.item_description }}
+                        <div class="col-12 col-md-3 form-group">
+                            item description: {{ form.item_description|add_class:"form-control" }}
                         </div>
-                        <div class="col-6 col-md-3 form-group">
-                            request datetime: {{ form.request_datetime }}
+                        <div class="col-12 col-md-3 form-group">
+                            request datetime: {{ form.request_datetime|add_class:"form-control" }}
                          </div>
-                        <div class="col-6 col-md-3 form-group">
-                            return datetime: {{ form.return_datetime }}
+                        <div class="col-12 col-md-3 form-group">
+                            return datetime: {{ form.return_datetime|add_class:"form-control" }}
                          </div>
-                         <div class="col-6 col-md-3 form-group">
-                            purpose {{ form.purpose }}
+                         <div class="col-12 col-md-3 form-group">
+                            purpose {{ form.purpose|add_class:"form-control" }}
                          </div>
                          
                         
-                         <div class="col-6 col-md-3">
+                         <div class="col-12 col-md-3 my-4">
                             <button type="submit" name="add_to_basket" class="btn btn btn-primary mt-4">Submit</button>
                          </div>
                       

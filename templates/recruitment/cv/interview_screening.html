@@ -1,7 +1,7 @@
 
 {% extends "base.html" %}
 {% load static %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -24,7 +24,18 @@
                     <!-- Form -->
                     <form method="POST" enctype="multipart/form-data" class="p-4">
                         {% csrf_token %}
-                        {{ form.as_p }}
+                       {% for field in form.visible_fields %}
+                      <div class="mb-3">
+                          {{ field.label_tag }}
+                          {{ field|add_class:"form-control" }}
+                          {% if field.help_text %}
+                              <small class="form-text text-muted">{{ field.help_text }}</small>
+                          {% endif %}
+                          {% for error in field.errors %}
+                              <div class="text-danger">{{ error }}</div>
+                          {% endfor %}
+                      </div>
+                  {% endfor %}
                         <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg"> Apply</button>
                         </div>
@@ -92,6 +103,9 @@
         </form>
   
         <!-- Table -->
+         <div class="table-responsive">
+
+     
         <table class="table">
           <thead class="table-dark">
             <tr>
@@ -136,6 +150,7 @@
             {% endfor %}
           </tbody>
         </table>
+            </div>
   
         <!-- Pagination Controls -->
         <div class="pagination">

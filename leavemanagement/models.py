@@ -311,3 +311,20 @@ class SalaryDeductionRecord(models.Model):
 
     def __str__(self):
         return f"{self.employee.name} - {self.amount} deducted on {self.date}"
+
+
+
+
+class LeaveJobLog(models.Model):
+    JOB_CHOICES = [
+        ("CARRY_FORWARD", "Carry Forward Leave"),
+        ("MONTHLY_ACCRUAL", "Monthly Leave Accrual"),
+        ("LATE_DEDUCTION", "Late Leave Deduction"),
+    ]
+    job_type = models.CharField(max_length=50, choices=JOB_CHOICES)
+    run_date = models.DateField()
+    run_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("job_type", "run_date")  # ensures each job runs only once per day

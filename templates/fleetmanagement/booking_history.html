@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -10,24 +10,24 @@
                     {% csrf_token %}
                     <div class="container">
                         <div class="row">
-                            <div class="col-6 col-md-3">
-                                Start Date:{{ form.start_date }}   
+                            <div class="col-12 col-md-3">
+                                Start Date:{{ form.start_date|add_class:"form-control" }}   
                             </div>
-                            <div class="col-6 col-md-3">
-                                End date:{{ form.end_date }}   
+                            <div class="col-12 col-md-3">
+                                End date:{{ form.end_date|add_class:"form-control" }}   
                             </div>
                             
                         </div>
                     </div>
                                    
-                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary"> Filter</button>
+                    <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary my-4"> Filter</button>
                 </form>
         </div>
         <hr>
         <h2>Booking history</h2>
         
         {% if history %}
-          
+          <div class="table-responsive">
         <table class="table table-hover">
             <thead class="table-dark">
                     <tr>
@@ -82,7 +82,7 @@
                         {% endif %}
                     </span>
                 </div>
-
+                </div>
             {% endif %}
        
     </div>

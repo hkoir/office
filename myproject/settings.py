@@ -58,7 +58,18 @@ TENANT_APPS = [
     'transport',
     'recruitment',
     'officemanagement',
-    'leavemanagement'
+    'leavemanagement',
+    
+    'store',
+    'orders',
+    'manage_shop',
+    'shop',
+    'basket',
+    'payment',
+    'accounting',
+    'payment_gateway',
+    'messaging'
+ 
  
   
     
@@ -251,20 +262,23 @@ LOGIN_URL = 'accounts:login'
 
 
 
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.e2esolutionsbd.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
+EMAIL_HOST_USER = 'humayun@e2esolutionsbd.com'
+EMAIL_HOST_PASSWORD = 'ArafaT_1234'
+DEFAULT_FROM_EMAIL = 'humayun@e2esolutionsbd.com'
+
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MESSAGE_STORAGE = 'django.contrib.messages.storage.session.SessionStorage'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.your-email-provider.com' 
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@example.com'
-# EMAIL_HOST_PASSWORD = 'your-email-password'
-# DEFAULT_FROM_EMAIL = 'your-email@example.com'
-
-
 
     
 

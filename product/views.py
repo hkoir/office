@@ -7,13 +7,39 @@ from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.db import ProgrammingError
 from django.contrib.auth.decorators import login_required,permission_required
 
-
+from purchase.models import Batch
 
 
 @login_required
 def product_dashboard(request):
     return render(request,'product/product_dashboard.html')
 
+@login_required
+def print_unit_labels(request, batch_id):
+    batch = get_object_or_404(Batch, id=batch_id)
+    total_units = batch.units.count()
+
+    # Default quantity = 1 (to avoid printing all accidentally)
+    quantity_to_print = 1
+    selected_quantity = 1
+
+    if request.method == "POST":
+        qty = request.POST.get("quantity")
+        try:
+            qty = int(qty)
+            if 1 <= qty <= total_units:
+                quantity_to_print = qty
+                selected_quantity = qty
+        except (ValueError, TypeError):
+            pass  # ignore invalid input
+
+    # We don’t need to slice actual units; just use a range
+    return render(request, "product/unit_labels.html", {
+        "batch": batch,
+        "quantity_to_print": quantity_to_print,
+        "selected_quantity": selected_quantity,
+        "max_quantity": total_units,
+    })
 
 
 @login_required

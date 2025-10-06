@@ -40,6 +40,7 @@ from django.core.mail import EmailMessage,send_mail
 
 import base64
 
+from django.urls import reverse
 
 @login_required
 def dashboard(request):
@@ -50,6 +51,7 @@ def dashboard(request):
     modules = [
     {"name": "SCM Module", "icon": "fas fa-truck", "description": "Optimize your supply chain.", "link": "core:home"},
     {"name": "Core HR Management", "icon": "fas fa-cogs", "description": "Streamline core business processes.", "link": "core:only_core_dashboard"},
+    {"name": "Accounting process Automate", "icon": "fas fa-dollar-sign", "description": "Automate your accounting Journal entry and generate financial statment", "link": "accounting:profit_loss"},
     {"name": "Appraisal Automation", "icon": "fas fa-chart-line", "description": "Automate performance reviews.", "link": "tasks:tasks_dashboard"},
     {"name": "Recruitment Automation", "icon": "fas fa-file-signature", "description": "Simplify hiring workflows.", "link": "recruitment:recruitment_dashboard"},
     {"name": "Leave management", "icon": "fas fa-users", "description": "Automate entire leave management system and established association with others.., .", "link": "leavemanagement:leave_dashboard"},
@@ -65,6 +67,8 @@ def dashboard(request):
 ]
 
     return render(request,'core/dashboard.html',{'plans':plans,'modules':modules})
+
+
 
 @login_required
 def home(request):
@@ -82,6 +86,112 @@ def only_core_dashboard(request):
 @login_required
 def all_qc(request):
     return render(request,'core/all_qc.html')
+
+
+
+
+
+
+
+
+from core.models import Company, Location, Department, Position, CompanyPolicy, SalaryStructure, Festival, PerformanceBonus
+from accounts.models import CustomUser
+from customer.models import Customer
+from supplier.models import Supplier
+from leavemanagement.models import LatePolicy
+
+@login_required
+def basic_database_creation(request):
+    setup_steps = [
+        {
+            'name': 'Company',
+            'exists': Company.objects.exists(),
+            'url': reverse('core:create_company')
+        },
+        {
+            'name': 'Company Location',
+            'exists': Location.objects.exists(),
+            'url': reverse('core:manage_location')
+        },
+        {
+            'name': 'Department',
+            'exists': Department.objects.exists(),
+            'url': reverse('core:manage_department')
+        },
+        {
+            'name': 'Position',
+            'exists': Position.objects.exists(),
+            'url': reverse('core:create_position')
+        },
+        {
+            'name': 'Company Policy',
+            'exists': CompanyPolicy.objects.exists(),
+            'url': reverse('core:create_company_policy')
+        },
+        {
+            'name': 'Attendance Policy',
+            'exists': LatePolicy.objects.exists(),
+            'url': reverse('leavemanagement:create_attendance_policy')
+        },
+        {
+            'name': 'Salary Structure',
+            'exists': SalaryStructure.objects.exists(),
+            'url': reverse('core:create_salary_structure')
+        },
+        {
+            'name': 'Festival',
+            'exists': Festival.objects.exists(),
+            'url': reverse('core:create_festival')
+        },
+        {
+            'name': 'Performance Bonus',
+            'exists': PerformanceBonus.objects.exists(),
+            'url': reverse('core:create_performance_bonus')
+        },
+        {
+            'name': 'Staff Registration',
+            'exists': CustomUser.objects.filter(is_staff=True).exists(),
+            'url': reverse('accounts:register')
+        },
+        {
+            'name': 'Customer / Supplier Registration',
+            'exists': Customer.objects.exists() or Supplier.objects.exists(),
+            'url': reverse('accounts:register_partner_job_seeker')
+        },
+        {
+            'name': 'Customer',
+            'exists': Customer.objects.exists(),
+            'url': reverse('customer:create_customer')
+        },
+        {
+            'name': 'Customer Location',
+            'exists': Customer.objects.exists(),  # You can replace with Location model for customers
+            'url': reverse('customer:create_location')
+        },
+        {
+            'name': 'Supplier',
+            'exists': Supplier.objects.exists(),
+            'url': reverse('supplier:create_supplier')
+        },
+        {
+            'name': 'Supplier Location',
+            'exists': Supplier.objects.exists(),
+            'url': reverse('supplier:create_location')
+        },
+    ]
+
+    # Optional redirect: If everything is created, go to dashboard
+    if all(step['exists'] for step in setup_steps):
+        return redirect('dashboard')
+
+    return render(request, 'core/basic_database_creation.html', {'setup_steps': setup_steps})
+
+
+
+
+
+
+
 
 
 
@@ -327,6 +437,8 @@ def manage_location(request):
     entities = Location.objects.all().order_by('-created_at')  
     companies = Company.objects.all()
     form =ManageLocationForm(request.POST or None)
+    print(Location.objects.all())
+
 
     if request.method == 'POST':
         if 'entity_submit' in request.POST:  
@@ -369,6 +481,8 @@ def manage_location(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return render(request,'core/manage_location.html',{'form': form, 'page_obj': page_obj,'companies':companies})
+
+
 
 
 @login_required

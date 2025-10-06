@@ -14,7 +14,7 @@ from manufacture.models import MaterialsRequestOrder
 from sales.models import SaleOrder
 from manufacture.models import ReceiveFinishedGoods
 from purchase.models import PurchaseOrder
-
+from django.utils.translation import gettext_lazy as _
 from accounts.models import CustomUser
 
 
@@ -59,6 +59,25 @@ class Location(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+class Shelf(models.Model):
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE, related_name="warehouse_shelves",null=True,blank=True)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, related_name="warehouse_location_shelves",null=True,blank=True)
+    code = models.CharField(max_length=50,blank=True, null=True) 
+    description = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(_("Created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("Updated at"), auto_now=True) 
+
+    class Meta:
+        unique_together = ("warehouse", "code")
+
+    def __str__(self):
+        return f"{self.warehouse.name} - {self.code}"
+
+
+
 
 from operations.models import ExistingOrder,OperationsRequestOrder
 from repairreturn.models import ScrappedOrder

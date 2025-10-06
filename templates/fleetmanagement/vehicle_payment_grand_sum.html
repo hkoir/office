@@ -14,17 +14,17 @@
             <form method="GET" action="{% url 'transport:vehicle_grand_summary' %}">
 
                 <div class="container-fluid">
-                    <div class="row row-cols-2 row-cols-md-6">
+                    <div class="row row-cols-md-6">
             
-                     <div class="col" >  Start Date:  {{ form.start_date }} </div>
-                     <div class="col" >  End Date:  {{ form.end_date }} </div>
-                     <div class="col" > No of days {{ form.days }} </div>
+                     <div class="col mb-2" >  Start Date:  {{ form.start_date|add_class:"form-control" }} </div>
+                     <div class="col mb-2" >  End Date:  {{ form.end_date|add_class:"form-control" }} </div>
+                     <div class="col" > No of days {{ form.days|add_class:"form-control" }} </div>
                   
-                     <div class="col" >  Vehicle Number:{{ form.vehicle_number }} </div>   
-                     <div class="col" >  Month:{{ form.month }} </div>   
-                     <div class="col" >  Year:{{ form.year }} </div>   
+                     <div class="col mb-2" >  Vehicle Number:{{ form.vehicle_number|add_class:"form-control" }} </div>   
+                     <div class="col mb-2" >  Month:{{ form.month|add_class:"form-control" }} </div>   
+                     <div class="col mb-2" >  Year:{{ form.year|add_class:"form-control" }} </div>   
                        
-                     <div class="col" > <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                     <div class="col mb-2" > <button type="submit" class='btn btn-primary my-4'>Generate Data</button></div>
                        
                     </div>
                 </div>

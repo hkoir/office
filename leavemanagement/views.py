@@ -176,85 +176,121 @@ def get_accrued_balance(employee, leave_type):
     return balance_record.balance
 
 
+########### helper function for carry forwarder #################
 
+
+from datetime import date
+from .models import LeaveJobLog
+
+def check_job_already_run(request, job_type):
+    today = date.today()
+    if LeaveJobLog.objects.filter(job_type=job_type, run_date=today).exists():
+        messages.warning(request, f"{job_type} has already been executed today.")
+        return True
+    return False
+
+def mark_job_as_run(request, job_type):
+    LeaveJobLog.objects.create(job_type=job_type, run_date=date.today(), run_by=request.user)
+######################################################################################
 
 @login_required
 def carry_forward_leave(request):
     current_date = timezone.now()
-    current_year = current_date.year
-    next_year = current_year + 1
 
-    if current_date.month != 1: 
-        messages.warning(request, 'Carry forward process is only allowed in January.')
+    if check_job_already_run(request, "CARRY_FORWARD"):
         return redirect('leavemanagement:leave_dashboard')
 
-    balances = EmployeeLeaveBalance.objects.filter(
-        year=current_year,
-        leave_type__allow_carry_forward=True
-    )
+    if request.method == "POST":
+        current_year = current_date.year
+        next_year = current_year + 1
 
-    for balance in balances:
-        max_limit = balance.leave_type.max_carry_forward_limit or 0
-        carry_over_days = min(balance.balance, max_limit)
+        if current_date.month != 1: 
+            messages.warning(request, 'Carry forward process is only allowed in January.')
+            return redirect('leavemanagement:leave_dashboard')
 
-        next_year_balance, created = EmployeeLeaveBalance.objects.get_or_create(
-            employee=balance.employee,
-            leave_type=balance.leave_type,
-            year=next_year,
-            defaults={
-                'balance': balance.leave_type.annual_allowance + carry_over_days,
-                'carry_forward': carry_over_days,
-            }
+        balances = EmployeeLeaveBalance.objects.filter(
+            year=current_year,
+            leave_type__allow_carry_forward=True
         )
 
-        if not created:    
-            next_year_balance.carry_forward = carry_over_days
-            next_year_balance.balance += carry_over_days
-            next_year_balance.save()
+        for balance in balances:
+            max_limit = balance.leave_type.max_carry_forward_limit or 0
+            carry_over_days = min(balance.balance, max_limit)
 
-    messages.success(request, 'Eligible leave balances have been successfully carried forward!')
-    return redirect('leavemanagement:create_leave_type')
+            next_year_balance, created = EmployeeLeaveBalance.objects.get_or_create(
+                employee=balance.employee,
+                leave_type=balance.leave_type,
+                year=next_year,
+                defaults={
+                    'balance': balance.leave_type.annual_allowance + carry_over_days,
+                    'carry_forward': carry_over_days,
+                }
+            )
+
+            if not created:    
+                next_year_balance.carry_forward = carry_over_days
+                next_year_balance.balance += carry_over_days
+                next_year_balance.save()
+
+        messages.success(request, 'Eligible leave balances have been successfully carried forward!')
+        return redirect('leavemanagement:leave_dashboard')
+
+    return render(request, "leavemanagement/confirm_action.html", {
+        "action_name": "Carry Forward Leave Balances"
+    })
 
 
 
 from core.models import Employee
+
 
 @login_required
 def monthly_leave_accrual_update(request):
     today = date.today()
     current_month = today.month
     current_year = today.year
+    
+    if check_job_already_run(request, "MONTHLY_ACCRUAL"):
+        return redirect('leavemanagement:leave_dashboard')
 
-    employees = Employee.objects.all()
+    if request.method == "POST":
+        employees = Employee.objects.all()
 
-    for employee in employees:
-        leave_balances = EmployeeLeaveBalance.objects.filter(employee=employee)
+        for employee in employees:
+            leave_balances = EmployeeLeaveBalance.objects.filter(employee=employee)
 
-        for balance_instance in leave_balances:
-            leave_type = balance_instance.leave_type
-            if not leave_type.accrues_monthly:
-                continue
+            for balance_instance in leave_balances:
+                leave_type = balance_instance.leave_type
+                if not leave_type.accrues_monthly:
+                    continue
 
-            if balance_instance.last_accrued_month == current_month:
-                continue  
- 
-            approved_leaves = LeaveApplication.objects.filter(
-                employee=employee,
-                leave_type=leave_type,
-                status='APPROVED',
-                approved_start_date__year=current_year,
-                approved_start_date__month=current_month,
-            ).aggregate(total_days=Sum('approved_no_of_days'))['total_days'] or 0
- 
-            accrued_days = leave_type.accrual_rate
-            balance_instance.balance += accrued_days
-            balance_instance.balance -= approved_leaves
-            if balance_instance.balance < 0:
-                balance_instance.balance = 0
- 
-            balance_instance.last_accrued_month = current_month
-            balance_instance.save()
-    return HttpResponse("Monthly leave accrual updated successfully for all employees.")
+                if balance_instance.last_accrued_month == current_month:
+                    continue  
+
+                approved_leaves = LeaveApplication.objects.filter(
+                    employee=employee,
+                    leave_type=leave_type,
+                    status='APPROVED',
+                    approved_start_date__year=current_year,
+                    approved_start_date__month=current_month,
+                ).aggregate(total_days=Sum('approved_no_of_days'))['total_days'] or 0
+
+                accrued_days = leave_type.accrual_rate
+                balance_instance.balance += accrued_days
+                balance_instance.balance -= approved_leaves
+                if balance_instance.balance < 0:
+                    balance_instance.balance = 0
+
+                balance_instance.last_accrued_month = current_month
+                balance_instance.save()
+
+        messages.success(request, "Monthly leave accrual updated successfully for all employees.")
+        return redirect("leavemanagement:leave_dashboard")
+
+    # GET request → show confirmation
+    return render(request, "leavemanagement/confirm_action.html", {
+        "action_name": "update monthly leave accrual for all employees"
+    })
 
 
 
@@ -297,7 +333,7 @@ def leave_history(request):
     leave_summary=[]
     employee=None
     try:
-        user_profile = request.user.user_profile
+        user_profile = request.user
         employee = Employee.objects.get(user_profile=user_profile)
         leave_applications = LeaveApplication.objects.filter(employee=employee).select_related('leave_type')
         leave_balances = EmployeeLeaveBalance.objects.filter(employee=employee).select_related('leave_type')
@@ -342,8 +378,7 @@ def leave_history(request):
 @login_required
 def leave_summary(request):
     try:
-        current_year = timezone.now().year
-        user_profile = request.user.user_profile
+        user_profile = request.user
         employee = Employee.objects.get(user_profile=user_profile)
         leave_balances = EmployeeLeaveBalance.objects.filter(employee=employee)     
         availed_leaves = LeaveApplication.objects.filter(
@@ -372,7 +407,7 @@ def leave_summary(request):
 
     except Employee.DoesNotExist:
         messages.error(request, "No employee record found for your profile.")
-        return redirect('leavemanagement:dashboard')
+        return redirect('leavemanagement:leave_dashboard')
 
     return render(request, 'leavemanagement/leave_summary.html', {
         'leave_summary': leave_summary,
@@ -712,40 +747,45 @@ def deduct_leave(employee):
 
 
 
+from django.http import JsonResponse
+
 @login_required
 def check_and_deduct_late_leaves(request):
-    employees = Employee.objects.all()
-    deductions = []
-    for employee in employees:        
-        result_late = combined_check_lates_or_earlyouts(employee, is_late=True)
-        result_early_out = combined_check_lates_or_earlyouts(employee, is_late=False)
+    if request.method == "POST":
+        employees = Employee.objects.all()
+        deductions = []
+        for employee in employees:        
+            result_late = combined_check_lates_or_earlyouts(employee, is_late=True)
+            result_early_out = combined_check_lates_or_earlyouts(employee, is_late=False)
 
-        salary_deducted = False
-        leave_deducted = False
+            salary_deducted = False
+            leave_deducted = False
 
-        # Combine the results from both late and early-out checks
-        result = {
-            "salary_violation": result_late.get("salary_violation", False) or result_early_out.get("salary_violation", False),
-            "leave_violation": result_late.get("leave_violation", False) or result_early_out.get("leave_violation", False)
-        }
+            result = {
+                "salary_violation": result_late.get("salary_violation", False) or result_early_out.get("salary_violation", False),
+                "leave_violation": result_late.get("leave_violation", False) or result_early_out.get("leave_violation", False)
+            }
 
-        if result["salary_violation"]:
-            salary_deducted = deduct_salary(employee, is_late=True)
-            if salary_deducted:
-                deductions.append(f"Deducted {salary_deducted} from salary for {employee.name} due to excessive lateness/early-out.")
-        
-        if result["leave_violation"]:
-            leave_deducted = deduct_leave(employee)
-            if leave_deducted:
-                deductions.append(f"Deducted {employee.late_policy.leave_day_deduction_for_late_policy_violation} leave days for {employee.name} due to lateness/early-out policy violation.")
+            if result["salary_violation"]:
+                salary_deducted = deduct_salary(employee, is_late=True)
+                if salary_deducted:
+                    deductions.append(f"Deducted {salary_deducted} from salary for {employee.name} due to excessive lateness/early-out.")
+            
+            if result["leave_violation"]:
+                leave_deducted = deduct_leave(employee)
+                if leave_deducted:
+                    deductions.append(f"Deducted {employee.late_policy.leave_day_deduction_for_late_policy_violation} leave days for {employee.name} due to lateness/early-out policy violation.")
 
-    if deductions:
-        messages.success(request, f"Deductions made: {', '.join(deductions)}")
-        return JsonResponse({'status': 'success', 'deductions': deductions})
-    else:
-        messages.info(request, "No deductions were made today.")
+        if deductions:
+            messages.success(request, f"Deductions made: {', '.join(deductions)}")
+            return JsonResponse({'status': 'success', 'deductions': deductions})
+        else:
+            messages.info(request, "No deductions were made today.")
 
-    return redirect('leavemanagement:leave_dashboard')
+        return redirect('leavemanagement:leave_dashboard')
+
+    # 👇 If GET, show confirmation page
+    return render(request, "leavemanagement/confirm_check_deductions.html")
 
 
 

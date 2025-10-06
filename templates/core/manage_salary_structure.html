@@ -1,11 +1,12 @@
 
 {% extends "base.html" %}
 {% load static %}
-
+{% load custom_filters %}
 {% block content %}
 
 
 <div class="container-fluid main-content">
+     <a href="{% url 'core:create_company_policy' %}" class="btn btn-success text-center">Create Company Policy</a>
     <div class="row">
         <div class="col-12 col-md-4">
             <div class="card shadow-lg" style="background-color: aliceblue;">
@@ -15,14 +16,40 @@
                 </div>              
                 <form method="POST" enctype="multipart/form-data" class="p-2 m-4">
                     {% csrf_token %}
-                    {{ form.as_p }}   
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg"> {% if instance %} Update {% else %} Add {% endif %}</button>
-                    </div>
+                    <div class="row">
+                    {% for field in form.visible_fields %}
+                        <div class="col-lg-3 col-md-3 col-sm-12 mb-3">
+                            {% if field.field.widget.input_type == "checkbox" %}
+                                <div class="form-check mt-2">
+                                    {{ field }}
+                                    {{ field.label_tag }}
+                                </div>
+                            {% else %}
+                                {{ field.label_tag }}
+                                {{ field|add_class:"form-control" }}
+                            {% endif %}
+
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-grid mt-4">
+                    <button type="submit" name="entity_submit" class="btn btn-primary btn-lg">
+                        {% if instance %} Update {% else %} Add {% endif %}
+                    </button>
+                </div>
                 </form>
             </div>
         </div>
-        <div class="col-12 col-md-8">
+        
+        <div class="col-12 col-md-8 table-responsive">
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>
@@ -65,6 +92,7 @@
                 </tbody>
                 
             </table>
+        </div>
                     
             <!-- Pagination Controls -->
             <div class="pagination">
@@ -107,11 +135,10 @@
                     </div>
                 </div>
             </div>
+
+
         </div>
     </div>
-
-    
-</div>
 
 
 <script>

@@ -19,13 +19,13 @@
             <div class="container">
                 <form method="GET">
                     {% csrf_token %}  
-                <div class="row">  
+                <div class="row g-2">  
                                                    
                     <div class="col-md-3">
-                        Start date{{ form.start_date }}
+                        Start date{{ form.start_date|add_class:"form-control" }}
                     </div>
                     <div class="col-md-3">
-                    End date{{ form.end_date }}
+                    End date{{ form.end_date|add_class:"form-control" }}
                     </div>
                     <div class="col-md-3">
                         Department{{ form.department}}

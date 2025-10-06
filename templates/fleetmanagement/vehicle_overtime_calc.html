@@ -17,11 +17,11 @@
             <div class="container">
                 <div class="row">           
                     <form method="GET" action="{% url 'transport:vehicle_overtime_calc' %}"></form>
-                    <div class="col" style="padding:5px;">  Start Date:  {{ form.start_date }} </div>
-                    <div class="col" style="padding:5px;">  End Date:  {{ form.end_date }} </div>
-                    <div class="col" style="padding:5px;"> No of days {{ form.days }} </div>
-                     <div class="col" style="padding:5px;">  Vehicle:{{ form.vehicle_number }} </div> 
-                    <div class="col" style="padding:5px; margin:5px"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
+                    <div class="col mb-2" style="padding:5px;">  Start Date:  {{ form.start_date }} </div>
+                    <div class="col mb-2" style="padding:5px;">  End Date:  {{ form.end_date }} </div>
+                    <div class="col mb-2" style="padding:5px;"> No of days {{ form.days }} </div>
+                     <div class="col mb-2" style="padding:5px;">  Vehicle:{{ form.vehicle_number }} </div> 
+                    <div class="col mb-2" style="padding:5px; margin:5px"> <button type="submit" class='btn btn-primary'>Generate Data</button></div>
                             
                     </form>
                  </div>

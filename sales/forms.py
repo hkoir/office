@@ -4,9 +4,41 @@ from product.models import Product,Category
 from.models import SaleRequestOrder,SaleRequestItem,SaleOrder,SaleQualityControl
 from inventory.models import Warehouse,Location
 from customer.models import Customer
-
-
 from purchase.models import Batch
+
+from django.forms import inlineformset_factory
+from .models import CustomerQuotation, CustomerQuotationItem
+
+
+
+
+class CustomerQuotationForm(forms.ModelForm):
+    class Meta:
+        model = CustomerQuotation
+        fields = ["customer", "date","valid_until", "status", "notes"]
+        widgets={
+            'notes':forms.TextInput(attrs={
+                'style':'height:50px'
+            }),
+            'valid_until': forms.DateInput(attrs={'type':'date'}),
+             'date': forms.DateInput(attrs={'type':'date'})
+        }
+
+class CustomerQuotationItemForm(forms.ModelForm):
+    class Meta:
+        model = CustomerQuotationItem
+        fields = ["product", "quantity", "unit_price", "vat_percentage"]
+
+CustomerQuotationItemFormSet = inlineformset_factory(
+    CustomerQuotation,
+    CustomerQuotationItem,
+    form=CustomerQuotationItemForm,
+    extra=1,
+    can_delete=True
+)
+
+
+
 
 class SaleRequestForm(forms.ModelForm):
     class Meta:

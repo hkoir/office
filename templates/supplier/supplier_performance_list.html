@@ -7,6 +7,7 @@
  
   <h2>Supplier Performance List</h2>
 
+  <div class="table-responsive">
   <table class="table table-hover">
     <thead class="table-dark">
       <tr>
@@ -40,6 +41,7 @@
     </tbody>
   </table>
 
+  
   <div class="pagination">
     {% if page_obj.has_previous %}
       <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary">Previous</a>
@@ -51,6 +53,8 @@
       <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary">Next</a>
     {% endif %}
   </div>
+  </div>
+
 
   <a href="{% url 'supplier:create_performance' %}" class="btn btn-primary mt-3">Add New Performance</a>
 

@@ -1,0 +1,88 @@
+{% extends "../base.html" %}
+{% block content %}
+<div class="container mt-4">
+    
+   <div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'accounting:balance_sheet' %}" class="btn btn-sm btn-primary w-100">
+        Balance Sheet
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:balance_sheet_quarterly' %}" class="btn btn-sm btn-primary w-100">
+        Balance Sheet Quarterly
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:trial_balance' %}" class="btn btn-sm btn-primary w-100">
+        Trial Balance
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:profit_loss' %}" class="btn btn-sm btn-primary w-100">
+        Profit &amp; Loss
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:profit_loss_quarterly' %}" class="btn btn-sm btn-primary w-100">
+        Profit &amp; Loss Quarterly
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:journalentry_create' %}" class="btn btn-sm btn-primary w-100">
+        Journal Entry
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:journalentry_list' %}" class="btn btn-sm btn-primary w-100">
+        Journal Entry List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:account_create' %}" class="btn btn-sm btn-primary w-100">
+        Add Account
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'accounting:account_list' %}" class="btn btn-sm btn-primary w-100">
+        Account List
+      </a>
+    </div>
+  </div>
+</div>
+
+   
+    
+    <div class="row">
+       <h3 class="my-4">Ledger: {{ account.name }}</h3>
+        <div class="table-responsive">
+
+            <table class="table table-bordered table-striped table-sm">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th class="text-end">Debit</th>
+                        <th class="text-end">Credit</th>
+                        <th class="text-end">Balance</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in ledger_rows %}
+                    <tr>
+                        <td>{{ row.date }}</td>
+                        <td>{{ row.description }}</td>
+                        <td class="text-end">{{ row.debit|default_if_none:"0"|floatformat:2 }}</td>
+                        <td class="text-end">{{ row.credit|default_if_none:"0"|floatformat:2 }}</td>
+                        <td class="text-end">{{ row.balance|floatformat:2 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">No transactions</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

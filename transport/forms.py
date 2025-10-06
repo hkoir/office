@@ -224,15 +224,33 @@ class VehiclePaymentForm(forms.ModelForm):
 
 
 class FuelPumpDatabaseForm(forms.ModelForm):
-    contact_date = forms.DateField(label='contact date', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    contact_date = forms.DateField(
+        label='Contact date',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'form-control'
+        })
+    )
+
     class Meta:
         model = FuelPumpDatabase
-        exclude =['created_at','fuel_pump_id','pump_code']    
-        widgets={
-            'fuel_pump_address':forms.Textarea(attrs={
-            'style':'height:100px'
-            })
+        exclude = ['created_at', 'fuel_pump_id', 'pump_code']
+        widgets = {
+            'fuel_pump_address': forms.Textarea(attrs={
+                'class': 'form-control w-100',  # ensures responsiveness
+                'rows': 3,  # better than fixed height px
+                'placeholder': 'Enter fuel pump address',
+            }),
+            'fuel_pump_name': forms.TextInput(attrs={
+                'class': 'form-control',
+            }),
+            'owner_name': forms.TextInput(attrs={
+                'class': 'form-control',
+            }),
+            # Add similar widgets for other fields if needed
         }
+
 
 
 class viewFuelPumpForm(forms.Form):     

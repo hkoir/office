@@ -17,5 +17,7 @@ urlpatterns = [
     path('update_product/<int:id>/', views.manage_product, name='update_product'),
     path('delete_product/<int:id>/', views.delete_product, name='delete_product'),
     path('product_data/<int:product_id>/', views.product_data, name='product_data'),
+
+     path('print_unit_labels/<int:batch_id>/', views.print_unit_labels, name='print_unit_labels'),
   
 ]

@@ -9,6 +9,8 @@
 
     <h4>Items to purchased</h4>
     {% if basket %}
+    <div class="table-responsive">
+   
     <table class="table table-hover">
         <thead class="table-dark">
             <tr>
@@ -29,7 +31,7 @@
             {% endfor %}
         </tbody>
     </table>
-
+ </div>
     <form method="post">
         {% csrf_token %}
         <button type="submit" class="btn btn-success">Confirm Purchase Order</button>

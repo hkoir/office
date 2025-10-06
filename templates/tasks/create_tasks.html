@@ -40,20 +40,20 @@ form .form-control {
                             <form method="post" enctype="multipart/form-data" id="add_category">
                                 {% csrf_token %} 
                                 <div class="row g-1"> <!-- g-1 reduces gutter spacing between rows -->
-                                    <div class="col-6 col-md-3 form-group">Department: {{ form.department }}</div>
-                                    <div class="col-6 col-md-3 form-group">Task type: {{ form.task_type }}</div>
-                                    <div class="col-6 col-md-3 form-group">Task Title: {{ form.title }}</div>
-                                    <div class="col-6 col-md-3 form-group">Ticket: {{ form.ticket }}</div>
-                                    <div class="col-6 col-md-3 form-group">Assigned type: {{ form.assigned_to }}</div>
-                                    <div class="col-6 col-md-3 form-group">Team: {{ form.assigned_to_team }}</div>
-                                    <div class="col-6 col-md-3 form-group">Member: {{ form.assigned_to_employee }}</div>
-                                    <div class="col-6 col-md-3 form-group">Task Manager: {{ form.task_manager }}</div>
-                                    <div class="col-6 col-md-3 form-group">Assigned score: {{ form.assigned_number }}</div>
-                                    <div class="col-6 col-md-3 form-group">Assigned date: {{ form.assigned_datetime }}</div>
-                                    <div class="col-6 col-md-3 form-group">Due date: {{ form.due_datetime }}</div>
-                                    <div class="col-6 col-md-3 form-group">Priority: {{ form.priority }}</div>
-                                    <div class="col-6 col-md-3 form-group">Remarks: {{ form.remarks }}</div>
-                                    <div class="col-6 col-md-3 form-group">
+                                    <div class="col-12 col-md-3 form-group">Department: {{ form.department }}</div>
+                                    <div class="col-12 col-md-3 form-group">Task type: {{ form.task_type }}</div>
+                                    <div class="col-12 col-md-3 form-group">Task Title: {{ form.title }}</div>
+                                    <div class="col-12 col-md-3 form-group">Ticket: {{ form.ticket }}</div>
+                                    <div class="col-12 col-md-3 form-group">Assigned type: {{ form.assigned_to }}</div>
+                                    <div class="col-12 col-md-3 form-group">Team: {{ form.assigned_to_team }}</div>
+                                    <div class="col-12 col-md-3 form-group">Member: {{ form.assigned_to_employee }}</div>
+                                    <div class="col-12 col-md-3 form-group">Task Manager: {{ form.task_manager }}</div>
+                                    <div class="col-12 col-md-3 form-group">Assigned score: {{ form.assigned_number }}</div>
+                                    <div class="col-12 col-md-3 form-group">Assigned date: {{ form.assigned_datetime }}</div>
+                                    <div class="col-12 col-md-3 form-group">Due date: {{ form.due_datetime }}</div>
+                                    <div class="col-12 col-md-3 form-group">Priority: {{ form.priority }}</div>
+                                    <div class="col-12 col-md-3 form-group">Remarks: {{ form.remarks }}</div>
+                                    <div class="col-12 col-md-3 form-group">
                                         <button type="submit" name="add_to_basket" class="btn btn-primary mt-2">Submit</button>
                                     </div>
                                 </div>
@@ -62,10 +62,8 @@ form .form-control {
                     </div>
                     
 
-                    </div>
-                </div>
-        </div>
-                       
+            </div>
+        
                         
                             
 
@@ -78,10 +76,10 @@ form .form-control {
             <h2 class="mt-4">Tasks List</h2>   
             <form method="get">
                 <label for="start_date">Start Date:</label>
-                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
                 
                 <label for="end_date">End Date:</label>
-                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control"  >
             
                 <button type="submit" class="btn btn-sm btn-primary">Filter</button>
             </form>
@@ -129,7 +127,7 @@ form .form-control {
             </table>
         </div>
 
-        </div>  
+    </div>  
 
    
     <!-- Pagination Controls -->

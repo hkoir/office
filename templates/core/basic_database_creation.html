@@ -1,0 +1,56 @@
+{% extends 'base.html' %}  
+
+{% block content %}
+
+    
+<div class="container-fluid main-content py-4 d-flex justify-content-center flex-wrap gap-3">
+
+  <a href="{% url 'accounts:register' %}" class="btn btn-primary">Staff Registration</a>
+  <a href="{% url 'accounts:register_partner_job_seeker' %}" class="btn btn-primary">Customer / Supplier Registration</a>
+
+  <a href="{% url 'core:create_company' %}" class="btn btn-success">Create Company</a>
+  <a href="{% url 'core:manage_location' %}" class="btn btn-success">Create Company Location</a>
+  <a href="{% url 'core:manage_department' %}" class="btn btn-success">Create Department</a>
+  <a href="{% url 'core:create_position' %}" class="btn btn-success">Create Designation</a>
+  <a href="{% url 'core:create_company_policy' %}" class="btn btn-success">Create Company Policy</a>
+  <a href="{% url 'leavemanagement:create_attendance_policy' %}" class="btn btn-success">Create Attendance Policy</a>
+
+  <a href="{% url 'core:create_salary_structure' %}" class="btn btn-info">Create Salary Structure</a>
+  <a href="{% url 'core:create_festival' %}" class="btn btn-info">Create Festival Reward</a>
+  <a href="{% url 'core:create_performance_bonus' %}" class="btn btn-info">Create Performance Reward</a>
+  <a href="{% url 'core:manage_employee' %}" class="btn btn-info">Enroll Employee</a>
+  <a href="{% url 'core:create_job_requirement' %}" class="btn btn-info">Create Job Requirement</a>
+  <a href="{% url 'core:create_job_description' %}" class="btn btn-info">Create Job Description</a>
+
+  <a href="{% url 'customer:create_customer' %}" class="btn btn-warning">Create Customer</a>
+  <a href="{% url 'customer:create_location' %}" class="btn btn-warning">Create Customer Location</a>
+  <a href="{% url 'supplier:create_supplier' %}" class="btn btn-warning">Create Supplier</a>
+  <a href="{% url 'supplier:create_location' %}" class="btn btn-warning">Create Supplier Location</a>
+
+</div>
+
+
+
+
+<div class="container mt-4">
+  <h3>🧭 System Setup Wizard</h3>
+  <p>Complete the following steps to initialize your system:</p>
+  <hr>
+  <ul class="list-group">
+    {% for step in setup_steps %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>{{ step.name }}</span>
+        {% if step.exists %}
+          <span class="badge bg-success">✅ Completed</span>
+        {% else %}
+          <a href="{{ step.url }}" class="btn btn-sm btn-primary">Create</a>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+
+
+    
+{% endblock %}

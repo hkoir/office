@@ -5,16 +5,17 @@ from simple_history.models import HistoricalRecords
 import uuid
 from accounts.models import CustomUser
 
-from logistics.models import PurchaseShipment,SaleShipment
+# from logistics.models import PurchaseShipment,SaleShipment
 from django.db.models import Sum
 from decimal import Decimal
-
+from decimal import Decimal, ROUND_HALF_UP
 
 
 class PurchaseInvoice(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_invoice_user')
-    purchase_shipment = models.ForeignKey(PurchaseShipment, related_name='shipment_invoices', on_delete=models.CASCADE, null=True, blank=True)
+    purchase_shipment = models.ForeignKey('logistics.PurchaseShipment', related_name='shipment_invoices', on_delete=models.CASCADE, null=True, blank=True)
     invoice_number = models.CharField(max_length=150, unique=True, blank=True, null=True)
+    supplier = models.ForeignKey('supplier.Supplier', on_delete=models.CASCADE, related_name='invoice_supplier',null=True,blank=True)
     amount_due = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(
         max_length=20, null=True, blank=True,
@@ -36,38 +37,22 @@ class PurchaseInvoice(models.Model):
     net_due_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) # Added for calculation
     
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    def calculate_tax_amounts(self):
-        base_amount = Decimal(self.amount_due or 0).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        vat_rate = Decimal(self.VAT_rate or 0) / 100
-        ait_rate = Decimal(self.AIT_rate or 0) / 100
-
-        if self.AIT_type == 'inclusive':
-            self.ait_amount = (base_amount - (base_amount / (1 + ait_rate))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            base_amount -= self.ait_amount  # Adjust base for VAT calculation
-        else:
-            self.ait_amount = (base_amount * ait_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)  
-
-        if self.VAT_type == 'inclusive':
-            self.vat_amount = (base_amount - (base_amount / (1 + vat_rate))).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-            base_amount -= self.vat_amount  # Adjust base after VAT extraction
-        else:
-            self.vat_amount = (base_amount * vat_rate).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-        if self.VAT_type == 'exclusive':
-            base_amount += self.vat_amount
-        if self.AIT_type == 'exclusive':
-            base_amount += self.ait_amount
-
-        self.net_due_amount = base_amount.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
-
+    updated_at = models.DateTimeField(auto_now=True)  
    
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             self.invoice_number = f"PINV-{uuid.uuid4().hex[:8].upper()}"
-        self.calculate_tax_amounts()
+        supplier_quotation = None
+        if hasattr(self, 'purchase_shipment') and getattr(self.purchase_shipment, 'purchase_order', None):
+            supplier_quotation = getattr(self.purchase_shipment.purchase_order, 'supplier_quotation', None)
+
+        if supplier_quotation:
+            self.VAT_rate = supplier_quotation.VAT_rate
+            self.VAT_type = supplier_quotation.VAT_type
+            self.AIT_rate = supplier_quotation.AIT_rate
+            self.AIT_type = supplier_quotation.AIT_type
+            self.amount_due = supplier_quotation.total_amount
+            self.net_due_amount = supplier_quotation.net_due_amount
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -150,7 +135,7 @@ class PurchasePaymentAttachment(models.Model):
 from decimal import Decimal, ROUND_HALF_UP
 class SaleInvoice(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='sale_invoice_user')
-    sale_shipment = models.ForeignKey(SaleShipment, related_name='sale_shipment_invoices', on_delete=models.CASCADE,null=True,blank=True)
+    sale_shipment = models.ForeignKey('logistics.SaleShipment', related_name='sale_shipment_invoices', on_delete=models.CASCADE,null=True,blank=True)
     invoice_number = models.CharField(max_length=150, unique=True, blank=True, null=True)
     amount_due = models.DecimalField(max_digits=10, decimal_places=2)   
     issued_date = models.DateTimeField(auto_now_add=True)

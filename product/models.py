@@ -113,6 +113,22 @@ class BOM(models.Model):
 
 
 
+    
+class Unit(models.Model):
+    batch = models.ForeignKey('purchase.Batch', on_delete=models.CASCADE, related_name="units")    
+    serial_number = models.CharField(max_length=100, unique=True)   
+    barcode = models.CharField(max_length=100, unique=True)
+    barcode_image = models.ImageField(upload_to="barcodes/", null=True, blank=True)
+    qr_code_image = models.ImageField(upload_to="qrcodes/", null=True, blank=True)   
+    manufacture_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField(null=True, blank=True)
+    factor = models.DecimalField(max_digits=12, decimal_places=4, default=1)
+    sold = models.BooleanField(default=False)  
+
+    def __str__(self):
+        return f"{self.batch.product.name} - {self.serial_number}"
+
+
 
 
 

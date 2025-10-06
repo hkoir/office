@@ -13,20 +13,20 @@
                 <form method ="GET" action="">
                 <div class="row">                   
                       
-                            <div class="col-6 col-md-4 p-1">
+                            <div class="col-12 col-md-4 p-1">
                             <label for="id_sale_order_id"> Scrap Order</label>
                              {{ form.order_id }}
                             </div>
                             
-                            <div class="col-6 col-md-4 p-1">
+                            <div class="col-12 col-md-4 p-1">
                                 <label for="id_start_date"> Start date</label>
                                 {{ form.start_date }}
                             </div>
-                            <div class="col-6 col-md-4 p-1">
+                            <div class="col-12 col-md-4 p-1">
                                 <label for="id_start_date"> End date</label>
                                 {{ form.end_date }}
                             </div>   
-                            <div class="col-6 col-md-4 p-1">
+                            <div class="col-12 col-md-4 p-1">
                                 <button type="Submit" class="btn btn-primary">Search</button>
                             </div>                      
                                                       
@@ -38,7 +38,7 @@
             
         <hr class="mt-2">
           
-        <div class="col">       
+        <div class="col table-responsive">       
 
             <h4> Scrapped orders</h4>
             <table class="table table-hover">

@@ -341,24 +341,12 @@ class PanelForm(forms.ModelForm):
     class Meta:
         model = Panel
         exclude=['user','is_active']
-        widgets = {                  
-           
-            'job': forms.CheckboxSelectMultiple,            
-            'exam': forms.CheckboxSelectMultiple,                     
-            
-        }
        
 
 class PanelMemberForm(forms.ModelForm):
     class Meta:
         model = PanelMember
         exclude=['user','is_active']
-        widgets = {                  
-           
-            'panel': forms.CheckboxSelectMultiple,            
-                      
-            
-        }
        
 
 class PanelScoreForm(forms.ModelForm):

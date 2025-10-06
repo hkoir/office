@@ -318,7 +318,7 @@ class Employee(models.Model):
     father_name = models.CharField(max_length=100,null=True, blank=True,default="Nome") 
     mother_name = models.CharField(max_length=100,null=True, blank=True,default="Nome") 
     
-    user_profile = models.ForeignKey(UserProfile,on_delete=models.CASCADE,null=True, blank=True,related_name='employee_user_profile')   
+    user_profile = models.ForeignKey(CustomUser,on_delete=models.CASCADE,null=True, blank=True,related_name='employee_user_profile')   
              
     company = models.ForeignKey(Company,on_delete=models.CASCADE,null=True, blank=True,related_name='employee_company')    
     department = models.ForeignKey(Department,on_delete=models.CASCADE,null=True, blank=True,related_name='employee_department')   
