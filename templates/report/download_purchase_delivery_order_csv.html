@@ -5,6 +5,17 @@
 {% block content %}
 
 
+<div class="container my-3">
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body text-center py-3">
+      <a href="{% url 'reporting:report_dashboard' %}" 
+         class="btn btn-success btn-sm px-4">
+         🚚 Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+
 <h4>Purchase Order:{{ purchase_order.purchase_order_id }} </h4>
 <h6> Supplier: {{ purchase_order.supplier.supplier_name }} </h6>
 <h6>Dated: {{ purchase_order.order_date }}</h6>

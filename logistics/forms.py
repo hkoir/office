@@ -3,8 +3,8 @@ from django import forms
 from .models import PurchaseShipment,SaleShipment,PurchaseDispatchItem,SaleDispatchItem
 from purchase.models import PurchaseOrderItem
 from sales.models import SaleOrder,SaleOrderItem
-
-
+from purchase.models import Batch
+from .models import SaleDispatchItem, SaleShipment, SaleOrderItem
 
 
 class PurchaseShipmentForm(forms.ModelForm):
@@ -49,7 +49,7 @@ class PurchaseDispatchItemForm(forms.ModelForm):
 
     class Meta:
         model = PurchaseDispatchItem
-        exclude=['dispatch_id','user','status']
+        exclude=['dispatch_id','user','status','batch']
 
 
     def __init__(self, *args, purchase_shipment=None, **kwargs):
@@ -70,9 +70,7 @@ class PurchaseDispatchItemForm(forms.ModelForm):
             'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
         })
 
-from purchase.models import Batch
-from django import forms
-from .models import SaleDispatchItem, SaleShipment, SaleOrderItem, Batch
+
 
 class SaleDispatchItemForm(forms.ModelForm):
     DISPATCH_STRATEGY_CHOICES = [

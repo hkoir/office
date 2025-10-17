@@ -6,7 +6,40 @@
 
 
 
+<div class="d-flex flex-wrap justify-content-start gap-2 mb-3" style="border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">
 
+  <a href="{% url 'officemanagement:create_visitor_group' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-users"></i> Create Visitor Group
+  </a>
+
+  <a href="{% url 'officemanagement:create_visitor_member' %}" class="btn btn-success btn-sm">
+    <i class="fas fa-user-plus"></i> Add Visitor Member
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_group_check_in' %}" class="btn btn-info btn-sm">
+    <i class="fas fa-sign-in-alt"></i> Group Check-In
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_log_list' %}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-list"></i> Visitor Log List
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_id_card_list' %}" class="btn btn-dark btn-sm">
+    <i class="fas fa-id-card"></i> Visitor ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:generate_visitor_id_cards' %}" class="btn btn-warning btn-sm">
+    <i class="fas fa-print"></i> Generate ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:search_visitor' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-search"></i> Search Visitor
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_report' %}" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-chart-line"></i> Visitor Report
+  </a>
+</div>
 
 
 
@@ -41,12 +74,14 @@
                         <th class="text-center p-2">Visitor Type</th>
                     
                         <th class="text-center p-2">Visitor Name</th>
+                        <th class="text-center p-2">Photo ID</th>
                         <th class="text-center p-2">Designation</th>                       
                         <th class="text-center p-2">Phone</th>
                         <th class="text-center p-2">Photo</th>
                         <td>Check In</td>
                         <th>Check Out</th>
                         <td>Address</td>
+                         <td>Actions</td>
                     
                     </tr>
                 </thead>
@@ -55,7 +90,16 @@
                         <tr>
                             <td class="text-center p-1">{{ data.company.company }}</td>
                             <td class="text-center p-1">{{ data.visitor_type }}</td>                         
-                            <td class="text-center p-1">{{ data.name}}</td>                          
+                            <td class="text-center p-1">{{ data.name}}</td>  
+                             <td>
+                                {% if data.photo %}
+                                    <a href="{{ data.photo.url }}" target="_blank">
+                                    <img src="{{ data.photo.url }}" alt="{{ data.name }}" width="40" height="40" class="img-thumbnail">
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">No photo</span>
+                                {% endif %}
+                                </td>                        
                             <td>{{data.designation}}</td>
                             <td>{{data.phone}}</td>
                             
@@ -82,10 +126,18 @@
                                 {% else %}
                                 {{ data.check_out }}
                                 {% endif %}
-                            </td>
-            
-            
-                            <td>{{ data.address }}</td>
+                            </td>           
+                             <td>{{ data.address }}</td>
+
+                             <td>
+                                {% if not visitor.id_card %}
+                                    <a href="{% url 'officemanagement:visitor_check_in' data.id %}" class="btn btn-sm btn-outline-primary">Check in</a>
+                                {% elif not visitor.check_out %}
+                                    <a href="{% url 'officemanagement:visitor_check_out' data.id %}" class="btn btn-sm btn-outline-danger">Check Out</a>
+                                {% else %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% endif %}
+                                </td>
                            </tbody>
                            {% endfor %}
                            

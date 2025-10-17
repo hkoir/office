@@ -141,8 +141,10 @@
                                                     {% elif dispatch_item.status == "CUSTOM_CLEARANCE_IN_PROCESS" %}
                                                         <option value="REACHED">Reached</option>   
                                                     {% elif dispatch_item.status == "OBI" %}
-                                                        <option value="OBI">OBI</option>                                                                                           
-                                                    {% else %}
+                                                        <option value="OBI">OBI</option>                                                                                            
+                                                    {% elif dispatch_item.status == "CANCELLED" %}
+                                                        <option value="CANCELLED">Cancelled</option>  
+                                                    {% else %}                                                       
                                                         <option value = 'COMPLETED'>Completed</option>
                                                     {% endif %}
                                                 </select>

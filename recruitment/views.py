@@ -48,25 +48,24 @@ from .models import Job, Exam, Candidate, PanelMember, TakeExam,Interview,Interv
 @login_required
 def recruitment_dashboard(request):
     menu_items = [
-        {'title': 'Create Job Category', 'url': reverse('recruitment:create_job_category')},
-        {'title': 'Create Job', 'url': reverse('recruitment:create_job')},
-        {'title': 'Job List', 'url': reverse('recruitment:job_list')},
-        {'title': 'CV Screening', 'url': reverse('recruitment:cv_screening')},
-        {'title': 'Create Exam', 'url': reverse('recruitment:create_exam')},
-        {'title': 'Exam List', 'url': reverse('recruitment:exam_list')},
-        {'title': 'Create Questions', 'url': reverse('recruitment:create_questions')},
-        {'title': 'Exam Screening', 'url': reverse('recruitment:exam_screening')},
-        {'title': 'Create Panel', 'url': reverse('recruitment:create_panel')},
-        {'title': 'Create Panel Member', 'url': reverse('recruitment:create_panel_member')},
-        {'title': 'Interview Screening', 'url': reverse('recruitment:interview_screening')},
-        {'title': 'Selected Candidate', 'url': reverse('recruitment:selected_candidate')},
-        {'title': 'Grand Summary', 'url': reverse('recruitment:grand_summary')},
-        {'title': 'Create Common Documents', 'url': reverse('recruitment:create_common_documents')},
-        {'title': 'Create Candidate Documents', 'url': reverse('recruitment:create_candidate_documents')},
+        {'title': 'Create Job Category', 'url': reverse('recruitment:create_job_category'), 'icon': 'fa-folder-plus'},
+        {'title': 'Create Job', 'url': reverse('recruitment:create_job'), 'icon': 'fa-briefcase'},
+        {'title': 'Job List', 'url': reverse('recruitment:job_list'), 'icon': 'fa-list'},
+        {'title': 'CV Screening', 'url': reverse('recruitment:cv_screening'), 'icon': 'fa-file-alt'},
+        {'title': 'Create Exam', 'url': reverse('recruitment:create_exam'), 'icon': 'fa-pencil-ruler'},
+        {'title': 'Exam List', 'url': reverse('recruitment:exam_list'), 'icon': 'fa-file-signature'},
+        {'title': 'Create Questions', 'url': reverse('recruitment:create_questions'), 'icon': 'fa-question-circle'},
+        {'title': 'Exam Screening', 'url': reverse('recruitment:exam_screening'), 'icon': 'fa-clipboard-check'},
+        {'title': 'Create Panel', 'url': reverse('recruitment:create_panel'), 'icon': 'fa-users'},
+        {'title': 'Create Panel Member', 'url': reverse('recruitment:create_panel_member'), 'icon': 'fa-user-plus'},
+        {'title': 'Interview Screening', 'url': reverse('recruitment:interview_screening'), 'icon': 'fa-comments'},
+        {'title': 'Selected Candidate', 'url': reverse('recruitment:selected_candidate'), 'icon': 'fa-user-check'},
+        {'title': 'Grand Summary', 'url': reverse('recruitment:grand_summary'), 'icon': 'fa-chart-line'},
+        {'title': 'Create Common Documents', 'url': reverse('recruitment:create_common_documents'), 'icon': 'fa-file-upload'},
+        {'title': 'Create Candidate Documents', 'url': reverse('recruitment:create_candidate_documents'), 'icon': 'fa-id-card'},
     ]
 
     return render(request, 'recruitment/recruitment_dashboard.html', {'menu_items': menu_items})
-
 
 
 @login_required

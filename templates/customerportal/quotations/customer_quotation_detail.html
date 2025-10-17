@@ -1,0 +1,97 @@
+{% extends 'partner_portal_base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<div class="container-fluid">
+   <div class="container-fluid main-content py-4 d-flex justify-content-center gap-2 flex-wrap">        
+        <a href="{% url 'customerportal:customer_quotation_list' %}" class="btn btn-sm btn-success">Customer Quotation List</a>
+        
+    </div>
+    <div class="row">
+
+        <div class="container mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2>Customer Quotation #{{ quotation.quotation_number }}</h2>
+                
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-body">
+                    <p>
+                    <strong>Customer:</strong> {{ quotation.customer.name }}<br>
+                    <strong>Quotation Date:</strong> {{ quotation.date }}<br>
+                    <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
+                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Status:</strong> {{ quotation.status }}<br>
+                    <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}<br>                    
+
+                    </p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">   
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4>Quoted Items</h4>
+                    <span>
+                    {% if quotation.status == "sent" %}
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.id 'accepted' %}" 
+                        class="btn btn-success btn-sm">Accept</a>
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.id 'rejected' %}" 
+                        class="btn btn-danger btn-sm">Reject</a>
+                        {% elif quotation.status == 'accepted' %}
+                        <span class="badge bg-info">Quotation accepted</span>
+                         {% elif quotation.status == 'rejected' %}
+                          <span class="badge bg-info">Quotation declined</span>
+                    {% endif %}
+                 </span>
+            </div>
+
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="col table-responsive">
+                    <table class="table table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Quantity</th>
+                                <th>Unit Price</th>                               
+                                <th>Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in quotation.sales_quotation_items.all %}
+                            <tr>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.unit_price }}</td>                              
+                                <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No items</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+   <!-- Current Status Badge -->
+        <p>Status: 
+            {% if quotation.status == "draft" %}<span class="badge bg-secondary">Draft</span>{% endif %}
+            {% if quotation.status == "sent" %}<span class="badge bg-info">Sent</span>{% endif %}
+            {% if quotation.status == "accepted" %}<span class="badge bg-success">Accepted</span>{% endif %}
+            {% if quotation.status == "rejected" %}<span class="badge bg-danger">Rejected</span>{% endif %}
+        </p>
+        
+    </div>
+</div>
+{% endblock %}

@@ -15,6 +15,12 @@ urlpatterns = [
   
   path('purchase_dashboard/', views.purchase_dashboard, name='purchase_dashboard'),
 
+  path('purchase-request/create/', views.create_purchase_request_order, name='create_purchase_request_order'),
+  path('create_purchase_request/', views.create_purchase_request, name='create_purchase_request'),
+  path('cconfirm_purchase_request/', views.confirm_purchase_request, name='confirm_purchase_request'),
+  path('purchase_request_order_list/', views.purchase_request_order_list, name='purchase_request_order_list'),
+  path('purchase_request_items/<int:order_id>/', views.purchase_request_items, name='purchase_request_items'),
+
   
   path('rfq/<int:request_order_id>/create/', views.create_rfq, name='create_rfq'),
   path('rfq/<int:pk>/', views.rfq_detail, name='rfq_detail'),
@@ -30,21 +36,13 @@ urlpatterns = [
   path("supplier-quotation/<int:pk>/approve/", views.approve_supplier_quotation, name="approve_supplier_quotation"),
   path("supplier-quotation/<int:pk>/reject/", views.reject_supplier_quotation, name="reject_supplier_quotation"),
 
-  path('supplier-quotation/<int:quotation_id>/convert/', views.convert_quotation_to_po,name='convert_supplier_quotation'),
+  path('supplier-quotation/<int:quotation_id>/convert/', views.convert_quotation_to_po,name='convert_supplier_quotation_to_po'),
   path('add_batch_details/<int:po_id>/', views.add_batch_details,name='add_batch_details'),
   path('batch_list/', views.batch_list,name='batch_list'),
-
-
-  path('create_purchase_request/', views.create_purchase_request, name='create_purchase_request'),
-  path('cconfirm_purchase_request/', views.confirm_purchase_request, name='confirm_purchase_request'),
-  path('purchase_request_order_list/', views.purchase_request_order_list, name='purchase_request_order_list'),
-  path('purchase_request_items/<int:order_id>/', views.purchase_request_items, name='purchase_request_items'),
- 
-  #path('create_purchase_order/', views.create_purchase_order, name='create_purchase_order'),
-  path('create_purchase_order/<int:request_id>/', views.create_purchase_order, name='create_purchase_order'),
-  path('confirm_purchase_order/', views.confirm_purchase_order, name='confirm_purchase_order'),
+  path('batch/<int:batch_id>/', views.batch_details, name='batch_details'),
   path('purchase_order_list/', views.purchase_order_list, name='purchase_order_list'),
   path('purchase_order_items/<int:order_id>/', views.purchase_order_items, name='purchase_order_items'),
+
 
   path('qc_dashboard/', views.qc_dashboard, name='qc_dashboard'),
   path('qc_dashboard/<int:purchase_order_id>/', views.qc_dashboard, name='qc_dashboard_with_order'), 

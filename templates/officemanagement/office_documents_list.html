@@ -5,6 +5,69 @@
 {% block content %}
 
 
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+    <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+    <a href="{% url 'officemanagement:inventory_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'officemanagement:visitor_reports' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Visitor Report
+    </a>
+
+    <a href="{% url 'officemanagement:meeting_room_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Meeting room report
+    </a>
+
+    <a href="{% url 'officemanagement:advance_reconcilation_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Advance reconcilation report
+    </a>
+    <a href="{% url 'officemanagement:top_expense_categories' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> top expense categories
+    </a>
+
+  </div>
+</div>
 <div class="container-fluid main-content">
     <div class="row">       
         <form method="GET">

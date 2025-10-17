@@ -45,14 +45,7 @@ class PurchaseInvoice(models.Model):
         supplier_quotation = None
         if hasattr(self, 'purchase_shipment') and getattr(self.purchase_shipment, 'purchase_order', None):
             supplier_quotation = getattr(self.purchase_shipment.purchase_order, 'supplier_quotation', None)
-
-        if supplier_quotation:
-            self.VAT_rate = supplier_quotation.VAT_rate
-            self.VAT_type = supplier_quotation.VAT_type
-            self.AIT_rate = supplier_quotation.AIT_rate
-            self.AIT_type = supplier_quotation.AIT_type
-            self.amount_due = supplier_quotation.total_amount
-            self.net_due_amount = supplier_quotation.net_due_amount
+      
         super().save(*args, **kwargs)
 
     def __str__(self):

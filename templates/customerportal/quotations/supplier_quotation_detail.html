@@ -1,0 +1,97 @@
+{% extends 'partner_portal_base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<div class="container mt-4">
+    <div class="container-fluid main-content py-4 d-flex justify-content-center gap-2 flex-wrap">
+        <a href="{% url 'customerportal:rfq_list' %}" class="btn btn-sm btn-success">RFQ List</a>     
+        <a href="{% url 'customerportal:supplier_quotation_list' %}" class="btn btn-sm btn-success">Supplier Quotation List</a>   
+   
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Supplier Quotation #{{ quotation.quotation_number }}</h2>      
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p>
+            <strong>Supplier:</strong> {{ quotation.supplier.name }}<br>
+            <strong>Quotation Date:</strong> {{ quotation.date }}<br>
+            <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
+            <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+            <strong>Net due Amount:</strong> {{ quotation.net_due_amount|add_commas }}<br>
+             <strong>AIT:</strong> {{ quotation.ait_amount|add_commas }}&nbsp;| &nbsp;{{ quotation.AIT_rate}}&nbsp;%&nbsp;|{{ quotation.AIT_type}}<br>
+            <strong>VAT:</strong> {{ quotation.vat_amount|add_commas }}<br>
+             <strong>Status:</strong> {{ quotation.status }}<br>
+	        <strong>Quoted Project delivery date</strong>:{{quotation.quoted_delivery_date}}<br>
+            <strong>Notes:</strong> {{ quotation.notes|default:"-" }}<br>
+
+
+            {% if quotation.status == 'draft' %}
+             <a href="{% url 'customerportal:send_supplier_quotation' quotation.pk %}" class="btn btn-warning btn-sm">Review and submit</a>
+             {% else %}
+             <span class="badge bg-info">Quotation has been submitted</span>
+             {% endif %}
+             &nbsp;||&nbsp;
+              {% if quotation.status != 'approved' %}
+               <span class="badge bg-warning">Waiting for Approval by Buyer</span>
+             {% else %}
+             <span class="badge bg-success">Quotation has been accepted&nbsp;|&nbsp;Waiting for Procurement Order</span>
+             {% endif %}
+             
+            </p>
+            
+        </div>       
+                                 
+    </div>
+
+
+
+    <div class="card">
+        <div class="card-header">Quotation Items</div>
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>Spec</th>
+                        <th>Delivery date</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                         <th>VAT rate</th>
+                        <th>VAT status</th>                                          
+                        <th>Line Total</th>
+			            <th>Note</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in quotation.purchase_quotation_items.all %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.specification }}</td>
+                        <td>{{ item.quoted_delivery_date }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_price }}</td>
+                        <td>{{ item.VAT_rate}}&nbsp;%</td>
+                        <td>{{ item.VAT_type }}</td>                        
+                        <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price|add_commas }}</td>
+			            <td>{{ item.notes }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No items</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+</div>
+
+{% endblock %}

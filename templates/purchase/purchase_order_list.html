@@ -114,7 +114,7 @@
                    
                         <th class="text-center p-2">Purchase Order Number</th>                      
                          <th class="text-center p-2">Request Order Number</th>
-                        <th class="text-center p-2">Total amount Due</th>                   
+                        <th class="text-center p-2">Net amount Due</th>                   
                         <th class="text-center p-2">Total amount Paid</th>  
 
                         <th class="text-center p-2">Status</th>                
@@ -129,9 +129,9 @@
 
                         <th class="text-center p-2" style="background-color: rgb(235, 109, 12);">Update Shipment</th> 
                         <th class="text-center p-2">Dispatched Items</th>
-                        <th class="text-center p-2">QC Dashboard</th>                        
-                        <th class="text-center p-2">Create Invoice</th>
-
+                        <th class="text-center p-2">QC Dashboard</th>   
+                        <th>Invoice status</th>                    
+                      
                         <th class="text-center p-2">Payment Status</th>
                         <th class="text-center p-2">Make payment</th>                       
                         <th class="text-center p-2">Download invoice</th> 
@@ -151,13 +151,19 @@
                             {% if not order.purchase_order_item.first.batch %}
                                 <a href="{% url 'purchase:add_batch_details' order.id %}" class="btn btn-primary">Add batch details</a>
                                 {% else %}
-                                <span>{{ order.purchase_order_item.first.batch.batch_number }}</span>
+                                        {% if order.purchase_order_item.first %}
+                                        <a href="{% url 'purchase:batch_details' order.purchase_order_item.first.batch.id %}">
+                                        <span>{{ order.purchase_order_item.first.batch.batch_number }}</span>
+                                        </a>
+                                        {% else %}
+                                         <span>{{ order.purchase_order_item.first.batch.batch_number }}</span>
+                                         {% endif %}
                                 {% endif %}
                         </td>                 
                          
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.order_id }}</td>                            
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.purchase_request_order.order_id }}</td>
-                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>                         
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.net_due_amount}}</td>                         
                             <td class="text-center p-2" style="white-space: nowrap;">
                                 {% with shipment=order.purchase_shipment.first %}
                                     {% if shipment %}
@@ -181,7 +187,9 @@
                             <td>
                                 {% if order.is_fully_delivered %}   
                                 <i class="fas fa-check" style="color:green;font-weight: bold;">Delivered</i>
-                                {% else %}
+                                {% elif order.status|in_list:'REACHED,OBI' %}
+				               <span style="color:red;font-weight: bold;">Reached</span>
+				            {% else %}
                                 <span style="color:red;font-weight: bold;">In process</span>
                                 {% endif %}
                             </td>    
@@ -278,60 +286,36 @@
                     </td>                                         
 
                  <!-- QC Dashboard section -->
-                 <td>
-                    {% if order.is_full_delivered %}                   
-                        <i class="fas fa-check" style="color:green; font-weight: bold;">QC completed</i>
-                     {% else %}                        
-                        <a href="{% url 'purchase:qc_dashboard_with_order' order.id %}" class="btn btn-sm btn-primary">QC Dashboard</a>
-                    {% endif %}                   
-                </td>              
 
-                <!-- Invoice section -->                 
-                <td> 
-                    {% if order.approver_approval_status != 'APPROVED' %}
-                        
-                        <button class="btn btn-secondary" disabled>Pending Approval</button>
-                    {% else %}                                                    
-                        {% with shipment=order.purchase_shipment.first %}
-                            {% if shipment %}
-                                {% with invoices=shipment.shipment_invoices %}
-                                    {% if invoices.exists %}
-                                        {% if shipment.is_fully_invoiced %}
-                                        <i class="fas fa-check" style="color:green;font-weight: bold;">Fully Invoiced</i>
-                                    {% else %}
-                                        <i class="fas fa-check" style="color:green;font-weight: bold;">Partially Invoiced</i>                                          
-                                        <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">
-                                            Create Another Invoice
-                                        </a>
-                                        
-                                    {% endif %}
 
-                                    {% else %}                                            
-                                    <a href="{% url 'finance:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
-                                        
-                                    {% endif %}
-                                {% endwith %}
-                            {% else %}
-                                <button class="btn btn-sm btn-secondary" disabled>Make shipment first</button>
-                            {% endif %}
-                        {% endwith %}   
-                {% endif %}
+                    <td>
+                    {% if order.status == "DELIVERED" %}
+                        <i class="fas fa-check text-success fw-bold">QC completed</i>
+                    {% elif order.status|in_list:"REACHED,OBI" %}
+                        <a href="{% url 'purchase:qc_dashboard_with_order' order.id %}" class="btn btn-sm btn-primary">
+                        QC Dashboard
+                        </a>
+                    {% else %}
+                        <span class="badge bg-info text-dark">Goods not reached yet</span>
+                    {% endif %}
+                    </td>
 
-               {% with shipment=order.purchase_shipment.first %}
-                    {% if order.supplier_quotation %}
-                        {% if not shipment or not shipment.shipment_invoices.first %}
-                            <a href="{% url 'finance:create_purchase_invoice_from_quotation' order.supplier_quotation.id %}"
-                            class="btn btn-primary"
-                            onclick="return confirm('Convert this quotation to Invoice?')">
-                                Convert to Invoice
-                            </a>
-                        {% endif %}
+
+            <!-- Invoice Section -->
+               <td>
+                {% with shipment=order.purchase_shipment.first %}
+                    {% if shipment and shipment.shipment_invoices.exists %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> Already Invoiced
+                        </span>
+                  
+                    {% else %}
+                        <span class="badge bg-info text-dark">
+                            <i class="fas fa-clock"></i> No invoice yet
+                        </span>
                     {% endif %}
                 {% endwith %}
-
-
-
-             </td>
+            </td>
 
 
                 <!-- Payment status section -->
@@ -353,26 +337,38 @@
                     {% endwith %}
                 </td>               
 
-                  <td class="text-center p-2" style="white-space: nowrap;">
-                        {% with action=order.get_payment_action %}
-                            {% if action.status == "APPROVAL_PENDING" %}
-                                <span class="text-muted">Approval pending</span>
-                            {% elif action.status == "NO_SHIPMENT" %}
-                                <span class="text-muted">No shipment found</span>
-                            {% elif action.status == "NO_INVOICE" %}
-                                <span class="text-muted">No invoice found</span>
-                            {% elif action.status == "NO_PAYMENT" or action.status == "PARTIAL" %}
-                                <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
-                                class="btn btn-sm btn-primary">
-                                    Make Payment
-                                </a>
-                            {% elif action.status == "FULLY_PAID" %}
-                                <span class="text-success fw-bold">
-                                    <i class="fas fa-check"></i> Fully Paid
-                                </span>
-                            {% endif %}
-                        {% endwith %}
-                    </td>
+                 <td class="text-center p-2" style="white-space: nowrap;">
+                    {% with action=order.get_payment_action %}
+                        {% if action.status == "APPROVAL_PENDING" %}
+                            <span class="text-muted">Approval pending</span>
+
+                        {% elif action.status == "NO_SHIPMENT" %}
+                            <span class="text-muted">No shipment found</span>
+
+                        {% elif action.status == "NO_INVOICE" %}
+                            <span class="text-muted">No invoice found</span>
+
+                        {% elif action.status == "INVOICE_NOT_READY" %}
+                            <span class="text-warning">Invoice not submitted</span>
+
+                        {% elif action.status == "NO_PAYMENT" and action.invoice %}
+                            <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
+                            class="btn btn-sm btn-primary">
+                                Make Payment
+                            </a>
+
+                        {% elif action.status == "FULLY_PAID" %}
+                            <span class="text-success fw-bold"><i class="fas fa-check"></i> Fully Paid</span>
+
+                        {% elif action.status == "PARTIAL" %}
+                            <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
+                            class="btn btn-sm btn-warning">
+                                Pay Remaining
+                            </a>
+                        {% endif %}
+                    {% endwith %}
+                </td>
+
 
                   <td>                      
                        

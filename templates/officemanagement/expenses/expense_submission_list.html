@@ -1,0 +1,149 @@
+
+
+{% extends 'base.html' %}
+{% block content %}
+
+
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+    <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+    <a href="{% url 'officemanagement:inventory_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'officemanagement:visitor_reports' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Visitor Report
+    </a>
+
+    <a href="{% url 'officemanagement:meeting_room_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Meeting room report
+    </a>
+
+    <a href="{% url 'officemanagement:advance_reconcilation_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Advance reconcilation report
+    </a>
+    <a href="{% url 'officemanagement:top_expense_categories' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> top expense categories
+    </a>
+
+  </div>
+</div>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Expense Submission List</h2>
+        <a href="{% url 'officemanagement:create_expense_submission' %}" class="btn btn-primary">
+            ➕ New Submission
+        </a>
+    </div>
+
+    <div class="col table-responsive">
+    <table class="table table-bordered table-striped table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>#</th>
+                <th>Submission ID</th>
+                <th>Submission Date</th>
+                <th>Total Amount</th>
+                <th>Has Advance</th>             
+                <th>Status</th>
+                <th>Submitted By</th>
+                <th>Approved By</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ submission.submission_id }}</td>
+                <td>{{ submission.submission_date }}</td>
+                <td>${{ submission.total_amount }}</td>
+                <td>{% if submission.has_advance %}|{{ submission.advance_ref }}✅{% else %}❌{% endif %}</td>
+               
+                <td>
+                    {% if submission.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Submitted</span>
+                    {% endif %}
+                </td>
+                <td>{{ submission.submitted_by }}</td>
+                <td>{{ submission.approved_by|default:'-' }}</td>
+                <td>
+                    <a href="{% url 'officemanagement:items_submitted' submission.id %}" class="btn btn-sm btn-outline-info">View</a>
+                    {% if submission.status != 'approved' %}
+                    <a href="{% url 'officemanagement:expense_approval' submission.id %}" class="btn btn-sm btn-outline-primary">Approve</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center text-muted">No expense submissions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+    </div>
+</div>
+
+<style>
+.badge { font-size: 0.85rem; padding: 0.4em 0.6em; }
+</style>
+{% endblock %}

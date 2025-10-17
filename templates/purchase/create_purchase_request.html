@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -40,25 +40,63 @@
   </div>
 </div>
     <div class="row">
-        <div class="col-12 col-md-3">
+
+
+<div class="col-12">
             <div class="card shadow-lg" style="background-color: aliceblue;">
                  <!-- Card Header -->
                  <div class="card-header bg-primary text-white text-center">
                     <h5 class="mb-0"> Create Purchase request</h5>
                 </div> 
-                <div class="card-body">
-                    
-                    <form method="post" enctype="multipart/form-data" action="{% url 'purchase:create_purchase_request' %}" id="add_category">
-                        {% csrf_token %} 
-                        {{ form.as_p }}
-                        <div class="d-grid">
-                        <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg-lg">Add to list</button>
+                <div class="card-body">                    
+                    <form method="post" enctype="multipart/form-data" 
+                        action="{% url 'purchase:create_purchase_request' %}" 
+                        id="add_category">
+                    {% csrf_token %}
+
+                    <div class="container-fluid">
+                        <div class="row g-3">
+                        {% for field in form %}
+                            <div class="col-sm-6 col-lg-3">
+
+                            {% if field.field.widget.input_type == "checkbox" %}
+                                <div class="form-check mt-4">
+                                {{ field }}
+                                <label class="form-check-label fw-semibold ms-1" for="{{ field.id_for_label }}">
+                                    {{ field.label }}
+                                </label>
+                                </div>
+                            {% else %}
+                                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                </label>
+                                {{ field|add_class:"form-control" }}
+                            {% endif %}
+
+                            {% if field.help_text %}
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                                <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                            </div>
+                        {% endfor %}
                         </div>
+
+                        <div class="d-grid my-4">
+                        <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">
+                            Add to List
+                        </button>
+                        </div>
+                    </div>
                     </form>
+
                  </div>
             </div>           
         </div>
-        <div class="col-12 table-responsive col-md-9">
+
+<div class="col-12 table-responsive">
 
             {% if basket %}
             <table class="table table-hover">
@@ -68,7 +106,12 @@
                             <th>Product</th>
                             <th>Category</th>                            
                             <th style="white-space: nowrap;">Quantity</th>
-                            <th style="white-space: nowrap;" >Unit Price</th>                       
+                            <th style="white-space: nowrap;" >UOM</th> 
+                            <th>Unit Price</th>   
+                            <th>Spect</th>   
+                            <th style="white-space: nowrap;">Supplier</th>       
+                            <th>Line total</th>    
+                            <th>Required Delivery date</th>            
                             <th>Change</th>
                         </tr>
                     </thead>
@@ -76,16 +119,20 @@
                         {% for item in basket %}
                         <tr>
                             <td style="white-space: nowrap;">{{ item.name }}</td>  
-                            <td style="white-space: nowrap;">{{ item.category }}</td>                          
-                           
-                            <td style="white-space: nowrap;">{{ item.quantity }}</td>
-                            <td style="white-space: nowrap;">{{ item.unit_price }}</td>
+                             <td style="white-space: nowrap;">{{ item.category }}</td>                         
+                             <td style="white-space: nowrap;">{{ item.quantity }}</td>
+                             <td>{{ item.unit_of_measure }}</td>
+                             <td style="white-space: nowrap;">{{ item.unit_price }}</td>
+                             <td>{{ item.specification }}</td>
+                              <td style="white-space: nowrap;">{{ item.supplier }}</td>
+                              <td style="white-space: nowrap;">{{ item.total_amount }}</td>
+                              <td>{{ item.required_delivery_date }}</td>
                         
                             <td style="white-space: nowrap;">
                                 <form method="post" style="display:inline;">
                                     {% csrf_token %}
                                     <input type="hidden" name="product_id" value="{{ item.id }}">
-                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control d-inline w-25">
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control d-inline w-50">
                                     <button type="submit" name="action" value="update" class="btn btn-sm btn-warning">Update</button>
                                 </form>
                                 <form method="post" style="display:inline;">
@@ -98,6 +145,7 @@
                         {% endfor %}
                     </tbody>
                 </table>
+                <h2>Total amount: {{ request.session.grand_total|floatformat:2|add_commas }}</h2>
         
                 <form method="post">
                     {% csrf_token %}
@@ -111,6 +159,41 @@
     </div>
 </div>
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const batchField = document.querySelector('select[name="batch"]');
+    const unitPriceField = document.querySelector('input[name="unit_price"]');
+
+    if (!batchField || !unitPriceField) return;
+
+    const batchWrapper = batchField.closest('p, div, .form-group');
+    const unitPriceWrapper = unitPriceField.closest('p, div, .form-group');
+
+    function toggleVisibility() {
+        const hasBatch = batchField.value && batchField.value.trim() !== '';
+        const hasUnitPrice = unitPriceField.value && unitPriceField.value.trim() !== '';
+
+        if (hasBatch) {
+            unitPriceWrapper.style.display = 'none';
+        } else {
+            unitPriceWrapper.style.display = '';
+        }
+
+        if (hasUnitPrice) {
+            batchWrapper.style.display = 'none';
+        } else {
+            batchWrapper.style.display = '';
+        }
+    }
+
+    // Initial check
+    toggleVisibility();
+
+    // Event listeners for both
+    batchField.addEventListener('change', toggleVisibility);
+    unitPriceField.addEventListener('input', toggleVisibility);
+});
+</script>
 
 
 <script>

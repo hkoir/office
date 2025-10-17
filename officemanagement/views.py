@@ -294,6 +294,100 @@ def confirm_purchase_request(request):
 
 
 
+from .forms import StationaryPurchaseOrderForm, StationaryPurchaseItemFormSet
+from .models import StationaryPurchaseOrder
+import uuid
+from django.db import transaction
+from django.utils import timezone
+import uuid
+from django.contrib import messages
+from django.shortcuts import redirect, render
+
+def create_stationary_purchase_order(request):
+    if request.method == 'POST':
+        order_form = StationaryPurchaseOrderForm(request.POST, request.FILES)
+        formset = StationaryPurchaseItemFormSet(request.POST)
+
+        if order_form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                order = order_form.save(commit=False)
+                order.user = request.user
+                order.save()
+
+                total_amount = 0
+
+                for form in formset:
+                    if not form.cleaned_data:
+                        continue  # Skip empty rows
+
+                    item = form.save(commit=False)
+                    item.user = request.user
+                    item.stationary_purchase_order = order
+
+                    stationary_product = form.cleaned_data.get('stationary_product')
+                    batch = form.cleaned_data.get('batch')
+                    quantity = form.cleaned_data.get('quantity') or 0
+                    unit_price = form.cleaned_data.get('unit_price')
+
+                    # ✅ Case 1: Batch not selected, check for existing
+                    if not batch and stationary_product and unit_price:
+                        existing_batch = (
+                            StationaryBatch.objects
+                            .filter(
+                                stationary_product=stationary_product,
+                                unit_price=unit_price
+                            )
+                            .first()
+                        )
+
+                        if existing_batch:
+                            # Update existing batch quantity
+                            existing_batch.quantity += quantity
+                            existing_batch.remaining_quantity += quantity
+                            existing_batch.save()
+                            batch = existing_batch
+                        else:
+                            # Create new batch
+                            batch = StationaryBatch.objects.create(
+                                user=request.user,
+                                stationary_product=stationary_product,
+                                quantity=quantity,
+                                remaining_quantity=quantity,
+                                unit_price=unit_price,
+                                batch_number=f"BATCH-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:4]}"
+                            )
+
+                    elif not batch:
+                        # Missing product or price — skip row
+                        continue
+
+                    # ✅ Assign batch to item
+                    item.batch = batch
+                    item.save()
+
+                    total_amount += (unit_price or batch.unit_price or 0) * quantity
+
+                # ✅ Update total on order
+                order.total_amount = total_amount
+                order.save(update_fields=['total_amount'])
+
+            messages.success(request, "Stationary Purchase Order created successfully!")
+            return redirect('officemanagement:purchase_request_list')
+
+        else:
+            messages.error(request, "Please correct the errors below.")
+            print(order_form.errors,formset.errors)
+    else:
+        order_form = StationaryPurchaseOrderForm()
+        formset = StationaryPurchaseItemFormSet()
+
+    return render(request, 'officemanagement/purchase/create_purchase_order.html', {
+        'order_form': order_form,
+        'formset': formset,
+    })
+
+
+
 @login_required
 def purchase_request_list(request):    
   
@@ -638,6 +732,45 @@ def confirm_usage_request(request):
 
 
 
+from .forms import StationaryUsageRequestOrderForm, StationaryUsageRequestItemFormSet
+from .models import StationaryUsageRequestOrder
+
+def create_stationary_usage_request(request):
+    if request.method == 'POST':
+        order_form = StationaryUsageRequestOrderForm(request.POST)
+        formset = StationaryUsageRequestItemFormSet(request.POST)
+
+        if order_form.is_valid() and formset.is_valid():
+            with transaction.atomic():
+                order = order_form.save(commit=False)
+                order.user = request.user
+                order.save()
+
+                formset.instance = order
+                formset.save()
+
+                # Optional: Calculate total amount if stationary_product has unit_price
+                total_amount = sum([
+                    (item.stationary_product.unit_price * item.quantity)
+                    for item in order.usage_order.all()
+                    if hasattr(item.stationary_product, 'unit_price')
+                ])
+                order.total_amount = total_amount
+                order.save(update_fields=['total_amount'])
+
+            messages.success(request, "Stationary usage request created successfully!")
+            return redirect('officemanagement:usage_request_list')
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        order_form = StationaryUsageRequestOrderForm()
+        formset = StationaryUsageRequestItemFormSet()
+
+    return render(request, 'officemanagement/usage_request/create_usage_request_updated.html', {
+        'order_form': order_form,
+        'formset': formset,
+        'user':request.user.username
+    })
 
 @login_required
 def usage_request_list(request):    
@@ -1345,6 +1478,28 @@ def update_it_feedback(request,support_id):
 
 
 
+
+
+from .models import VisitorIDCard
+
+def generate_visitor_id_cards(request):
+    if request.method == 'POST':
+        count = int(request.POST.get('count', 1))
+        for _ in range(count):
+            VisitorIDCard.objects.create()
+        messages.success(request, f"{count} visitor ID card(s) generated successfully.")
+        return redirect('officemanagement:visitor_id_card_list')  # Replace with your actual list view name
+
+    return render(request, 'officemanagement/generate_visitor_id_cards.html')
+
+
+
+def visitor_id_card_list(request):
+    id_cards = VisitorIDCard.objects.order_by('-created_at')
+    return render(request, 'officemanagement/visitor_id_card_list.html', {'id_cards': id_cards})
+
+
+
 @login_required
 def manage_visitor_group(request, id=None):  
     end_date = datetime.today().date()
@@ -1431,23 +1586,141 @@ def delete_member_visitor_group(request, id):
     return redirect('officemanagement:create_visitor_memeber_log')  
 
 
-
+from django.http import JsonResponse
 from .forms import VisitorSearchForm
 from django.db import models
+from .models import VisitorLog, VisitorIDCard,VisitorGroup
+from .forms import VisitorGroupCheckInForm, VisitorMemberFormSet
+
+def visitor_group_check_in(request):
+    if request.method == 'POST':
+        group_form = VisitorGroupCheckInForm(request.POST)
+        formset = VisitorMemberFormSet(request.POST, request.FILES)
+
+        if group_form.is_valid() and formset.is_valid():
+            company_name = group_form.cleaned_data['company']
+            existing_group = VisitorGroup.objects.filter(company__iexact=company_name).first()
+            if existing_group:
+                group = existing_group              
+                group.address = group_form.cleaned_data['address']
+                group.purpose = group_form.cleaned_data['purpose']               
+                group.save()
+            else:
+                group = group_form.save(commit=False)
+                group.user = request.user
+                group.check_in = timezone.now()
+                group.save()       
+
+            members = formset.save(commit=False)
+            for member in members:
+                member.company = group
+                member.user = request.user                
+                member.check_in = timezone.now()                
+                member.save()
+                if member.id_card:
+                    member.id_card.status = 'in_use'
+                    member.id_card.save()
+
+            messages.success(request, f"Group '{group.company}' checked in with {len(members)} visitor(s).")
+            return redirect('officemanagement:visitor_log_list')
+    else:
+        group_form = VisitorGroupCheckInForm()
+        formset = VisitorMemberFormSet()
+
+    return render(request, 'officemanagement/visitor_group_check_in.html', {
+        'group_form': group_form,
+        'formset': formset,
+    })
+
+
+def visitor_log_list(request):
+    query = request.GET.get('q', '').strip()
+    visitors = VisitorLog.objects.select_related('company', 'id_card').order_by('-created_at')
+    visitors = visitors.filter(check_in__isnull=False, check_out__isnull=True)
+
+    if query:
+        visitors = visitors.filter(
+            Q(name__icontains=query) |
+            Q(company__company__icontains=query) | 
+            Q(id_card__card_number__icontains=query)
+        )
+    
+    visitors = visitors.order_by('-check_in')
+    return render(request, 'officemanagement/visitor_log_list.html', {'visitors': visitors})
+
+
+
+def get_group_details(request):
+    company_name = request.GET.get('company')
+    if not company_name:
+        return JsonResponse({'error': 'No company name provided'}, status=400)
+
+    try:
+        group = VisitorGroup.objects.get(company__iexact=company_name)
+        data = {
+            'address': group.address or '',
+            'purpose': group.purpose or '',
+            'expected_check_in_time': group.expected_check_in_time.strftime('%Y-%m-%dT%H:%M')
+                if group.expected_check_in_time else '',
+        }
+        return JsonResponse(data)
+    except VisitorGroup.DoesNotExist:
+        return JsonResponse({'error': 'not_found'})
+
+
+
+def visitor_check_in(request, visitor_id):
+    visitor = get_object_or_404(VisitorLog, id=visitor_id)
+    available_cards = VisitorIDCard.objects.filter(status='active', printed=False)
+    if request.method == 'POST':
+        card_id = request.POST.get('id_card')
+        if card_id:
+            card = VisitorIDCard.objects.get(id=card_id)
+            visitor.id_card = card
+            visitor.check_in = timezone.now()
+            visitor.save()
+            messages.success(request, f"Card {card.card_number} assigned to {visitor.name}.")
+            return redirect('officemanagement:visitor_log_list')
+
+    return render(request, 'officemanagement/assign_id_card.html', {
+        'visitor': visitor,
+        'available_cards': available_cards,
+    })
+
+
+def visitor_check_out(request, visitor_id):
+    visitor = get_object_or_404(VisitorLog, id=visitor_id)
+    if visitor.check_out:
+        messages.info(request, f"{visitor.name} already checked out.")
+        return redirect('officemanagement:visitor_log_list')
+
+    visitor.check_out = timezone.now()
+    visitor.save()
+
+    if visitor.id_card:
+        visitor.id_card.status = 'active' 
+        visitor.id_card.status = 'idle' 
+        visitor.id_card.save()
+
+    messages.success(request, f"{visitor.name} checked out successfully.")
+    return redirect('officemanagement:visitor_log_list')
+
 
 
 def search_visitor(request):
-    form = VisitorSearchForm(request.GET or None)
-    visitors = VisitorLog.objects.all().order_by('-created_at')
+    form = VisitorSearchForm(request.GET or None)   
+    visitors = VisitorLog.objects.select_related('company', 'id_card').order_by('-created_at')
 
     if form.is_valid():
         query = form.cleaned_data.get("query")
+       
         if query:
             visitors = visitors.filter(
-                models.Q(name__icontains=query) | models.Q(phone__icontains=query)
-            )
-
-    
+                Q(name__icontains=query) |
+                Q(company__company__icontains=query) | 
+                Q(id_card__card_number__icontains=query)|
+                Q(phone__icontains=query)
+            )    
 
     paginator = Paginator(visitors, 5)
     page_number = request.GET.get('page')
@@ -1595,133 +1868,56 @@ def expense_advance_approval(request,submission_id):
 
 
 
-@login_required
-def manage_expense_order(request, id=None):  
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=30)
-  
-    instance = get_object_or_404(ExpenseSubmissionOrder, id=id) if id else None
-    message_text = "updated successfully!" if id else "added successfully!"  
-    form = ExpenseSubmissionOrderForm(request.POST or None, request.FILES or None, instance=instance)
+from django.db import transaction
+from .models import ExpenseSubmissionOrder
+from .forms import ExpenseSubmissionOrderForm, ExpenseSubmissionItemFormSet
 
+@transaction.atomic
+def create_expense_submission(request):
     if request.method == 'POST':
-        form = ExpenseSubmissionOrderForm(request.POST or None, request.FILES or None, instance=instance)
-        if form.is_valid():
-            form_instance=form.save(commit=False)
-            if form_instance.advance_ref and ExpenseSubmissionOrder.objects.filter(advance_ref=form_instance.advance_ref).exists():
-                messages.error(request, "An ExpenseSubmissionOrder already exists for this advance reference.")
-                return redirect('officemanagement:create_expense_order') 
-            form_instance.user = request.user       
-            form_instance.submitted_by = request.user           
-            form_instance.save()     
-        
-            messages.success(request, message_text)
-            return redirect('officemanagement:create_expense_order')  
+        order_form = ExpenseSubmissionOrderForm(request.POST)
+        formset = ExpenseSubmissionItemFormSet(request.POST)
+
+        if order_form.is_valid() and formset.is_valid():
+            order = order_form.save(commit=False)
+            order.user = request.user
+            order.submitted_by = getattr(request.user, 'employee', None)
+            order.save()
+
+            items = formset.save(commit=False)
+            for item in items:
+                item.user = request.user
+                item.submission_order = order
+                item.save()
+            formset.save_m2m()
+
+            messages.success(request, "Expense submission created successfully!")
+            return redirect('officemanagement:expense_advance_list')
         else:
-            print(form.errors)
+            messages.error(request, "Please fix the errors below.")
+    else:
+        order_form = ExpenseSubmissionOrderForm()
+        formset = ExpenseSubmissionItemFormSet()
 
-    datas = ExpenseSubmissionOrder.objects.filter(created_at__range = [start_date,end_date]).order_by('-submission_date')
-    paginator = Paginator(datas, 5)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-     
-    return render(request, 'officemanagement/expenses/manage_expense_order.html', {
-        'form': form,
-        'instance': instance,
-        'datas': datas,
-        'page_obj': page_obj
+    return render(request, 'officemanagement/expenses/expense_submission_form.html', {
+        'order_form': order_form,
+        'formset': formset,
     })
 
 
-
 @login_required
-def delete_expense_order(request, id):
-    instance = get_object_or_404(ExpenseSubmissionOrder, id=id)
-    if request.method == 'POST':
-        instance.delete()
-        messages.success(request, "Deleted successfully!")
-        return redirect('officemanagement:create_expense_order')        
+def expense_submission_list(request):
+    submissions = ExpenseSubmissionOrder.objects.select_related('submitted_by', 'approved_by').order_by('-submission_date')
 
-    messages.warning(request, "Invalid delete request!")
-    return redirect('officemanagement:create_expense_order')  
-
-
-
-
-@login_required
-def manage_expense_item(request, id=None):  
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=30)
-    instance = get_object_or_404(ExpenseSubmissionItem, id=id) if id else None
-    message_text = "updated successfully!" if id else "added successfully!"  
-    form = ExpenseSubmissionItemForm(request.POST or None, request.FILES or None, instance=instance)
-
-    if request.method == 'POST' and form.is_valid():
-        form_intance=form.save(commit=False)
-        form_intance.user = request.user
-        form_intance.save()        
-        messages.success(request, message_text)
-        return redirect('officemanagement:create_expense_item')  
-
-    datas = ExpenseSubmissionItem.objects.filter(created_at__range = [start_date,end_date]).order_by('-created_at')
-    paginator = Paginator(datas, 5)
+    paginator = Paginator(submissions , 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'officemanagement/expenses/manage_expense_item.html', {
-        'form': form,
-        'instance': instance,
-        'datas': datas,
-        'page_obj': page_obj
+    return render(request, 'officemanagement/expenses/expense_submission_list.html', {
+        'submissions': submissions,
+        'page_obj':page_obj
     })
 
-
-
-@login_required
-def delete_expense_item(request, id):
-    instance = get_object_or_404(ExpenseSubmissionItem, id=id)
-    if request.method == 'POST':
-        instance.delete()
-        messages.success(request, "Deleted successfully!")
-        return redirect('officemanagement:create_expense_item')        
-
-    messages.warning(request, "Invalid delete request!")
-    return redirect('officemanagement:create_expense_item')  
-
-
-
-@login_required
-def expense_order_list(request):
-    if request.method == 'GET':
-        end_date = request.GET.get('end_date')
-        start_date = request.GET.get('start_date')  
-        submission_id = request.GET.get('submission_id')        
-
-        objects = ExpenseSubmissionOrder.objects.all().order_by('-created_at')    
-
-        if not start_date or not end_date: 
-            end_date = datetime.today().date()
-            start_date = end_date - timedelta(days=7)
-            objects = objects.filter(created_at__range=[start_date,end_date])
-        else:             
-            start_date = datetime.strptime(start_date, "%Y-%m-%d").date()
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
-            objects=objects.filter(created_at__range=[start_date,end_date])
-        if submission_id:
-            objects = objects.filter(submission_id = submission_id )
-
- 
-    paginator = Paginator( objects, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'officemanagement/expenses/expense_order_list.html', {                 
-        'user': request.user, 
-        'page_obj': page_obj,
-        
-      
-    })
 
 
 
@@ -1804,7 +2000,7 @@ def advance_reconciliation_report(request):
 
     reconciliation_data = employees.annotate(
         total_advance_taken=Sum(
-            "office_advance_employee__amount", output_field=DecimalField()
+            "user__officeadvance__amount", output_field=DecimalField()
         ),
         total_expenses_submitted=Sum(
             "expense_submission_user__total_amount",

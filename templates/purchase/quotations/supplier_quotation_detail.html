@@ -42,41 +42,26 @@
 
 
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Supplier Quotation #{{ quotation.quotation_number }}</h2>
-         
-            {% if quotation.status == "draft" %}
-              <a href="{% url 'purchase:send_supplier_quotation' quotation.pk %}" class="btn btn-warning btn-sm">Send</a>
-          {% endif %}
-
-          {% if quotation.status in "draft sent" %}
+        <h4>Supplier Quotation #{{ quotation.quotation_number }}</h4>         
+       
+          {% if quotation.status == 'sent' %}
               <a href="{% url 'purchase:approve_supplier_quotation' quotation.pk %}" class="btn btn-success btn-sm">Approve</a>
               <a href="{% url 'purchase:reject_supplier_quotation' quotation.pk %}" class="btn btn-danger btn-sm">Reject</a>
           {% endif %}
 
-
         {% if request.user.is_staff %}
-        {% if quotation.status == "approved" %}
-        {% if not quotation.supplier_quotations.first %}
-        <a href="{% url 'purchase:convert_supplier_quotation' quotation.id %}"
-           class="btn btn-primary"
-           onclick="return confirm('Convert this quotation to a Purchase Order?')">
-            Convert to Purchase Order
-        </a>
-        {% endif %}
-        {% endif %}
-        {% endif %}
-
-        {% if quotation.status == "approved" and request.user.is_authenticated %}
-        {% if not quotation.supplier_quotations.first.purchase_shipment.first.shipment_invoices.first %}
-      
-         <a href="{% url 'finance:create_purchase_invoice_from_quotation' quotation.id %}"
-           class="btn btn-primary"
-           onclick="return confirm('Are You sure  to convert this quotation to a Invoice?')">
-            Convert to Invoice
-        </a>
-        {% endif %}
-        {% endif %}
-    </div>
+            {% if quotation.status == "approved" %}
+                {% if not quotation.supplier_quotations.first %}
+                  <a href="{% url 'purchase:convert_supplier_quotation_to_po' quotation.id %}"
+                    class="btn btn-primary"
+                    onclick="return confirm('Convert this quotation to a Purchase Order?')">
+                      Convert to Purchase Order
+                  </a>
+                {% endif %}
+            {% endif %}
+          {% endif %}
+        
+      </div>
 
     <div class="card mb-3">
         <div class="card-body">
@@ -84,13 +69,34 @@
             <strong>Supplier:</strong> {{ quotation.supplier.name }}<br>
             <strong>Quotation Date:</strong> {{ quotation.date }}<br>
             <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
-            <strong>Total Amount:</strong> {{ quotation.net_due_amount|add_commas }}<br>
-             <strong>AIT:</strong> {{ quotation.AIT_type }}<br>
-            <strong>Status:</strong> {{ quotation.status }}<br>
-            <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}
+            <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+            <strong>Net due Amount:</strong> {{ quotation.net_due_amount|add_commas }}<br>
+             <strong>AIT:</strong> {{ quotation.ait_amount|add_commas }}&nbsp;| &nbsp;{{ quotation.AIT_rate}}&nbsp;%&nbsp;|{{ quotation.AIT_type}}<br>
+            <strong>VAT:</strong> {{ quotation.vat_amount|add_commas }}<br>
+             <strong>Status:</strong> {{ quotation.status }}<br>
+	        <strong>Quoted Project delivery date</strong>:{{quotation.quoted_delivery_date}}<br>
+            <strong>Notes:</strong> {{ quotation.notes|default:"-" }}<br>
+
+
+            {% if quotation.status == 'draft' %}
+             <a href="{% url 'customerportal:send_supplier_quotation' quotation.pk %}" class="btn btn-warning btn-sm">Review and submit</a>
+             {% else %}
+             <span class="badge bg-info">Quotation has been submitted</span>
+             {% endif %}
+             &nbsp;||&nbsp;
+              {% if quotation.status != 'approved' %}
+               <span class="badge bg-warning">Waiting for Approval by Buyer</span>
+             {% else %}
+             <span class="badge bg-success">Quotation has been accepted</span>
+             {% endif %}
+             
             </p>
-        </div>
+            
+        </div>       
+                                 
     </div>
+
+
 
     <div class="card">
         <div class="card-header">Quotation Items</div>
@@ -99,22 +105,29 @@
                 <thead class="table-light">
                     <tr>
                         <th>Product</th>
+                        <th>Spec</th>
+                        <th>Delivery date</th>
                         <th>Quantity</th>
                         <th>Unit Price</th>
                          <th>VAT rate</th>
                         <th>VAT status</th>                                          
                         <th>Line Total</th>
+			            <th>Note</th>
+                        
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in quotation.purchase_quotation_items.all %}
                     <tr>
                         <td>{{ item.product.name }}</td>
+                        <td>{{ item.specification }}</td>
+                        <td>{{ item.quoted_delivery_date }}</td>
                         <td>{{ item.quantity }}</td>
                         <td>{{ item.unit_price }}</td>
                         <td>{{ item.VAT_rate}}&nbsp;%</td>
-                        <td>{{ item.VAT_type }}</td>                      
+                        <td>{{ item.VAT_type }}</td>                        
                         <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price|add_commas }}</td>
+			            <td>{{ item.notes }}</td>
                     </tr>
                     {% empty %}
                     <tr>
@@ -124,6 +137,10 @@
                 </tbody>
             </table>
         </div>
+    </div>
+
+
+
     </div>
 
 </div>

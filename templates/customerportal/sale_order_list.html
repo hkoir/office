@@ -90,9 +90,7 @@
                        
                     
                         <td>
-                            {% if order.is_fully_delivered %}
-                            <i class="fas fa-check text-success fw-bold"></i> <span>Completed</span>
-                            {% elif not order.sale_shipment.first.sale_shipment_dispatch.first.status|item_list:'REACHED,OBI' %}
+                      {% if not order.sale_shipment.first.sale_shipment_dispatch.first.status|item_list:'REACHED,OBI,DELIVERED' %}
                             <i class="fas fa-box text-info fw-bold"></i> <span style="color:brown">Not arrived yet</span>
                             {% else %}
                             <a href="{% url 'customerportal:customer_qc_dashboard_with_order' order.id %}">Check & confirm</a>

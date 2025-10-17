@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load custom_filters %}
 {% block content %}
 
 
@@ -39,31 +39,47 @@
         </div>
   </div>
 </div>
-    <h4 class="text-center">Confirm Purchase Order</h4>
+    <h4 class="text-center">Confirm Purchase request Order</h4>
 
    <div class="col table-responsive">
     <h4>Items to be purchased</h4>
     {% if basket %}
-    <table class="table table-hover">
+
+
+ <table class="table table-hover">
         <thead class="table-dark">
             <tr>
                 <th>Product</th>
-                <th>Category</th>
-                <th>Quantity</th>
+                <th>Category</th>                            
+                <th style="white-space: nowrap;">Quantity</th>
+                <th style="white-space: nowrap;" >UOM</th> 
+                <th>Unit Price</th>   
+                <th>Spect</th>   
+                <th style="white-space: nowrap;">Supplier</th>       
+                <th>Line total</th>    
+                <th>Required Delivery date</th>    
                           
             </tr>
         </thead>
         <tbody>
             {% for item in basket %}
             <tr>
-                <td>{{ item.name }}</td>
-                <td>{{ item.category }}</td>
-                <td>{{ item.quantity }}</td>
-                          
+                <td style="white-space: nowrap;">{{ item.name }}</td>  
+                <td style="white-space: nowrap;">{{ item.category }}</td>                         
+                <td style="white-space: nowrap;">{{ item.quantity }}</td>
+                <td>{{ item.unit_of_measure }}</td>
+                <td style="white-space: nowrap;">{{ item.unit_price }}</td>
+                <td>{{ item.specification }}</td>
+                <td style="white-space: nowrap;">{{ item.supplier }}</td>
+                <td style="white-space: nowrap;">{{ item.total_amount }}</td>
+                <td>{{ item.required_delivery_date }}</td>                          
             </tr>
             {% endfor %}
-        </tbody>
+        </tbody>      
     </table>
+
+
+     <h2>Total amount: {{ request.session.grand_total|floatformat:2|add_commas }}</h2>
 </div>
     <form method="post">
         {% csrf_token %}

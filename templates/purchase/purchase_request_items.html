@@ -17,8 +17,9 @@
                             <th>Product</th>
                             <th>Category</th>                            
                             <th style="white-space: nowrap;">Quantity</th>
-                            <th style="white-space: nowrap;" >Unit Price</th>                       
-                       
+                            <th style="white-space: nowrap;" >Unit Price</th>
+				<th>Line total</th>                       
+                       	     <th>Supplier</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -29,7 +30,8 @@
                          
                             <td style="white-space: nowrap;">{{ item.quantity }}</td>
                             <td style="white-space: nowrap;">{{ item.product.unit_price }}</td>
-                        
+				<td>{{ item.total_price }}</td>
+                           <td>{{ item.supplier }}</td>
                             
                         </tr>
                         {% endfor %}

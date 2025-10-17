@@ -1,0 +1,62 @@
+{% extends 'partner_portal_base.html' %}
+{% load custom_filters %}
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row">
+
+    <div class="col table-responsive">
+        <h2>Quotations list</h2>
+
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Quotation Number</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Valid Until</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quotation in quotations %}
+                <tr>
+                    <td>{{ quotation.quotation_number }}</td>
+                    <td>{{ quotation.customer }}</td>
+                    <td>{{ quotation.date }}</td>
+                    <td>{{ quotation.valid_until }}</td>
+                    <td>{{ quotation.get_status_display }}</td>
+                    <td>
+
+		     <a href="{% url 'customerportal:customer_quotation_detail' quotation.pk %}" class="btn btn-info btn-sm">View</a>
+
+                    {% if quotation.status == "sent" %}
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.pk 'accepted' %}" 
+                        class="btn btn-success btn-sm">Accept</a>
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.pk 'rejected' %}" 
+                        class="btn btn-danger btn-sm">Reject</a>
+                    {% endif %}
+
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No quotations found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Current Status Badge -->
+        <p>Status: 
+            {% if quotation.status == "draft" %}<span class="badge bg-secondary">Draft</span>{% endif %}
+            {% if quotation.status == "sent" %}<span class="badge bg-info">Sent</span>{% endif %}
+            {% if quotation.status == "accepted" %}<span class="badge bg-success">Accepted</span>{% endif %}
+            {% if quotation.status == "rejected" %}<span class="badge bg-danger">Rejected</span>{% endif %}
+        </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

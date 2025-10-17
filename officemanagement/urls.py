@@ -22,6 +22,7 @@ urlpatterns = [
     path('update_batch/<int:id>/', views.manage_batch, name='update_batch'),
     path('delete_batch/<int:id>/', views.delete_batch, name='delete_batch'),
 
+    path('purchase/create/', views.create_stationary_purchase_order, name='create_stationary_purchase_order'),
     path('create_purchase_request/', views.create_purchase_request, name='create_purchase_request'),
     path('confirm_purchase_request/', views.confirm_purchase_request, name='confirm_purchase_request'),
     path('purchase_request_list/', views.purchase_request_list, name='purchase_request_list'),
@@ -31,6 +32,7 @@ urlpatterns = [
     path('process_purchase_request/<int:order_id>/', views.process_purchase_request, name='process_purchase_request'),
     path('purchase_confirmation_and_warehouse_entry/<int:order_id>/', views.purchase_confirmation_and_warehouse_entry, name='purchase_confirmation_and_warehouse_entry'),
 
+    path('create_stationary_usage_request/', views.create_stationary_usage_request, name='create_stationary_usage_request'),
     path('create_usage_request/', views.create_usage_request, name='create_usage_request'),
     path('confirm_usage_request/', views.confirm_usage_request, name='confirm_usage_request'),
     path('usage_request_list/', views.usage_request_list, name='usage_request_list'),
@@ -49,7 +51,6 @@ urlpatterns = [
     path('create_meeting_order/', views.manage_meeting_order, name='create_meeting_order'),
     path('update_meeting_order/<int:id>/', views.manage_meeting_order, name='update_meeting_order'),
     path('delete_meeting_order/<int:id>/', views.delete_meeting_order, name='delete_meeting_order'),
-
  
     path('create_attendee/', views.manage_attendee, name='create_attendee'),
     path('update_attendee/<int:id>/', views.manage_attendee, name='update_attendee'),
@@ -73,11 +74,19 @@ urlpatterns = [
     path('create_visitor_group/', views.manage_visitor_group, name='create_visitor_group'),
     path('update_visitor_group/<int:id>/', views.manage_visitor_group, name='update_visitor_group'),
     path('delete_visitor_group/<int:id>/', views.delete_visitor_group, name='delete_visitor_group'),
-
     path('create_visitor_member/', views.add_member_visitor_group, name='create_visitor_member'),
     path('update_visitor_member/<int:id>/', views.add_member_visitor_group, name='update_visitor_member'),
     path('delete_visitor_member/<int:id>/', views.delete_member_visitor_group, name='delete_visitor_member'),
     path('search_visitor/', views.search_visitor, name='search_visitor'),
+    path('visitor_report/', views.visitor_reports, name='visitor_report'),
+    path('generate-id-cards/', views.generate_visitor_id_cards, name='generate_visitor_id_cards'),
+    path('id-card-list/', views.visitor_id_card_list, name='visitor_id_card_list'),
+    path('visitor_check_in/<int:visitor_id>/', views.visitor_check_in, name='visitor_check_in'),   
+    path('visitor_log_list/', views.visitor_log_list, name='visitor_log_list'),  
+    path('visitor/group/check-in/', views.visitor_group_check_in, name='visitor_group_check_in'),
+    path('visitors/<int:visitor_id>/check_in/', views.visitor_check_in, name='visitor_check_in'),
+    path('visitors/<int:visitor_id>/check-out/', views.visitor_check_out, name='visitor_check_out'),
+    path('ajax/get-group-details/', views.get_group_details, name='get_group_details'),
 
   ##################### office expense advance #########################
     path('create_expense_advance/', views.manage_expense_advance, name='create_expense_advance'),
@@ -86,16 +95,8 @@ urlpatterns = [
     path('expense_advance_list/', views.expense_advance_list, name='expense_advance_list'),   
     path('expense_advance_approval/<int:submission_id>/', views.expense_advance_approval, name='expense_advance_approval'), 
 
-
-    path('create_expense_order/', views.manage_expense_order, name='create_expense_order'),
-    path('update_expense_order/<int:id>/', views.manage_expense_order, name='update_expense_order'),
-    path('delete_expense_order/<int:id>/', views.delete_expense_order, name='delete_expense_order'),
-
-    path('create_expense_item/', views.manage_expense_item, name='create_expense_item'),
-    path('update_expense_item/<int:id>/', views.manage_expense_item, name='update_expense_item'),
-    path('delete_expense_item/<int:id>/', views.delete_expense_item, name='delete_expense_item'),
-    
-    path('expense_order_list/', views.expense_order_list, name='expense_order_list'),
+    path('expense-submission/create/', views.create_expense_submission, name='create_expense_submission'),
+    path('expense-submission/list/', views.expense_submission_list, name='expense_submission_list'),
     path('items_submitted/<int:submission_id>/', views.items_submitted, name='items_submitted'),
     path('expense_approval/<int:submission_id>/', views.expense_approval, name='expense_approval'),
 
@@ -125,3 +126,5 @@ urlpatterns = [
 
 
 ] 
+
+#office_supplies_stationary/office_expense_advance/office_meeting_room_booking/office_visitor_management/office_documentations

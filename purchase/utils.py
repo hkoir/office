@@ -76,16 +76,31 @@ def create_units_for_batch(batch, start_index=1):
 from django.utils import timezone
 from decimal import Decimal
 from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
 
 
+from decimal import Decimal
+from django.utils import timezone
+from django.db import transaction
+from decimal import Decimal
+from django.db import transaction
+from django.utils import timezone
 
+
+@transaction.atomic
 def create_purchase_order_from_quotation(quotation_id, user):
-    from .models import PurchaseOrder, PurchaseOrderItem, SupplierQuotation
-    
-    quotation = SupplierQuotation.objects.get(pk=quotation_id)
-    if quotation.status != "approved":
-        raise ValueError("Quotation must be approved before creating a purchase order.")
+    from.models import SupplierQuotation,PurchaseOrder,PurchaseOrderItem   
+    quotation = SupplierQuotation.objects.prefetch_related('purchase_quotation_items').get(pk=quotation_id)
 
+    if quotation.status.lower() != "approved":
+        raise ValueError("Quotation must be approved before creating a Purchase Order.")
+
+    # Prevent duplicate PO
+    existing_po = PurchaseOrder.objects.filter(supplier_quotation=quotation).first()
+    if existing_po:
+        return existing_po
+
+    # Create PurchaseOrder by copying totals
     po = PurchaseOrder.objects.create(
         order_id=f"PO-{timezone.now().strftime('%Y%m%d')}-{quotation.id:05d}",
         supplier=quotation.supplier,
@@ -94,31 +109,36 @@ def create_purchase_order_from_quotation(quotation_id, user):
         status="IN_PROCESS",
         approval_status="SUBMITTED",
         supplier_quotation=quotation,
-        purchase_request_order=quotation.rfq.purchase_request_order,
-        VAT_rate=quotation.VAT_rate,
-        VAT_type=quotation.VAT_type,
+        purchase_request_order=getattr(quotation.rfq, 'purchase_request_order', None),
         AIT_rate=quotation.AIT_rate,
         AIT_type=quotation.AIT_type,
         vat_amount=quotation.vat_amount,
         ait_amount=quotation.ait_amount,
-        total_amount=quotation.net_due_amount
+        total_amount=quotation.total_amount,
+        net_due_amount=quotation.net_due_amount,
+        remarks=quotation.notes or "",
+        currency=quotation.currency or "BDT",
+        required_delivery_date=quotation.quoted_delivery_date
     )
 
-    total_amount = Decimal('0.00')
-    for item in quotation.purchase_quotation_items.all():
-        line_total = (item.quantity * item.unit_price).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    # Copy quotation items to PO items
+    for q_item in quotation.purchase_quotation_items.all():
         PurchaseOrderItem.objects.create(
             purchase_order=po,
-            product=item.product,
-            quantity=item.quantity,
-            total_price=line_total,
+            product=q_item.product,
+            quantity=q_item.quantity,
+            unit_of_measure=q_item.unit_of_measure,
+            required_delivery_date=q_item.quoted_delivery_date,
+            currency=q_item.currency or "BDT",
+            specification=q_item.specification,
+            remarks=q_item.notes or "",
+            total_price=q_item.total_price,
+            VAT_rate=q_item.VAT_rate,
+            VAT_type=q_item.VAT_type,
+            vat_amount=q_item.vat_amount,
             supplier=quotation.supplier,
-            user=user,
+            batch = None,
+          
         )
-        total_amount += line_total
 
-    po.total_amount = total_amount.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
-    po.supplier_quotation = quotation
-    po.save()
     return po
-

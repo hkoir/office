@@ -26,10 +26,9 @@ from django.core.paginator import Paginator
 
 from .models import PurchaseInvoice, PurchaseInvoiceAttachment
 from .forms import PurchaseInvoiceAttachmentForm,PurchasePaymentAttachmentForm,SaleInvoiceAttachmentForm,SalePaymentAttachmentForm
-
-
-
 from accounting.models import JournalEntry, JournalEntryLine, Account,FiscalYear
+from purchase.models import SupplierQuotation,PurchaseOrder
+from.utils import convert_quotation_to_invoice,create_purchase_invoice_from_po
 
 
 
@@ -130,8 +129,6 @@ def create_purchase_invoice(request, order_id):
 
 
 
-from purchase.models import SupplierQuotation
-from.utils import convert_quotation_to_invoice
 
 @login_required
 def create_purchase_invoice_from_quotation(request, quotation_id):
@@ -154,6 +151,24 @@ def create_purchase_invoice_from_quotation(request, quotation_id):
     return redirect("finance:purchase_invoice_list")
 
 
+
+@login_required
+def create_purchase_invoice_from_purchase_order(request, po_id):
+    po = get_object_or_404(PurchaseOrder, id=po_id)
+    try:
+        invoice = create_purchase_invoice_from_po(po_id, request.user)
+        messages.success(request, f"Purchase Invoice {invoice.invoice_number} created successfully.")
+        return redirect("purchase:purchase_order_list")
+    except ValueError as e:
+        messages.error(request, str(e))
+        return redirect("purchase:purchase_order_list")
+    except Exception as e:
+        messages.error(request, f"Error creating invoice: {e}")
+        return redirect("purchase:purchase_order_list")
+
+
+
+from decimal import Decimal
 
 @login_required
 def create_purchase_payment(request, invoice_id):
@@ -256,7 +271,8 @@ def create_purchase_payment(request, invoice_id):
     return render(request, 'finance/purchase/create_payment.html', {
         'form': form,
         'purchase_invoice': invoice.invoice_number,
-        'remaining_balance': remaining_balance
+        'remaining_balance': remaining_balance,
+        'invoice':invoice
     })
 
 
@@ -297,26 +313,45 @@ def add_purchase_payment_attachment(request, invoice_id):
     return render(request, 'finance/attachmenet/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
-from django.db.models import Sum, F, Q
+
+from django.db.models.functions import Coalesce
+from django.db.models import F, Sum, Value, DecimalField
 
 
 @login_required
-def generate_purchase_invoice(purchase_order):
+def generate_purchase_invoice(purchase_order):   
+    # --- Get delivered shipments ---
     valid_shipments = PurchaseShipment.objects.filter(
         purchase_order=purchase_order, status='DELIVERED'
     )
 
+    # --- Get delivered dispatch items ---
     valid_dispatch_items = PurchaseDispatchItem.objects.filter(
         purchase_shipment__in=valid_shipments, status='DELIVERED'
     )
 
+    # --- Get unpaid invoices ---
     unpaid_invoices = PurchaseInvoice.objects.filter(
         purchase_shipment__in=valid_shipments
-    ).exclude(status__in=['FULLY_PAID', 'CANCELLED']) 
+    ).exclude(status__in=['FULLY_PAID', 'CANCELLED'])
 
     if not unpaid_invoices.exists():
-        return {"error": "No pending invoices for this purchase order"}
+        return {
+            "error": "No pending invoices for this purchase order",
+            "purchase_order": purchase_order,
+            "valid_shipments": valid_shipments,
+            "valid_dispatch_items": valid_dispatch_items,
+            "product_summary": [],
+            "grand_total": 0,
+            "vat_amount": 0,
+            "ait_amount": 0,
+            "net_payable": 0,
+            "paid_amount": 0,
+            "due_amount": 0,
+            "invoice_status": [],
+        }
 
+    # --- Aggregate invoice summary ---
     invoice_summary = unpaid_invoices.aggregate(
         total_vat=Sum('vat_amount'),
         total_ait=Sum('ait_amount'),
@@ -325,27 +360,42 @@ def generate_purchase_invoice(purchase_order):
         total_due=Sum(F('net_due_amount') - F('purchase_payment_invoice__amount'))
     )
 
-    product_data = valid_dispatch_items.values(
-        'dispatch_item__product__name', 'dispatch_item__product__unit_price', 'dispatch_item__batch__unit_price'
-    ).annotate(
-        total_quantity=Sum('dispatch_quantity'),
-        total_amount=Sum(
-            F('dispatch_quantity') * F('dispatch_item__batch__unit_price')  
+    # --- Prepare product summary with correct unit_price ---
+    product_data = valid_dispatch_items.annotate(
+        unit_price=Coalesce(
+            F('dispatch_item__batch__purchase_price'),
+            F('dispatch_item__product__unit_price'),
+            Value(0),
+            output_field=DecimalField()
+        ),
+        total_amount=F('dispatch_quantity') * Coalesce(
+            F('dispatch_item__batch__purchase_price'),
+            F('dispatch_item__product__unit_price'),
+            Value(0),
+            output_field=DecimalField()
         )
+    ).values(
+        'dispatch_item__product__name',
+        'unit_price',
+        'dispatch_quantity',
+        'total_amount'
     )
 
+    # --- Build product summary list ---
     product_summary = [
         {
             "product_name": item['dispatch_item__product__name'],
-            "unit_price": item['dispatch_item__batch__unit_price'], 
-            "quantity": item['total_quantity'],
-            "amount": item['total_amount']
+            "unit_price": item['unit_price'] or 0,
+            "quantity": item['dispatch_quantity'] or 0,
+            "amount": item['total_amount'] or 0,
         }
         for item in product_data
     ]
 
-    grand_total = sum(item['amount'] for item in product_summary)
+    # --- Calculate grand total ---
+    grand_total = sum(item['amount'] or 0 for item in product_summary)
 
+    # --- Return final invoice data ---
     return {
         "purchase_order": purchase_order,
         "valid_shipments": valid_shipments,
@@ -356,8 +406,8 @@ def generate_purchase_invoice(purchase_order):
         "ait_amount": invoice_summary['total_ait'] or 0,
         "net_payable": invoice_summary['total_net'] or 0,
         "paid_amount": invoice_summary['total_paid'] or 0,
-        "due_amount": invoice_summary['total_due'] or 0, 
-        "invoice_status": list(unpaid_invoices.values_list('status', flat=True).distinct())  
+        "due_amount": invoice_summary['total_due'] or 0,
+        "invoice_status": list(unpaid_invoices.values_list('status', flat=True).distinct())
     }
 
 
@@ -366,6 +416,8 @@ def generate_purchase_invoice(purchase_order):
 def generate_purchase_invoice_pdf(purchase_order, mode="download"):
     supplier = purchase_order.supplier
     supplier_address = 'Unknown'
+    product_summary = []
+    grand_total = 0
     supplier_info = Supplier.objects.filter(id=purchase_order.supplier_id).first()
     if supplier_info:
         supplier_name = supplier_info.name
@@ -394,6 +446,9 @@ def generate_purchase_invoice_pdf(purchase_order, mode="download"):
         company_logo_path = cfo_data.location.company.logo.path if cfo_data.location.company.logo else 'D:/SCM/dscm/media/company_logo/Logo.png'
 
     invoice_data = generate_purchase_invoice(purchase_order)
+    if 'product_summary' not in invoice_data:
+        invoice_data['product_summary'] = []
+        invoice_data['grand_total'] =0.0
 
     buffer = BytesIO()
     c = canvas.Canvas(buffer, pagesize=letter)
@@ -446,9 +501,11 @@ def generate_purchase_invoice_pdf(purchase_order, mode="download"):
             y_position = 750  
 
         c.drawString(30, y_position, item["product_name"])
-        c.drawString(200, y_position, f"${item['unit_price']:.2f}")
+        unit_price = item.get('unit_price') or 0
+        c.drawString(200, y_position, f"${unit_price:.2f}")      
         c.drawString(350, y_position, str(item['quantity']))
-        c.drawString(450, y_position, f"${item['amount']:.2f}")
+        amount = item.get('amount') or 0
+        c.drawString(450, y_position, f"${amount:.2f}")
         y_position -= 20
 
     # Adding VAT, AIT, and Net Due to the PDF

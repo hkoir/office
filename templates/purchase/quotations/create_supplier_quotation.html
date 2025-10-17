@@ -4,6 +4,29 @@
 {% block content %}
 
 
+<style>
+.table td input.form-control,
+.table td select.form-control,
+.table td textarea.form-control {
+  width: 100%;
+  min-width: 120px;   /* prevents cells from collapsing too small */
+  max-width: 250px;   /* keeps them from overflowing */
+  box-sizing: border-box;
+}
+
+.table th, .table td {
+  vertical-align: middle;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+</style>
+
+
+
 <div class="container-fluid">
 <div class="container-fluid main-content py-4">
   <div class="row g-2 justify-content-center text-center">
@@ -52,43 +75,51 @@
                 <legend class="w-auto px-2"><strong>Quotation Info</strong></legend>
                 <div class="row g-3">
 
-                    <div class="col-12 col-md-3">
+                    <div class="col-6 col-md-3">
                         <label for="{{ form.supplier.id_for_label }}" class="form-label">Supplier</label>
                         {{ form.supplier|add_class:"form-select" }}
                     </div>
                 
 
-                    <div class="col-12 col-md-3">
+                    <div class="col-6 col-md-3">
                         <label for="{{ form.date.id_for_label }}" class="form-label">Date</label>
                         {{ form.date|add_class:"form-control" }}
                     </div>
                                        
 
-                    <div class="col-12 col-md-3">
+                    <div class="col-6 col-md-3">
                         <label for="{{ form.date.id_for_label }}" class="form-label">AIT rate</label>
                         {{ form.AIT_rate|add_class:"form-control" }}
                     </div>
                     
-                    <div class="col-12 col-md-3">
+                    <div class="col-6 col-md-3">
                         <label for="{{ form.date.id_for_label }}" class="form-label">AIT Type</label>
                         {{ form.AIT_type|add_class:"form-control" }}
                     </div>
 
+                    <div class="col-6 col-md-3">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">Currency</label>
+                        {{ form.currency|add_class:"form-control" }}
+                    </div>
 
 
-                     <div class="col-12 col-md-3">
+                     <div class="col-6 col-md-3">
                         <label for="{{ form.valid_until.id_for_label }}" class="form-label">Valid Until</label>
                         {{ form.valid_until|add_class:"form-control" }}
                     </div>
 
-                    <div class="col-12 col-md-3">
+                    <div class="col-6 col-md-3">
                         <label for="{{ form.status.id_for_label }}" class="form-label">Status</label>
                         {{ form.status|add_class:"form-select" }}
                     </div>
 
-                    <div class="col-12 col-md-auto">
+                    <div class="col-6 col-md-auto">
                         <label for="{{ form.notes.id_for_label }}" class="form-label">Notes</label>
                         {{ form.notes|add_class:"form-control" }}
+                    </div>
+			      <div class="col-6 col-md-auto">
+                        <label for="{{ form.quoted_delivery_date.id_for_label }}" class="form-label">Quoted Project delivery Date</label>
+                        {{ form.quoted_delivery_date|add_class:"form-control" }}
                     </div>
 
                 </div>
@@ -96,8 +127,9 @@
 
             <!-- Quotation Items -->
             <fieldset class="border p-3 mb-4">
-                <legend class="w-auto px-2">Quotation Items</legend>
                 {{ formset.management_form }}
+		<div class="table-responsive">
+               <legend class="w-auto px-2">Quotation Items</legend>
                 <table id="quotation-table" class="table table-bordered table-striped">
                     <thead class="table-dark">
                         <tr>
@@ -125,8 +157,10 @@
                         {% endfor %}
                     </tbody>
                 </table>
+		</div>
 
                 <!-- Hidden empty row for cloning -->
+		<div class="table-rsponsive">
                 <table style="display: none;">
                     <tbody id="empty-form-row">
                         <tr>
@@ -142,6 +176,7 @@
                         </tr>
                     </tbody>
                 </table>
+		</div>
 
                 <button type="button" id="add-item" class="btn btn-primary mt-2">+ Add Item</button>
                 <button type="submit" class="btn btn-success">Save Quotation</button>

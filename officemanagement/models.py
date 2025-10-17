@@ -141,7 +141,7 @@ class StationaryPurchaseItem(models.Model):
     user = models.ForeignKey(CustomUser,on_delete=models.CASCADE,null=True,blank=True)
     stationary_category = models.ForeignKey(StationaryCategory, on_delete=models.CASCADE,null=True,blank=True)
     stationary_product = models.ForeignKey(StationaryProduct, on_delete=models.CASCADE)
-    batch = models.ForeignKey(StationaryBatch, on_delete=models.CASCADE)
+    batch = models.ForeignKey(StationaryBatch, on_delete=models.CASCADE,null=True,blank=True)
     quantity = models.PositiveIntegerField() 
     purchase_date = models.DateField(auto_now_add=True)    
     created_at = models.DateField(auto_now_add=True)
@@ -270,7 +270,7 @@ class OfficeAdvance(models.Model):
     ]
    
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Pending',null=True,blank=True)
-    approved_by = models.ForeignKey(Employee,on_delete=models.CASCADE,related_name='office_advance_employee',null=True,blank=True)
+    approved_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='approved_advances', null=True, blank=True)
     approved_on = models.DateField(default=timezone.now)
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateField(auto_now=True)
@@ -291,12 +291,12 @@ from django.db.models import Sum
 class ExpenseSubmissionOrder(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     submission_id = models.CharField(max_length=50)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
     has_advance = models.BooleanField(default=False)
     advance_ref = models.ForeignKey(OfficeAdvance,on_delete=models.CASCADE,null=True,blank=True)
     submitted_by = models.ForeignKey(Employee, on_delete=models.CASCADE,related_name='expense_submission_user',null=True,blank=True)
     submission_date = models.DateField()
-    approved_by = models.ForeignKey(Employee, on_delete=models.CASCADE,related_name='expense_approver',null=True,blank=True)
+    approved_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, related_name='user_approved_advances', null=True, blank=True)
     approved_on = models.DateField(null=True,blank=True)
     status =models.CharField(max_length=30,choices=[('submitted','Submitted'),('approved','Approved')],default='submitted')
     created_at = models.DateField(auto_now_add=True)
@@ -455,6 +455,53 @@ class ITSupportTicket(models.Model):
         return f"{self.ticket_id} - {self.status}"
 
 
+import qrcode
+from io import BytesIO
+from django.core.files import File
+from django.utils import timezone
+from django.core.files.base import ContentFile
+
+
+class VisitorIDCard(models.Model):
+    card_number = models.CharField(max_length=50, unique=True)
+    issue_date = models.DateTimeField(default=timezone.now)
+    expiry_date = models.DateTimeField(null=True, blank=True)
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('lost', 'Lost'),
+        ('expired', 'Expired'),
+        ('idle', 'Idle'),
+        ('in_use', 'In Use'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    printed = models.BooleanField(default=False)
+    qr_code = models.ImageField(upload_to='visitor_qrcodes/', null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"ID Card {self.card_number}"
+
+    def save(self, *args, **kwargs):
+        if not self.card_number:
+            # Automatically generate unique card number
+            last_card = VisitorIDCard.objects.order_by('-id').first()
+            next_number = 1 if not last_card else last_card.id + 1
+            self.card_number = f"VC-{next_number:05d}"
+
+        # Generate QR code
+        qr_data = f"Visitor Card: {self.card_number}"
+        qr_img = qrcode.make(qr_data)
+        buffer = BytesIO()
+        qr_img.save(buffer, format='PNG')
+        file_name = f"qr_{self.card_number}.png"
+        self.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=False)
+
+        super().save(*args, **kwargs)
+
 
 
 class VisitorGroup(models.Model):
@@ -483,7 +530,14 @@ class VisitorLog(models.Model):
         help_text='Please choose company to add member if any')
     visitor_type = models.CharField(max_length=100, choices=[('local', 'Local'), ('foreigner', 'Foreigner')], null=True, blank=True)
     name = models.CharField(max_length=255)
+
     designation = models.CharField(max_length=255, null=True, blank=True)
+    id_card = models.ForeignKey(VisitorIDCard,on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='assigned_visitors',
+        help_text='Select the ID card issued to this visitor'
+    )
     phone = models.IntegerField(null=True, blank=True)
     address =models.CharField(max_length=255,null=True,blank=True)
     photo = models.ImageField(upload_to="visitor_photo", null=True, blank=True)   

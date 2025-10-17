@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 
 from accounts.models import CustomUser
 from.models import Batch
+from supplier.models import Supplier
 
 
 
@@ -18,7 +19,7 @@ from.models import Batch
 class BatchForm(forms.ModelForm):
     class Meta:
         model = Batch
-        exclude=['user','remaining_quantity','sale_price','unit_price','selling_price','shelf']
+        exclude=['user','selling_price','returned_quantity','shelf','remaining_quantity','unit_price','sale_price','qr_code_image','barcode_image']
 
         widgets={
             'manufacture_date':forms.DateInput(attrs={'type':'date'}),
@@ -29,12 +30,12 @@ class BatchForm(forms.ModelForm):
 class BatchFormShort(forms.ModelForm):
     class Meta:
         model = Batch
-        fields=['product','quantity','manufacture_date','expiry_date','purchase_price','regular_price','discounted_price']
+        exclude=['user','selling_price','returned_quantity','shelf','remaining_quantity','unit_price','sale_price','qr_code_image','barcode_image']
 
         widgets={
             'manufacture_date':forms.DateInput(attrs={'type':'date'}),
             'expiry_date':forms.DateInput(attrs={'type':'date'}),
-             'purchase_price': forms.NumberInput(attrs={'readonly': 'readonly'}),
+            'purchase_price': forms.NumberInput(attrs={'readonly': 'readonly'}),
         }
 
 
@@ -45,11 +46,42 @@ class AssignRolesForm(forms.Form):
     reviewer = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label="Reviewer")
     approver = forms.ModelChoiceField(queryset=CustomUser.objects.all(), label="Approver")
 
+from inventory.models import Inventory
+
+
+
 
 class PurchaseRequestForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequestOrder  
-        fields = ['category', 'product', 'product_type','quantity']  
+        fields = ['category', 'product', 'product_type','quantity','required_delivery_date']  
+
+    required_delivery_date = forms.DateField(
+        required=False,
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        label="Required Delivery Date"
+    )
+    unit_of_measure = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. pcs, kg, box'}),
+        label="Unit of Measure"
+    )
+    currency = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g. BDT, USD'}),
+        label="Currency"
+    )
+    specification = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Enter detailed product specification...'}),
+        label="Specification"
+    )
+
+    supplier = forms.ModelChoiceField(
+        queryset=Supplier.objects.all(),
+        label="Supplier",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
 
     category = forms.ModelChoiceField(
         queryset=Category.objects.all(),
@@ -59,11 +91,6 @@ class PurchaseRequestForm(forms.ModelForm):
     product = forms.ModelChoiceField(
         queryset=Product.objects.all(),
         label="Product",
-        widget=forms.Select(attrs={'class': 'form-control'})
-         )
-    batch = forms.ModelChoiceField(
-        queryset=Batch.objects.all(),
-        label="Batch",
         widget=forms.Select(attrs={'class': 'form-control'})
          )
     product_type = forms.ChoiceField(
@@ -82,6 +109,25 @@ class PurchaseRequestForm(forms.ModelForm):
         min_value=1,
         widget=forms.NumberInput(attrs={'class': 'form-control'})
          )
+    unit_price = forms.DecimalField(
+        label="Unit Price",
+        min_value=1,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+
+    batch = forms.ModelChoiceField(
+        queryset=Batch.objects.all(),
+        required=False,
+        label="Batch (optional)",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    notes= forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Enter notes f any...'}),
+        label="Notes"
+    )
+
 
 
 class PurchaseOrderForm(forms.ModelForm):
@@ -163,6 +209,47 @@ class PurchaseOrderForm(forms.ModelForm):
 
 
 
+from .models import RFQ, RFQItem
+from django.forms import inlineformset_factory
+from .models import SupplierQuotation, SupplierQuotationItem
+from .models import PurchaseRequestOrder, PurchaseRequestItem
+
+
+class PurchaseRequestOrderForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseRequestOrder
+        fields = ['order_id', 'department', 'supplier', 'remarks','order_date']
+        widgets = {
+            'order_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'department': forms.TextInput(attrs={'class': 'form-control'}),
+            'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'order_date':forms.DateInput(attrs={'type':'date'})
+        }
+
+
+
+class PurchaseRequestItemForm(forms.ModelForm):
+    class Meta:
+        model = PurchaseRequestItem
+        fields = ['product', 'quantity', 'priority', 'supplier','unit_price', 'total_price']
+        widgets = {
+            'product': forms.Select(attrs={'class': 'form-select'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control quantity-field'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+            'supplier': forms.Select(attrs={'class': 'form-select'}),
+            'total_price': forms.NumberInput(attrs={'class': 'form-control total-field'}),
+        }
+
+# Inline formset: automatically links items to parent order
+PurchaseRequestItemFormSet = inlineformset_factory(
+    PurchaseRequestOrder,
+    PurchaseRequestItem,
+    form=PurchaseRequestItemForm,
+    extra=1,
+    can_delete=True
+)
+
 
 
 
@@ -171,14 +258,23 @@ from django.forms import inlineformset_factory
 from .models import SupplierQuotation, SupplierQuotationItem
 
 
+
+
 class RFQForm(forms.ModelForm):
+    suppliers = forms.ModelMultipleChoiceField(
+        queryset=Supplier.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label="Select Suppliers"
+    )
     class Meta:
         model = RFQ
-        fields = ["purchase_request_order","date", "valid_until", "notes", "status"]
+        fields = ["purchase_request_order","date","suppliers", "valid_until",'required_delivery_date', "notes", "status"]
         widgets={          
             'valid_until': forms.DateInput(attrs={'type':'date'}),  
              'date': forms.DateInput(attrs={'type':'date'}),
-            'notes':forms.TextInput(attrs={
+             'required_delivery_date': forms.DateInput(attrs={'type':'date'}),
+            'notes':forms.Textarea(attrs={
                 'style':'height:50px'
             }),         
         }
@@ -186,11 +282,16 @@ class RFQForm(forms.ModelForm):
 class RFQItemForm(forms.ModelForm):
     class Meta:
         model = RFQItem
-        fields = ["product", "quantity", "notes"]
+        fields = ["product", "quantity",'unit_of_measure','unit_price','currency','specification','required_delivery_date', "notes"]
         widgets={
-            'notes':forms.TextInput(attrs={
-                'style':'height:50px'
+            'notes':forms.Textarea(attrs={
+                'style':'height:50px;width:200px'
             }),
+
+            'specification':forms.Textarea(attrs={
+                'style':'height:50px;width:200px'
+            }),
+             'required_delivery_date': forms.DateInput(attrs={'type':'date'}),
            
         }
 RFQItemFormSet = inlineformset_factory(RFQ, RFQItem, form=RFQItemForm, extra=1, can_delete=True)
@@ -199,20 +300,34 @@ RFQItemFormSet = inlineformset_factory(RFQ, RFQItem, form=RFQItemForm, extra=1, 
 class SupplierQuotationForm(forms.ModelForm):
     class Meta:
         model = SupplierQuotation
-        fields = ["supplier", "date","AIT_rate","AIT_type", "valid_until", "status", "notes"]
+        fields = ["supplier", "date", "valid_until",'quoted_delivery_date', "status", "notes","AIT_rate","AIT_type","currency"]
         widgets={
-            'notes':forms.TextInput(attrs={
+            'notes':forms.Textarea(attrs={
                 'style':'height:50px'
             }),
             'valid_until': forms.DateInput(attrs={'type':'date'}),
-             'date': forms.DateInput(attrs={'type':'date'})
+             'date': forms.DateInput(attrs={'type':'date'}),
+	     'quoted_delivery_date': forms.DateInput(attrs={'type':'date'})
         }
 
 
 class SupplierQuotationItemForm(forms.ModelForm):
     class Meta:
         model = SupplierQuotationItem
-        fields = ["product", "quantity", "unit_price","VAT_rate","VAT_type",]
+        fields = ["product", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
+
+        widgets={
+            'specification':forms.Textarea(attrs={
+                'style':'height:50px;width:250px'
+            }),
+             'notes':forms.Textarea(attrs={
+                'style':'height:50px;width:250px'
+            }),
+            'quoted_delivery_date': forms.DateInput(attrs={'type':'date'}),
+            
+        }
+
+
 
 SupplierQuotationItemFormSet = inlineformset_factory(
     SupplierQuotation,
@@ -221,8 +336,6 @@ SupplierQuotationItemFormSet = inlineformset_factory(
     extra=2,
     can_delete=True
 )
-
-
 
 
 

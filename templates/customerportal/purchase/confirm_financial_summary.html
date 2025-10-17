@@ -1,0 +1,57 @@
+{% extends 'partner_portal_base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="container mt-4">
+  <div class="card shadow rounded-3">
+    <div class="card-header bg-primary text-white">
+      <h4>Confirm Purchase Invoice Creation</h4>
+    </div>
+    <div class="card-body">
+      <h5>Purchase Order: {{ po.order_number }}</h5>
+      <p><strong>Supplier:</strong> {{ po.supplier.name }}</p>
+      <hr>
+
+      <table class="table table-bordered table-striped">
+        <thead class="table-light">
+          <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Vat</th>            
+            <th>Vat amount</th>
+            <th>Product Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in po_items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.batch.purchase_price|floatformat:2 }}</td>
+            <td>{{ item.VAT_rate }}&nbsp;%&nbsp;|&nbsp;{{ item.VAT_type }}</td>
+            <td>{{ item.vat_amount }}</td>
+            <td>{{ item.total_price|floatformat:2}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="text-end mt-3">
+        <p><strong>Total PO amount:</strong> {{ total_amount|floatformat:2 }}<br>
+        <strong>VAT:</strong> {{ vat_amount|floatformat:2 }}<br>
+        <strong>AIT:</strong> {{ ait_amount|floatformat:2 }} &nbsp;|&nbsp;{{ AIT_type}}<br>    
+        
+        </p>
+        <h5 class="mt-3"><strong>Net due amount:</strong> {{ net_due_amount|floatformat:2 }}</h5>
+      </div>
+
+      <form method="POST" class="mt-4">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">Confirm & Create Invoice</button>
+        <a href="{% url 'customerportal:purchase_order_list' %}" class="btn btn-secondary">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

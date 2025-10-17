@@ -5,6 +5,46 @@
 {% block content %}
 
 
+
+ <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'leavemanagement:create_attendance_policy' %}" class="btn btn-sm btn-success">Create Leave policy</a>
+    </div>
+
+
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:create_leave_type' %}" class="btn btn-sm btn-success">Create Leave type</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:view_attendance' %}" class="btn btn-sm btn-success">View attendance</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:apply_leave' %}" class="btn btn-sm btn-success">Apply leave</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:leave_history' %}" class="btn btn-sm btn-success">CLeave history</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:pending_leave_list' %}" class="btn btn-sm btn-success">Leave List</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:leave_summary' %}" class="btn btn-sm btn-success">Leave summary</a>
+    </div>
+     <div class="col-auto">
+      <a href="{% url 'leavemanagement:leave_dashboard' %}" class="btn btn-sm btn-success">Leave dashboard</a>
+    </div>
+      <div class="col-auto">
+      <a href="{% url 'leavemanagement:check_and_deduct_late_leaves' %}" class="btn btn-sm btn-success">Check and deduct leave</a>
+    </div>
+      <div class="col-auto">
+      <a href="{% url 'leavemanagement:update_leave_balances_for_all' %}" class="btn btn-sm btn-success">Update leave balance for all</a>
+    </div>
+        <div class="col-auto">
+      <a href="{% url 'leavemanagement:carry_forward_leave' %}" class="btn btn-sm btn-success">Carry forward leave</a>
+    </div>
+   
+  </div>
+</div>
 <div class="container-fluid main-content mb-4">
     <div class="row" style="justify-content: center;justify-items: center;">
         <div class="col-12 col-md-auto">        

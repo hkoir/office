@@ -51,7 +51,7 @@ class CustomerQuotationItem(models.Model):
 
 
 class SaleRequestOrder(models.Model):    
-    customer_quotation=models.ForeignKey(CustomerQuotation,related_name='customer_quotation',on_delete=models.CASCADE,null=True, blank=True)
+    customer_quotation=models.ForeignKey(CustomerQuotation,related_name='customer_sales_quotation',on_delete=models.CASCADE,null=True, blank=True)
     order_id = models.CharField(max_length=50)
     department = models.CharField(max_length=50,null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
@@ -104,10 +104,11 @@ class SaleRequestOrder(models.Model):
     
         
       
-    def save(self,*args,**kwargs):
+    def save(self, *args, **kwargs):
         if not self.order_id:
-            self.order_id= f"PROID-{uuid.uuid4().hex[:8].upper()}"
-        super().save(*args,*kwargs)
+            self.order_id = f"PROID-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return self.order_id
@@ -152,7 +153,7 @@ class SaleOrder(models.Model):
     customer = models.ForeignKey(Customer, related_name='customer_sale', on_delete=models.CASCADE,null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
     STATUS_CHOICES = [
         ('IN_PROCESS', 'In Process'),
         ('READY_FOR_DISPATCH', 'Ready for Dispatch'),

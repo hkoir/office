@@ -1,0 +1,76 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+
+
+
+<div class="container-fluid main-content">    
+    <div class="row">
+        <div class="col-12 col-md-3">
+            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
+                <div class="card-body">
+                    <h6 class="card-title text-center"><strong>Create dispatch item</strong> </h6>
+                    <form method="post" enctype="multipart/form-data"  id="add_category">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" name="add_to_basket" class="btn btn-primary">Add to list</button>
+                    </form>
+                 </div>
+            </div>           
+        </div>
+
+        <div class="col-12 col-md-9">
+            {% if basket %}
+                <table class="table table-striped">
+                    <thead>                        
+                        <h4>Items to be dispatched</h4>
+                        <tr>
+                            <th>Product</th>
+                            <th style="white-space: nowrap;">Quantity</th>
+                             <th>Dispatch date</th>
+                            <th>Delivery date</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in basket %}
+                        <tr>
+                            <td style="white-space: nowrap;">{{ item.name }}</td>
+                            <td style="white-space: nowrap;">{{ item.quantity }}</td>
+                            <td>{{ item.dispatch_date }}</td>
+                             <td>{{ item.delivery_date }}</td>
+                            <td style="white-space: nowrap;">
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ item.id }}">
+                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control d-inline w-25">
+                                    <button type="submit" name="action" value="update" class="btn btn-sm btn-warning">Update</button>
+                                </form>
+                                <form method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="product_id" value="{{ item.id }}">
+                                    <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" name="confirm_dispatch" value="confirm_dispatch" class="btn btn-success">Confirm Dispatch </button>
+                </form>
+            {% else %}
+                <p>No products added to the list yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}
+

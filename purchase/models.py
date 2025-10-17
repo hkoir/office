@@ -102,8 +102,8 @@ class Batch(models.Model):
             self.remaining_quantity = self.quantity
         super().save(*args, **kwargs)
         
-        if is_new and self.quantity > 0:
-            create_units_for_batch(batch=self)
+        #if is_new and self.quantity > 0:
+         #   create_units_for_batch(batch=self)
 
 
 
@@ -116,12 +116,13 @@ class Batch(models.Model):
 
 
 
-
 class PurchaseRequestOrder(models.Model):
     order_id = models.CharField(max_length=50,null=True,blank=True)
     department = models.CharField(max_length=50,null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_request_user')
     order_date = models.DateField(null=True, blank=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_request_order_supplier',null=True,blank=True)
+    required_delivery_date = models.DateField(blank=True, null=True)  
     STATUS_CHOICES = [
         ('IN_PROCESS', 'In Process'),
         ('READY_FOR_QC', 'Ready for QC'),
@@ -209,18 +210,26 @@ class PurchaseRequestItem(models.Model):
     item_request_id = models.CharField(max_length=20,null=True,blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_request_item_user')
     purchase_request_order=models.ForeignKey(PurchaseRequestOrder,related_name='purchase_request_order',on_delete=models.CASCADE)
-    product = models.ForeignKey(Product,related_name='purchase_request_item', on_delete=models.CASCADE)   
+    product = models.ForeignKey('product.Product',related_name='purchase_request_item', on_delete=models.CASCADE)   
     quantity = models.PositiveIntegerField() 
     priority = models.CharField(max_length=20, choices=[('LOW', 'Low'), ('MEDIUM', 'Medium'), ('HIGH', 'High')])
-    total_price = models.DecimalField(max_digits=15,decimal_places=2, null=True,blank=True)
+    unit_price = models.DecimalField(max_digits=15,decimal_places=2, null=True,blank=True)
+    total_price = models.DecimalField(max_digits=15,decimal_places=2, null=True,blank=True)   
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_request_item_supplier',null=True,blank=True)
+   
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    required_delivery_date = models.DateField(blank=True, null=True)     
+    currency = models.CharField(max_length=10, default="BDT")   
+    specification = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True) 
 
-
-    def save(self,*args,**kwargs):
+    def save(self, *args, **kwargs):
         if not self.item_request_id:
-            self.item_request_id= f"RIID-{uuid.uuid4().hex[:8].upper()}"
-        super().save(*args,*kwargs)
+            self.item_request_id = f"RIID-{uuid.uuid4().hex[:8].upper()}"
+        super().save(*args, **kwargs)  # ✅ correct
+
 
     def __str__(self):
         return f" {self.item_request_id}:{self.product.name}:{self.quantity}nos"
@@ -229,14 +238,16 @@ class PurchaseRequestItem(models.Model):
 from django.db.models import Q
 import uuid
 from django.utils.timezone import now
-
+from django.db.models import Max
 
 
 class RFQ(models.Model):
     rfq_number = models.CharField(max_length=30, unique=True, blank=True)
+    suppliers = models.ManyToManyField(Supplier, related_name='supplier_rfqs')
     purchase_request_order = models.ForeignKey(PurchaseRequestOrder, on_delete=models.CASCADE, related_name="rfqs")
     date = models.DateField(default=timezone.now)
     valid_until = models.DateField(null=True, blank=True)
+    required_delivery_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
 
     STATUS_CHOICES = [
@@ -248,11 +259,22 @@ class RFQ(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.rfq_number:
-            count = SupplierQuotation.objects.count() + 1
-            self.rfq_number = f"RFQ-{timezone.now().strftime('%Y%m%d')}-{count:04d}"
+            today_str = timezone.now().strftime("%Y%m%d")
+            prefix = f"RFQ-{today_str}-"        
+            last_rfq = RFQ.objects.filter(rfq_number__startswith=prefix).aggregate(Max("rfq_number"))
+            last_number = last_rfq["rfq_number__max"]
+            if last_number:
+                try:
+                    last_seq = int(last_number.split("-")[-1])
+                except (IndexError, ValueError):
+                    last_seq = 0
+                new_seq = last_seq + 1
+            else:
+                new_seq = 1
+            self.rfq_number = f"{prefix}{new_seq:04d}"
         super().save(*args, **kwargs)
 
-    
+
 
     def __str__(self):
         return f"{self.rfq_number} - {self.purchase_request_order}"
@@ -262,6 +284,11 @@ class RFQItem(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey('product.Product', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    required_delivery_date = models.DateField(blank=True, null=True)     
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")   
+    specification = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True) 
     
     def __str__(self):
@@ -276,14 +303,22 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.utils import timezone
 
+
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import models
+from django.utils import timezone
+
+
 class SupplierQuotation(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='supplier_quotation_user')
     rfq = models.ForeignKey(
         "RFQ", on_delete=models.CASCADE, null=True, blank=True, related_name="rfq_quotation"
     )
-    supplier = models.ForeignKey("supplier.Supplier", on_delete=models.CASCADE)
+    supplier = models.ForeignKey("supplier.Supplier", on_delete=models.CASCADE,related_name='quotation_suppliers')
     quotation_number = models.CharField(max_length=30, unique=True, blank=True)
     date = models.DateField(default=timezone.now)
     valid_until = models.DateField(null=True, blank=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
 
     STATUS_CHOICES = [
         ("draft", "Draft"),
@@ -293,93 +328,97 @@ class SupplierQuotation(models.Model):
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
 
-    # TAX SETTINGS
-    AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    # ===== TAX SETTINGS =====
+    AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Overall AIT (%)")
     AIT_type = models.CharField(
         max_length=50,
         choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
         null=True, blank=True, default='exclusive'
     )
-    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    VAT_type = models.CharField(
-        max_length=50,
-        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
-        null=True, blank=True, default='exclusive'
-    )
 
-    # AMOUNTS
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # before tax
-    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    # ===== AMOUNTS =====
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # Before VAT/AIT
     vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     ait_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # Subtotal + VAT
+    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+
     notes = models.TextField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
 
+    def calculate_totals(self):
+        """
+        Calculates VAT per item, AIT on total, and final payable amount.
+        """
+        from decimal import Decimal, ROUND_HALF_UP
 
-    def calculate_tax_amounts(self):  
-        base_total = Decimal('0.00')
+        subtotal = Decimal('0.00')
         vat_total = Decimal('0.00')
 
-        # --- Calculate item-wise base and VAT ---
+        # --- Item-wise VAT calculation ---
         for item in self.purchase_quotation_items.all():
             qty = Decimal(item.quantity or 0)
-            unit_price = Decimal(item.unit_price or 0)
-            line_total = qty * unit_price
+            price = Decimal(item.unit_price or 0)
+            line_total = qty * price
 
-            item_vat_rate = Decimal(item.VAT_rate or 0) / 100
-            vat_type = (item.VAT_type or "exclusive").lower()
+            vat_rate = Decimal(item.VAT_rate or 0) / 100
+            vat_type = (item.VAT_type or 'exclusive').lower()
 
-            if vat_type == "inclusive" and item_vat_rate > 0:
-                # VAT included in line_total
-                item_vat = (line_total - (line_total / (1 + item_vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            if vat_type == 'inclusive' and vat_rate > 0:
+                item_vat = (line_total - (line_total / (1 + vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
                 item_base = line_total - item_vat
             else:
-                # VAT exclusive or no VAT
-                item_vat = (line_total * item_vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                item_vat = (line_total * vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
                 item_base = line_total
 
-            base_total += item_base
+            # Save item-level VAT and total for clarity
+            item.vat_amount = item_vat
+            item.total_price = (item_base + item_vat).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            item.save(update_fields=['vat_amount', 'total_price'])
+
+            subtotal += item_base
             vat_total += item_vat
 
-        self.total_amount = base_total.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.subtotal = subtotal.quantize(Decimal("0.01"), ROUND_HALF_UP)
         self.vat_amount = vat_total.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.total_amount = (self.subtotal + self.vat_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
-        # --- Calculate AIT (withholding tax on total base) ---
+        # --- AIT Calculation (applied on overall subtotal) ---
         ait_rate = Decimal(self.AIT_rate or 0) / 100
-        ait_type = (self.AIT_type or "exclusive").lower()
+        ait_type = (self.AIT_type or 'exclusive').lower()
 
         if ait_rate > 0:
-            if ait_type == "inclusive":
-                # AIT included in total_amount (rare case)
-                ait_amount = (self.total_amount - (self.total_amount / (1 + ait_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
-                net_base = self.total_amount - ait_amount
+            if ait_type == 'inclusive':
+                self.ait_amount = (self.subtotal - (self.subtotal / (1 + ait_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
             else:
-                # AIT exclusive (deducted from supplier)
-                ait_amount = (self.total_amount * ait_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
-                net_base = self.total_amount
+                self.ait_amount = (self.subtotal * ait_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
         else:
-            ait_amount = Decimal('0.00')
-            net_base = self.total_amount
+            self.ait_amount = Decimal('0.00')
 
-        self.ait_amount = ait_amount
-
-        # --- Net payable to supplier ---
-        # Supplier receives base + VAT − AIT
-        if ait_type == "inclusive":
-            self.net_due_amount = (net_base + self.vat_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        # --- Final payable ---
+        if ait_type == 'inclusive':
+            # AIT already included in subtotal
+            self.net_due_amount = (self.total_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
         else:
-            self.net_due_amount = (net_base + self.vat_amount - ait_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            # Deduct AIT from total
+            self.net_due_amount = (self.total_amount - self.ait_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
     def save(self, *args, **kwargs):
-        # Auto-generate quotation number
         if not self.quotation_number:
             count = SupplierQuotation.objects.count() + 1
             self.quotation_number = f"SQ-{timezone.now().strftime('%Y%m%d')}-{count:04d}"
-
         super().save(*args, **kwargs)
+
+        # Always calculate totals after saving
+        self.calculate_totals()
+        super().save(update_fields=['subtotal', 'vat_amount', 'ait_amount', 'total_amount', 'net_due_amount'])
+
+    def __str__(self):
+        return f"Quotation {self.quotation_number} - {self.supplier}"
 
 
 class SupplierQuotationItem(models.Model):
-    VAT_CHOICES = [
+    VAT_TYPE_CHOICES = [
         ('inclusive', 'Inclusive'),
         ('exclusive', 'Exclusive'),
     ]
@@ -388,129 +427,176 @@ class SupplierQuotationItem(models.Model):
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+    specification = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
 
     VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    VAT_type = models.CharField(max_length=20, choices=VAT_TYPE_CHOICES, default='exclusive')
 
-    # ✅ use CharField with proper choices
-    VAT_type = models.CharField(
-        max_length=20,
-        choices=VAT_CHOICES,
-        default='exclusive',  # optional
-        null=True,
-        blank=True
-    )
-    AIT_type = models.CharField(
-        max_length=20,
-        choices=VAT_CHOICES,
-        default='exclusive',  # optional
-        null=True,
-        blank=True
-    )
-
-    total_price = models.DecimalField(max_digits=15, decimal_places=2, blank=True)
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
-        base_amount = self.quantity * self.unit_price
+        qty = Decimal(self.quantity or 0)
+        unit_price = Decimal(self.unit_price or 0)
+        line_total = qty * unit_price
         vat_rate = Decimal(self.VAT_rate or 0) / 100
-        if self.VAT_type == 'inclusive':
-            vat_amt = (base_amount - (base_amount / (1 + vat_rate))).quantize(Decimal("0.01"))
-            base_amount -= vat_amt
+
+        if self.VAT_type == 'inclusive' and vat_rate > 0:
+            vat_amt = (line_total - (line_total / (1 + vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            base_amount = line_total - vat_amt
         else:
-            vat_amt = (base_amount * vat_rate).quantize(Decimal("0.01"))
+            vat_amt = (line_total * vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            base_amount = line_total
+
         self.vat_amount = vat_amt
-        self.total_price = base_amount + vat_amt if self.VAT_type == 'exclusive' else base_amount
+        self.total_price = (base_amount + vat_amt).quantize(Decimal("0.01"), ROUND_HALF_UP)
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.product} ({self.quantity})"
 
-
 class PurchaseOrder(models.Model):
-    order_id = models.CharField(max_length=20)
-    purchase_request_order = models.ForeignKey(PurchaseRequestOrder, 
-        on_delete=models.CASCADE, null=True, blank=True,related_name='purchase_order_request_order')
-
-    supplier_quotation = models.ForeignKey(SupplierQuotation, 
-        on_delete=models.CASCADE, null=True, blank=True,related_name='supplier_quotations')
+    order_id = models.CharField(max_length=20, unique=True, blank=True)
+    purchase_request_order = models.ForeignKey(
+        "PurchaseRequestOrder",
+        on_delete=models.CASCADE, null=True, blank=True,
+        related_name='purchase_order_request_order'
+    )
+    supplier_quotation = models.ForeignKey(
+        "SupplierQuotation",
+        on_delete=models.CASCADE, null=True, blank=True,
+        related_name='linked_purchase_orders'
+    )
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_order_user')
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_supplier')
-    order_date = models.DateField(null=True, blank=True)
+    supplier = models.ForeignKey("supplier.Supplier", on_delete=models.CASCADE, related_name='purchase_order_suppliers')
+    order_date = models.DateField(default=timezone.now)
+    required_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+
+    # ===== ORDER STATUS =====
     ORDER_STATUS_CHOICES = [
         ('IN_PROCESS', 'In Process'),
         ('READY_FOR_QC', 'Ready for QC'),
         ('DISPATCHED', 'Dispatched'),
         ('ON_BOARD', 'On Board'),
         ('IN_TRANSIT', 'In Transit'),
-        ('CUSTOM_CLEARANCE_IN_PROCESS', 'Custom Clearance In Process'),   
-        ('REACHED', 'Reached'),         
-        ('OBI','OBI done'),
-        ('DELIVERED', 'Delivered'),     
+        ('CUSTOM_CLEARANCE_IN_PROCESS', 'Custom Clearance In Process'),
+        ('REACHED', 'Reached'),
+        ('OBI', 'OBI done'),
+        ('DELIVERED', 'Delivered'),
         ('CANCELLED', 'Cancelled'),
-        ]
-    status = models.CharField(max_length=50, choices=ORDER_STATUS_CHOICES, default='IN_PROCESS',null=True,blank=True)   
-    APPROVAL_STATUS_CHOICES = [
-    ('SUBMITTED', 'Submitted'),
-     ('REVIEWED', 'Reviewed'),
-    ('APPROVED', 'Approved'),   
-    ('CANCELLED','Cancelled'),
-        ]
+    ]
+    status = models.CharField(max_length=50, choices=ORDER_STATUS_CHOICES, default='IN_PROCESS')
 
-     # TAX SETTINGS
+    APPROVAL_STATUS_CHOICES = [
+        ('SUBMITTED', 'Submitted'),
+        ('REVIEWED', 'Reviewed'),
+        ('APPROVED', 'Approved'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='SUBMITTED')
+
+    # ===== TAX SETTINGS (aligned with quotation) =====
     AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     AIT_type = models.CharField(
         max_length=50,
         choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
         null=True, blank=True, default='exclusive'
     )
-    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
-    VAT_type = models.CharField(
-        max_length=50,
-        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
-        null=True, blank=True, default='exclusive'
-    )
 
+    # ===== AMOUNTS =====
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)   # Before VAT/AIT
     vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     ait_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
-    approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='SUBMITTED',null=True, blank=True) 
-    total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)   # Subtotal + VAT
+    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    remarks = models.TextField(null=True, blank=True)
 
     requester = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_requester')
     reviewer = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_reviewer')
-    approver = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_approvar')
-    
-    created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    
-    remarks=models.TextField(null=True,blank=True)
+    approver = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True, related_name='order_approver')
 
-    approval_data = models.JSONField(default=dict,null=True,blank=True)
+    approval_data = models.JSONField(default=dict, null=True, blank=True)
     requester_approval_status = models.CharField(max_length=20, null=True, blank=True)
     reviewer_approval_status = models.CharField(max_length=20, null=True, blank=True)
     approver_approval_status = models.CharField(max_length=20, null=True, blank=True)
 
-    Requester_remarks=models.TextField(null=True,blank=True)
-    Reviewer_remarks=models.TextField(null=True,blank=True)
-    Approver_remarks=models.TextField(null=True,blank=True)
-      
+    Requester_remarks = models.TextField(null=True, blank=True)
+    Reviewer_remarks = models.TextField(null=True, blank=True)
+    Approver_remarks = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         permissions = [
-            ("can_request", "can request"),
+            ("can_request", "Can request"),
             ("can_review", "Can review"),
             ("can_approve", "Can approve"),
         ]
 
+    def __str__(self):
+        return self.order_id or "PO (unsaved)"
+
+    # ===== ORDER CALCULATION (Aligned with SupplierQuotation) =====
+    def calculate_totals(self):
+        subtotal = Decimal('0.00')
+        vat_total = Decimal('0.00')
+
+        for item in self.purchase_order_item.all():
+            qty = Decimal(item.quantity or 0)
+            price = Decimal(item.unit_price or 0)
+            line_total = qty * price
+
+            vat_rate = Decimal(item.VAT_rate or 0) / 100
+            vat_type = (item.VAT_type or 'exclusive').lower()
+
+            if vat_type == 'inclusive' and vat_rate > 0:
+                item_vat = (line_total - (line_total / (1 + vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                item_base = line_total - item_vat
+            else:
+                item_vat = (line_total * vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                item_base = line_total
+
+            # update item-level VAT and totals
+            item.vat_amount = item_vat
+            item.total_price = (item_base + item_vat).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            item.save(update_fields=['vat_amount', 'total_price'])
+
+            subtotal += item_base
+            vat_total += item_vat
+
+        self.subtotal = subtotal.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.vat_amount = vat_total.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.total_amount = (self.subtotal + self.vat_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+        # --- Apply AIT (overall, on subtotal) ---
+        ait_rate = Decimal(self.AIT_rate or 0) / 100
+        ait_type = (self.AIT_type or 'exclusive').lower()
+
+        if ait_rate > 0:
+            if ait_type == 'inclusive':
+                self.ait_amount = (self.subtotal - (self.subtotal / (1 + ait_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            else:
+                self.ait_amount = (self.subtotal * ait_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        else:
+            self.ait_amount = Decimal('0.00')
+
+        if ait_type == 'inclusive':
+            self.net_due_amount = (self.total_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        else:
+            self.net_due_amount = (self.total_amount - self.ait_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
     def save(self, *args, **kwargs):
-        if not self.requester:
-            self.requester = CustomUser.objects.filter(groups__name='Requester').first()
-        if not self.reviewer:
-            self.reviewer = CustomUser.objects.filter(groups__name='Reviewer').first()
-        if not self.approver:
-            self.approver = CustomUser.objects.filter(groups__name='Approver').first()
-
         if not self.order_id:
-            self.order_id= f"PROID-{uuid.uuid4().hex[:8].upper()}"
-        super().save(*args, **kwargs)
+            self.order_id = f"PO-{timezone.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
 
+        super().save(*args, **kwargs)
         
     def __str__(self):
         return self.order_id
@@ -561,29 +647,42 @@ class PurchaseOrder(models.Model):
         return "UNKNOWN"
     
     def get_payment_action(self):
+        # 1️⃣ Must be approved before payment
         if self.approver_approval_status != "APPROVED":
             return {"status": "APPROVAL_PENDING"}
 
+        # 2️⃣ Must have at least one shipment
         shipments = self.purchase_shipment.all()
         if not shipments.exists():
             return {"status": "NO_SHIPMENT"}
 
+        # 3️⃣ Must have at least one submitted invoice
         invoices = PurchaseInvoice.objects.filter(purchase_shipment__in=shipments)
         if not invoices.exists():
             return {"status": "NO_INVOICE"}
 
-        payments = PurchasePayment.objects.filter(purchase_invoice__in=invoices)
-        if not payments.exists():
-            # pick the first invoice to attach payment action
-            return {"status": "NO_PAYMENT", "invoice": invoices.first()}
+        # Only invoices in these statuses are valid for payment
+        payable_statuses = ["SUBMITTED", "APPROVED", "READY_FOR_PAYMENT"]
+        submitted_invoices = invoices.filter(status__in=payable_statuses)
 
-        # Check if all invoices are fully paid
-        if all(inv.is_fully_paid for inv in invoices):
+        if not submitted_invoices.exists():
+            # Invoice exists but not yet submitted or approved
+            return {"status": "INVOICE_NOT_READY"}
+
+        # 4️⃣ If there are submitted invoices, check for payments
+        payments = PurchasePayment.objects.filter(purchase_invoice__in=submitted_invoices)
+        if not payments.exists():
+            return {"status": "NO_PAYMENT", "invoice": submitted_invoices.first()}
+
+        # 5️⃣ Check if all submitted invoices are fully paid
+        if all(inv.is_fully_paid for inv in submitted_invoices):
             return {"status": "FULLY_PAID"}
 
-        # Some invoices unpaid → allow payment on the first unpaid one
-        unpaid_invoice = next((inv for inv in invoices if not inv.is_fully_paid), None)
+        # 6️⃣ Otherwise, some invoices are partially paid
+        unpaid_invoice = next((inv for inv in submitted_invoices if not inv.is_fully_paid), None)
         return {"status": "PARTIAL", "invoice": unpaid_invoice}
+
+
     
     def get_first_invoice(self):
         """Safely return the first invoice for the first shipment, or None."""
@@ -598,40 +697,42 @@ class PurchaseOrder(models.Model):
     
     
 
-
 class PurchaseOrderItem(models.Model):
-    order_item_id = models.ForeignKey(PurchaseRequestItem,on_delete=models.CASCADE,related_name='order_request_item',null=True,blank=True)
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_order_item_user')
     purchase_order = models.ForeignKey(PurchaseOrder, related_name='purchase_order_item', on_delete=models.CASCADE)
-    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_purchase_order_item',null=True, blank=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='purchases', null=True, blank=True)
-    quantity = models.PositiveIntegerField(null=True, blank=True)  # Total quantity ordered
-    total_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
-    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_order_items_supplier',null=True,blank=True)
-    prepared_by = models.ForeignKey(CustomUser, related_name='prepared_purchases', on_delete=models.CASCADE, null=True, blank=True)
-    approved_by = models.ForeignKey(CustomUser, related_name='approved_purchases', on_delete=models.CASCADE, null=True, blank=True)
-    status = models.CharField(
-    max_length=50,
-    choices=[
-        ('IN_PROCESS', 'In Process'),
-        ('READY_FOR_QC', 'Ready for QC'),
-        ('DISPATCHED', 'Dispatched'),
-        ('ON_BOARD', 'On Board'),
-        ('IN_TRANSIT', 'In Transit'),
-        ('CUSTOM_CLEARANCE_IN_PROCESS', 'Custom Clearance In Process'),   
-        ('REACHED', 'Reached'),         
-        ('OBI','OBI done'),
-        ('DELIVERED', 'Delivered'),     
-        ('CANCELLED', 'Cancelled'),
-    ],
-    null=True,
-    blank=True,
-    default='IN_PROCESS'
-)
-    created_at = models.DateField(auto_now_add=True)
-    updated_at = models.DateField(auto_now=True)
-    remarks = models.TextField(null=True, blank=True)
+    product = models.ForeignKey("product.Product", on_delete=models.CASCADE,blank=True, null=True, related_name='purchase_order_products')
+    quantity = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2,blank=True, null=True)
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    required_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+    specification = models.TextField(blank=True, null=True)
+    remarks = models.TextField(blank=True, null=True)
+    batch = models.ForeignKey(Batch,on_delete=models.CASCADE, null=True, blank=True,related_name='order_item_batches') 
+    supplier = models.ForeignKey("supplier.Supplier", on_delete=models.CASCADE,blank=True, null=True, related_name='purchase_order_item_suppliers')
 
+    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    VAT_type = models.CharField(
+        max_length=20,
+        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
+        default='exclusive'
+    )
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    status = models.CharField(
+        max_length=50,
+        choices=PurchaseOrder.ORDER_STATUS_CHOICES,
+        default='IN_PROCESS',
+        null=True,
+        blank=True
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    def __str__(self):
+        return f"{self.product.name} ({self.quantity})"
 
   
 
@@ -646,17 +747,7 @@ class PurchaseOrderItem(models.Model):
     def remaining_to_dispatch(self):
         return (self.quantity or 0) - self.quantity_dispatch
 
-    def __str__(self):
-        return f"{self.quantity} nos {self.product.name}"
-    
-    
-    def save(self,*args,**kwargs):      
-        if not self.total_price:
-             self.total_price = self.quantity * self.batch.unit_price
-        super().save(*args,**kwargs)
-    
-
-#
+  #
 
 
 class QualityControl(models.Model):

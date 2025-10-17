@@ -1,29 +1,19 @@
 {% extends 'base.html' %}  
 
-{% block extra_head %}
-
-<style>
-    .form-group {
-    margin-bottom: 0px !important; 
-}
-
-.card-body .row > div {
-    padding: 0 !important; 
-}
-
-form .form-control {
-    height: 5px;  
-    padding: 0; 
-    font-size: 14px;  
-}
-
-</style>
-
-{% endblock %}
 
 {% block content %}
 
 
+<div class="container my-3">
+  <div class="card shadow-sm border-0 rounded-3">
+    <div class="card-body text-center py-3">
+      <a href="{% url 'tasks:tasks_dashboard' %}" 
+         class="btn btn-success btn-sm px-4">
+         🚚 Dashboard
+      </a>
+    </div>
+  </div>
+</div>
 
 <div class="container-fluid main-content">
     <div class="row">  
@@ -61,29 +51,32 @@ form .form-control {
                         </div>
                     </div>
                     
-
-            </div>
-        
-                        
-                            
-
+            </div>                       
+                          
                                                 
+        <form method="get" class="my-4">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+            <label for="start_date" class="form-label">Start Date:</label>
+            <input type="date" id="start_date" name="start_date"
+                    value="{{ request.GET.start_date }}" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+            <label for="end_date" class="form-label">End Date:</label>
+            <input type="date" id="end_date" name="end_date"
+                    value="{{ request.GET.end_date }}" class="form-control">
+            </div>
+
+            <div class="col-md-4">
+            <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+            </div>
+        </div>
+        </form>                              
+                    
+        <div class="col-12 table-responsive table-responsive my-3">    
+            <h2 class="mt-4">Tasks List</h2>  
                      
-                     
-            
-        
-        <div class="col-12 table-responsive my-3">    
-            <h2 class="mt-4">Tasks List</h2>   
-            <form method="get">
-                <label for="start_date">Start Date:</label>
-                <input type="date" id="start_date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
-                
-                <label for="end_date">End Date:</label>
-                <input type="date" id="end_date" name="end_date" value="{{ request.GET.end_date }}" class="form-control"  >
-            
-                <button type="submit" class="btn btn-sm btn-primary">Filter</button>
-            </form>
-           
             <table class="table table-hover mt-4">
                 <thead class="table-dark">
                     <tr>

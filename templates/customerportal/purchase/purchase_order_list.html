@@ -100,13 +100,17 @@
                             </td>
                             
                                                
-                            <td>
-                                {% if order.is_full_delivered %}   
-                                <i class="fas fa-check" style="color:green;font-weight: bold;">Delivered</i>
-                                {% else %}
-                                <span style="color:red;font-weight: bold;">In process</span>
-                                {% endif %}
-                            </td>    
+			 <td>
+                                {% if order.is_fully_delivered %}
+                                 <i class="fas fa-check" style="color:green;font-weight: bold;">Delivered</i>
+                                 {% elif order.status|in_list:'REACHED,OBI' %}
+                                 <span style="color:red;font-weight: bold;">Reached</span>
+                                 {% else %}
+                                 <span style="color:red;font-weight: bold;">In process</span>
+                                 {% endif %}
+                             </td>
+
+
                                    
                             <td class="text-center p-2" style="white-space: nowrap;">{{order.user}}</td>
                             <td class="text-center p-1" style="white-space: nowrap;">
@@ -162,70 +166,63 @@
 
                                           
 
-                
-                
-
-                    <!-- Invoice section -->
-                    {% if order.approver_approval_status != 'APPROVED' %}
-                        <td> <button class="btn btn-secondary" disabled>Pending Approval</button></td>
-                        {% else %}                                                    
-                            {% with shipment=order.purchase_shipment.first %}
-                                {% if shipment %}
-                                    {% with invoices=shipment.shipment_invoices %}
-                                        {% if invoices.exists %}
-                                            {% if shipment.is_fully_invoiced %}
-                                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">Fully Invoiced</i></td>
-                                            {% else %}
-                                                <td><i class="fas fa-check" style="color:green;font-weight: bold;">Partially Invoiced</i></td>
-                                                <td class="text-center p-2" style="white-space: nowrap;">
-                                                    <a href="{% url 'customerportal:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Another Invoice</a>
-                                                </td>
-                                            {% endif %}
-                                        {% else %}
-                                            <td class="text-center p-2" style="white-space: nowrap;">
-                                                <a href="{% url 'customerportal:create_purchase_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
-                                            </td>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    <td><button class="btn btn-sm btn-secondary" disabled>Make shipment first</button></td>
-                                {% endif %}
-                            {% endwith %}   
+                <!-- Invoice Section -->
+               <td>
+                {% with shipment=order.purchase_shipment.first %}
+                    {% if shipment and shipment.shipment_invoices.exists %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-check-circle"></i> Already Invoiced
+                        </span>
+                    {% elif order.status == "DELIVERED" or order.status == "REACHED" %}
+                        <a href="{% url 'customerportal:create_purchase_invoice_from_purchase_order' order.id %}"
+                        class="btn btn-sm btn-primary"
+                        onclick="return confirm('Convert this Purchase Order to an Invoice?');">
+                            Convert PO to  Invoice
+                        </a>
+                    {% else %}
+                        <span class="badge bg-info text-dark">
+                            <i class="fas fa-clock"></i> Goods not delivered yet
+                        </span>
                     {% endif %}
+                {% endwith %}
+            </td>
 
 
-                   <!-- Payment status section -->
-                    <td class="text-center p-2" style="white-space: nowrap;">
-                        {% if order.approver_approval_status != 'APPROVED' %}
-                            <span>Approval Pending</span>
-                        {% else %}
-                            {% with shipment=order.purchase_shipment.first %}
-                                {% if shipment %}
-                                    {% with invoice=shipment.shipment_invoices.first %}
-                                        {% if invoice %}
-                                            {% if invoice.is_fully_paid %}
-                                                <span style="color:green; font-weight: bold;">Fully Paid</span>
-                                            {% elif invoice.remaining_balance == invoice.amount_due %}
-                                                <span style="color:red; font-weight: bold;">No Payment Made</span>
-                                            {% else %}
-                                                <span style="color:orange; font-weight: bold;">Partially Paid</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span style="color:red; font-weight: bold;">Invoice Not Submitted</span>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    <span class="text-secondary">No Shipment</span>
-                                {% endif %}
-                            {% endwith %}
-                        {% endif %}
-                    </td>        
 
+
+                <!-- Payment status section -->
+                        <td>
+                        {% with status=order.get_payment_status %}
+                            {% if status == "FULLY_PAID" %}
+                                <span class="text-success fw-bold">Fully Paid</span>
+                            {% elif status == "PARTIALLY_PAID" %}
+                                <span class="text-warning fw-bold">Partially Paid</span>
+                            {% elif status == "NO_PAYMENT" %}
+                                <span class="text-danger fw-bold">No Payment Made</span>
+                            {% elif status == "NO_INVOICE" %}
+                                <span class="text-muted fw-bold">No Invoice Issued</span>
+                            {% elif status == "NO_SHIPMENT" %}
+                                <span class="text-muted fw-bold">No Shipment</span>
+                            {% else %}
+                                <span class="text-secondary fw-bold">Unknown</span>
+                            {% endif %}
+                        {% endwith %}
+                    </td>   
+                             
                              
                    
                     <td>                      
-                        <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=preview" target="_blank">Preview</a> 
-                        <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=download">Download</a>
+                               
+                    {% if order.get_first_invoice.status|in_list:"SUBMITTED,PARTIALLY_PAID,FULLY_PAID" %}
+                    <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=preview" target="_blank">
+                        Preview
+                    </a>
+                    <a href="{% url 'finance:download_purchase_invoice' order.id %}?mode=download">
+                        Download
+                    </a>
+                    {% else %}
+                        <span>Invoice Not Submitted |{{ invoice.status }}</span>
+                    {% endif %}    
                     </td>
 
                     <td>

@@ -175,8 +175,10 @@ def calculate_average_usage(product, warehouse=None, days=30):
     return usage / days if usage else 0
 
 
+
+
 @login_required
-def create_purchase_request(request):
+def create_purchase_request2(request):
     
     if 'basket' not in request.session:
         request.session['basket'] = []
@@ -275,47 +277,297 @@ def create_purchase_request(request):
 
 
 
+from datetime import date, datetime
+
 @login_required
-def confirm_purchase_request(request):
+def create_purchase_request(request):
+    # Ensure basket exists in session
+    if 'basket' not in request.session:
+        request.session['basket'] = []
+
+    form = PurchaseRequestForm(request.POST or None)
+
+    if request.method == 'POST':
+
+        # --- Add to basket ---
+        if 'add_to_basket' in request.POST:
+            if form.is_valid():
+                category = form.cleaned_data['category']
+                product_obj = form.cleaned_data['product']
+                batch_obj = form.cleaned_data['batch']
+                quantity = form.cleaned_data['quantity']
+                supplier = form.cleaned_data['supplier']
+                unit_price = form.cleaned_data['unit_price']
+                unit_of_measure = form.cleaned_data['unit_of_measure']
+                currency = form.cleaned_data['currency']
+                required_delivery_date = form.cleaned_data['required_delivery_date']
+                specification = form.cleaned_data['specification']
+                notes= form.cleaned_data['notes']
+
+                # ✅ Convert non-serializable data
+                if isinstance(required_delivery_date, (date, datetime)):
+                    required_delivery_date = required_delivery_date.isoformat()  # Convert date to string
+
+                # --- Stock check logic ---
+                product_stocks = Inventory.objects.filter(product=product_obj)
+                total_available_stock = sum(stock.quantity for stock in product_stocks)
+                product_average_usage = calculate_average_usage(product_obj)
+                product_required_stock = product_average_usage * product_obj.lead_time
+
+                if total_available_stock > product_required_stock:
+                    messages.info(
+                        request,
+                        f"There is enough total stock for {product_obj.name}, current stock qty={total_available_stock}"
+                    )
+                    return redirect('purchase:create_purchase_request')
+
+                warehouse_messages = []
+                for stock in product_stocks:
+                    warehouse_avg_usage = calculate_average_usage(product_obj, stock.warehouse)
+                    warehouse_required_stock = warehouse_avg_usage * product_obj.lead_time
+                    if stock.quantity > warehouse_required_stock:
+                        warehouse_messages.append(
+                            f"{stock.product.name} in {stock.warehouse.name}, total available stock={stock.quantity}"
+                        )
+
+                if warehouse_messages:
+                    messages.info(
+                        request,
+                        f"There is enough stock in these warehouses: {', '.join(warehouse_messages)}"
+                    )
+                    return redirect('purchase:create_purchase_request')
+
+                # --- Determine unit price ---
+                if batch_obj:
+                    unit_price = float(batch_obj.purchase_price or 0)
+                else:
+                    latest_batch = (
+                        Batch.objects.filter(product=product_obj)
+                        .order_by('-created_at')
+                        .first()
+                    )
+                    unit_price = float(
+                        (latest_batch.purchase_price if latest_batch and latest_batch.purchase_price else product_obj.unit_price) or 0
+                    )
+
+                # --- Basket update logic ---
+                basket = request.session.get('basket', [])
+                product_in_basket = next((item for item in basket if item['id'] == product_obj.id), None)
+                total_amount = float(quantity) * unit_price
+
+                if product_in_basket:
+                    product_in_basket['quantity'] += quantity
+                    product_in_basket['total_amount'] = product_in_basket['quantity'] * unit_price
+                else:
+                    basket.append({
+                        'id': product_obj.id,
+                        'name': product_obj.name,
+                        'product_type': form.cleaned_data['product_type'],
+                        'category': category.name,
+                        'quantity': quantity,
+                        'sku': product_obj.sku,
+                        'unit_price': unit_price,
+                        'total_amount': total_amount,
+                        'supplier': supplier.name if supplier else None,
+                        'required_delivery_date': required_delivery_date,
+                        'unit_of_measure': unit_of_measure,
+                        'specification': specification,
+                        'currency': currency,
+                        'notes':notes
+                    })
+
+                # --- Grand total update ---
+                grand_total = sum(float(item['total_amount']) for item in basket)
+                request.session['basket'] = basket
+                request.session['grand_total'] = grand_total
+                request.session.modified = True
+
+                messages.success(request, f"✅ Added '{product_obj.name}' to the purchase basket.")
+                return redirect('purchase:create_purchase_request')
+
+            else:
+                messages.error(request, "⚠️ Form is invalid. Please check the details and try again.")
+
+        # --- Update/Delete from basket ---
+        elif 'action' in request.POST:
+            action = request.POST['action']
+            product_id = int(request.POST.get('product_id', 0))
+            basket = request.session.get('basket', [])
+
+            if action == 'update':
+                new_quantity = int(request.POST.get('quantity', 1))
+                for item in basket:
+                    if item['id'] == product_id:
+                        item['quantity'] = new_quantity
+                        item['total_amount'] = new_quantity * float(item['unit_price'])
+
+            elif action == 'delete':
+                basket = [item for item in basket if item['id'] != product_id]
+
+            # Recalculate grand total after update/delete
+            request.session['basket'] = basket
+            request.session['grand_total'] = sum(float(i['total_amount']) for i in basket)
+            request.session.modified = True
+
+            messages.success(request, "🧺 Purchase basket updated successfully.")
+            return redirect('purchase:create_purchase_request')
+
+        # --- Confirm Purchase ---
+        elif 'confirm_purchase' in request.POST:
+            basket = request.session.get('basket', [])
+            if not basket:
+                messages.error(request, "⚠️ Purchase basket is empty. Add products before confirming.")
+                return redirect('purchase:create_purchase_request')
+            return redirect('purchase:confirm_purchase_request')
+
+    # --- Default page load ---
     basket = request.session.get('basket', [])
+    grand_total = request.session.get('grand_total', 0)
+    return render(
+        request,
+        'purchase/create_purchase_request.html',
+        {'form': form, 'basket': basket, 'grand_total': grand_total}
+    )
+
+
+
+
+
+@login_required
+def confirm_purchase_request(request):   
+    basket = request.session.get('basket', [])
+    grand_total = 0
+
+    # Ensure basket is a list
+    if not isinstance(basket, list):
+        basket = []
+        request.session['basket'] = basket
+
+    # Handle empty basket
     if not basket:
         messages.error(request, "Purchase basket is empty. Cannot confirm purchase.")
         return redirect('purchase:create_purchase_request')
 
+    # Calculate total
+    for item in basket:       
+        line_total = float(item['total_amount'])        
+        grand_total += line_total  
+
     if request.method == 'POST':
         try:
-            with transaction.atomic(): 
-                total_amount = sum(item['quantity'] * item['unit_price'] for item in basket)
-                purchase_request_order = PurchaseRequestOrder(
-                    total_amount=total_amount,
-                    status='PENDING',  
-                    user=request.user  
+            with transaction.atomic():
+                total_amount = sum(float(item['quantity']) * float(item['unit_price']) for item in basket)
+                supplier_name = basket[0].get('supplier') if basket else None                
+                supplier = get_object_or_404(Supplier, name=supplier_name)
+                required_delivery_date =basket[0].get('required_delivery_date') if basket else None  
+
+                # Create PurchaseRequestOrder
+                purchase_request_order = PurchaseRequestOrder.objects.create(
+                    total_amount=float(total_amount),
+                    status='IN_PROCESS',   # ✅ match your model choices
+                    approval_status='SUBMITTED',
+                    user=request.user,
+                    supplier=supplier,
+                    required_delivery_date=required_delivery_date
+
                 )
-                purchase_request_order.save()  
-               
+
+                # Create PurchaseRequestItems
                 for item in basket:
                     product = get_object_or_404(Product, id=item['id'])
-                    quantity = item['quantity']
+                    quantity = float(item['quantity'])
+                    unit_price = float(item['unit_price'])
+                    total_price = float(quantity) * unit_price
+                    unit_of_measure=item['unit_of_measure']
+                    currency=item['currency']
+                    item_required_delivery_date=item['required_delivery_date']
+                    specification = item['specification']
 
-                    purchase_request_item = PurchaseRequestItem(
+                    PurchaseRequestItem.objects.create(
                         purchase_request_order=purchase_request_order,
                         product=product,
                         quantity=quantity,
-                        user=request.user  
-                    )
-                    purchase_request_item.save()
+                        user=request.user,
+                        supplier=supplier,
+                        unit_price=unit_price,
+                        total_price=total_price,
+                        priority='MEDIUM',
+                        unit_of_measure=unit_of_measure,
+                        currency=currency,
+                        required_delivery_date = item_required_delivery_date,
+                        specification=specification,
+                        notes=item['notes']
 
+                    )
+
+                # Clear basket
                 request.session['basket'] = []
                 request.session.modified = True
-                messages.success(request, "Purchase order created successfully!")
-                return redirect('purchase:create_purchase_request')
 
-        except Exception as e: 
+                messages.success(request, "Purchase request order created successfully!")
+                return redirect('purchase:purchase_request_order_list')
+
+        except Exception as e:
             logger.error("Error creating purchase order: %s", e)
             messages.error(request, f"An error occurred while creating the purchase order: {str(e)}")
-            return redirect('purchase:create_purchase_request')
-    return render(request, 'purchase/confirm_purchase_request.html', {'basket': basket})
+            return redirect('purchase:purchase_request_order_list')
 
+    return render(request, 'purchase/confirm_purchase_request.html', {
+        'basket': basket,
+        'grand_total': grand_total
+    })
+
+
+
+
+
+
+from .forms import PurchaseRequestOrderForm, PurchaseRequestItemFormSet
+from .models import PurchaseRequestOrder
+
+
+
+@transaction.atomic
+def create_purchase_request_order(request):
+    if request.method == "POST":
+        order_form = PurchaseRequestOrderForm(request.POST)
+        formset = PurchaseRequestItemFormSet(request.POST)
+
+        if order_form.is_valid() and formset.is_valid():
+            order = order_form.save(commit=False)
+            order.user = request.user
+            order.save()  # save parent first
+            items = formset.save(commit=False)
+
+            for item in items:
+                item.purchase_request_order = order
+                # ensure unit_price and quantity are not None
+                item.unit_price = item.unit_price or 0
+                item.quantity = item.quantity or 0
+                item.total_price = item.unit_price * item.quantity
+                item.save()
+
+            # calculate total_amount safely
+            total_amount = sum(
+                (item.unit_price or 0) * (item.quantity or 0) 
+                for item in order.purchase_request_order.all()
+            )
+            order.total_amount = total_amount
+            order.save()
+
+            messages.success(request, f"Purchase Request Order {order.order_id or order.id} created successfully.")
+            return redirect('purchase:purchase_request_order_list')
+
+        else:
+            messages.error(request, "Please correct the errors in the form or items.")
+    else:
+        order_form = PurchaseRequestOrderForm()
+        formset = PurchaseRequestItemFormSet()
+
+    return render(request, 'purchase/create_purchase_request_order.html', {
+        'order_form': order_form,
+        'formset': formset,
+    })
 
 
 @login_required
@@ -433,6 +685,7 @@ def process_purchase_request(request, order_id):
 
 ###########################################################################################@login_required
 
+@login_required
 def create_rfq(request, request_order_id):
     purchase_request_order = get_object_or_404(PurchaseRequestOrder, id=request_order_id)
 
@@ -442,21 +695,31 @@ def create_rfq(request, request_order_id):
 
         if form.is_valid() and formset.is_valid():
             with transaction.atomic():
+                # Save RFQ instance
                 rfq = form.save(commit=False)
                 rfq.purchase_request_order = purchase_request_order
-                rfq.save()       
+                rfq.save()
+
+                # ✅ Save selected suppliers (ManyToManyField)
+                form.save_m2m()
+
+                # Validate each RFQ item against PurchaseRequestOrder
                 for form_data in formset.cleaned_data:
                     if not form_data or form_data.get("DELETE"):
                         continue
+
                     product = form_data.get("product")
                     qty_requested = form_data.get("quantity")
 
                     try:
                         pr_item = purchase_request_order.purchase_request_order.get(product=product)
-                    except:
-                        messages.error(request, f"{product} was not part of the purchase request.")
+                    except PurchaseRequestItem.DoesNotExist:
+                        messages.error(
+                            request,
+                            f"{product} was not part of the purchase request."
+                        )
                         return redirect("purchase:purchase_request_order_list")
-     
+
                     if qty_requested > pr_item.quantity:
                         messages.warning(
                             request,
@@ -464,11 +727,14 @@ def create_rfq(request, request_order_id):
                             f"requested only {pr_item.quantity}."
                         )
                         return redirect("purchase:purchase_request_order_list")
+
+                # Save RFQ items
                 formset.instance = rfq
                 formset.save()
 
             messages.success(request, f"RFQ {rfq.rfq_number} created successfully.")
             return redirect("purchase:rfq_detail", pk=rfq.pk)
+
     else:
         form = RFQForm(initial={'purchase_request_order': purchase_request_order})
         initial_data = [
@@ -480,7 +746,11 @@ def create_rfq(request, request_order_id):
     return render(
         request,
         "purchase/rfq/create_rfq.html",
-        {"form": form, "formset": formset, "purchase_request_order": purchase_request_order},
+        {
+            "form": form,
+            "formset": formset,
+            "purchase_request_order": purchase_request_order
+        }
     )
 
 
@@ -510,45 +780,72 @@ def send_rfq(request, pk):
 
 
 
+import logging
+from django.utils import timezone
+import uuid
+
+logger = logging.getLogger(__name__)
+
 @login_required
 def create_supplier_quotation(request, pk):
     rfq = get_object_or_404(RFQ, pk=pk)
     supplier = Supplier.objects.filter(user=request.user).first()
+    if not supplier:
+        messages.warning(request, "No supplier found for the logged-in user.")
+        logger.warning(f"User {request.user} tried to access create_supplier_quotation but has no supplier linked.")
+    logger.debug(f"Accessed create_supplier_quotation view | RFQ ID: {rfq.id}, Supplier: {supplier}")
 
-    initial_data = [
-        {"product": item.product, "quantity": item.quantity}
-        for item in rfq.items.all()
-    ]
+    existing_quotation = rfq.rfq_quotation.filter(supplier=supplier).first()
+    if existing_quotation:
+        messages.info(request, "You have already submitted a quotation for this RFQ.")
+        logger.info(f"Supplier {supplier} already has quotation {existing_quotation.id} for RFQ {rfq.id}")
+        return redirect("customerportal:supplier_quotation_detail", pk=existing_quotation.id)
+
+    initial_data = [{"product": item.product, "quantity": item.quantity} for item in rfq.items.all()]
+    logger.debug(f"Initial formset data: {initial_data}")
 
     if request.method == "POST":
+        logger.debug("Received POST request for SupplierQuotationForm and Formset.")
         form = SupplierQuotationForm(request.POST)
         formset = SupplierQuotationItemFormSet(request.POST)
 
         if form.is_valid() and formset.is_valid():
+            logger.debug("Both form and formset are valid. Saving quotation...")
             quotation = form.save(commit=False)
             quotation.rfq = rfq
-            quotation.save()  # Save first to get pk for formset
+
+            if not quotation.quotation_number:
+                quotation.quotation_number = f"SQ-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+
+            quotation.save()
+            logger.info(f"Created new SupplierQuotation: {quotation.quotation_number} (ID: {quotation.id})")
 
             formset.instance = quotation
-            formset.save()  # Save items
-
-            # --- Calculate totals AFTER items are saved ---
-            quotation.calculate_tax_amounts()
-            quotation.save(update_fields=['total_amount', 'vat_amount', 'ait_amount', 'net_due_amount'])
+            formset.save()
+            quotation.calculate_totals()  # Recalculate totals now that items exist
+            quotation.save(update_fields=['subtotal', 'vat_amount', 'ait_amount', 'total_amount', 'net_due_amount'])
+            logger.debug("Formset saved successfully.")
 
             messages.success(request, f"Quotation {quotation.quotation_number} created.")
-            return redirect("purchase:supplier_quotation_detail", pk=quotation.pk)
+            return redirect("customerportal:supplier_quotation_detail", pk=quotation.pk)
         else:
-            print("Form errors:", form.errors)
-            print("Formset errors:", formset.errors)
+            logger.info("Form submission failed validation.")
+            logger.info(f"Form errors: {form.errors.as_json()}")
+            logger.info(f"Formset errors: {formset.errors}")
+            messages.error(request, f"Please correct the errors below and resubmit.{formset.errors}--{form.errors.as_json()}")
     else:
+        logger.debug("Rendering empty quotation form and formset.")
         form = SupplierQuotationForm(initial={'supplier': supplier})
         formset = SupplierQuotationItemFormSet(initial=initial_data)
 
     return render(
         request,
-        "purchase/quotations/create_supplier_quotation.html",
-        {"form": form, "formset": formset, "rfq": rfq},
+         "purchase/quotations/create_supplier_quotation.html",
+        {
+            "form": form,
+            "formset": formset,
+            "rfq": rfq,
+        },
     )
 
 
@@ -562,7 +859,7 @@ def supplier_quotation_detail(request, pk):
 
 @login_required
 def supplier_quotation_list(request):
-    quotations = SupplierQuotation.objects.all().order_by('-date')
+    quotations = SupplierQuotation.objects.filter(status__in=['sent','approved']).order_by('-date')
     return render(request, "purchase/quotations/supplier_quotation_list.html", {"quotations": quotations})
 
 
@@ -637,61 +934,6 @@ def convert_quotation_to_po(request, quotation_id):
         return redirect(request.META.get("HTTP_REFERER", "purchase:supplier_quotation_list"))
 
 
-@login_required
-def add_batch_details2(request, po_id):
-    print('start adding batch')
-
-    po_items = PurchaseOrderItem.objects.filter(
-        purchase_order_id=po_id, batch__isnull=True
-    )
-    if not po_items.exists():
-        print('no po items exist')
-        messages.info(request, "All items already have batches.")
-        return redirect("purchase:purchase_order_list")
-
-    # ✅ Define formset factory first
-    BatchFormSet = modelformset_factory(Batch, form=BatchFormShort, extra=len(po_items))
-
-    # Prepare initial data
-    initial_data = []
-    for po_item in po_items:
-        quotation_item = po_item.purchase_order.supplier_quotation.purchase_quotation_items.filter(
-            product=po_item.product
-        ).first()
-        purchase_price = quotation_item.unit_price if quotation_item else 0
-        initial_data.append({
-            "quantity": po_item.quantity,
-            "product": po_item.product,
-            "purchase_price": purchase_price
-        })
-
-    # ✅ Now safely initialize the formset
-    if request.method == "POST":
-        formset = BatchFormSet(request.POST)
-        if formset.is_valid():
-            print("Formset is valid. Start saving batches...")
-            for form, po_item in zip(formset.forms, po_items):
-                batch = form.save(commit=False)
-                batch.product = po_item.product
-                batch.supplier = po_item.supplier
-                batch.save()
-                po_item.batch = batch
-                po_item.save()
-                print(f"Saved batch {batch.id}, product {batch.product.name}")
-            print("All batches saved, now redirecting...")
-            messages.success(request, "Batch details saved successfully.")
-            return redirect("purchase:purchase_order_list")
-        else:
-            print('form errors', formset.errors)
-            messages.error(request, "There was an error submitting the batch details. Check server logs for details.")
-    else:
-        formset = BatchFormSet(queryset=Batch.objects.none(), initial=initial_data)
-
-    return render(request, "purchase/add_batch_details.html", {
-        "formset": formset,
-        "po": po_items.first().purchase_order,
-    })
-
 
 @login_required
 def add_batch_details(request, po_id):
@@ -729,6 +971,7 @@ def add_batch_details(request, po_id):
                 purchase_price = form.cleaned_data.get("purchase_price")
                 regular_price = form.cleaned_data.get("regular_price")
                 discounted_price = form.cleaned_data.get("discounted_price")
+                vat_percentage = form.cleaned_data.get("vat_percentage")
 
                 # Check if a similar batch exists (same product, same supplier, same dates)
                 existing_batch = Batch.objects.filter(
@@ -750,7 +993,12 @@ def add_batch_details(request, po_id):
                     # Create new batch
                     batch = form.save(commit=False)
                     # Assuming each po_item has the same supplier as the product in the form
-                    batch.supplier = po_items.filter(product=product).first().supplier
+                    po_item = po_items.filter(product=product).first()
+                    if po_item:                     
+                        batch.supplier = po_item.supplier or po_item.purchase_order.supplier
+                    else:
+                        batch.supplier = None  
+                    batch.user = request.user                                     
                     batch.save()
 
                 # Link PO items to the batch
@@ -775,260 +1023,13 @@ def add_batch_details(request, po_id):
 
 
 @login_required
-def create_purchase_order2(request, request_id):
-    request_instance = get_object_or_404(PurchaseRequestOrder, id=request_id)
-
-    if 'basket' not in request.session:
-        request.session['basket'] = []
-    form = PurchaseOrderForm(request.POST,request_instance=request_instance)   
-    if request.method == 'POST':
-        if 'add_to_basket' in request.POST:
-            if form.is_valid():
-                category = form.cleaned_data['category']
-                product_obj = form.cleaned_data['product']
-                quantity = form.cleaned_data['quantity']
-                supplier = form.cleaned_data['supplier']
-                batch = form.cleaned_data['batch']
-
-                item_request = form.cleaned_data['order_item_id'] 
-                item_request_id = item_request.id if item_request else None
-
-                purchase_request_order = form.cleaned_data.get('purchase_request_order')
-                purchase_request_order_id = purchase_request_order.id if purchase_request_order else None
-
-                total_requested_quantity = (
-                    request_instance.purchase_request_order.filter(product=product_obj)
-                    .aggregate(total_requested=Sum('quantity'))
-                    .get('total_requested', 0)
-                )
-
-                if not total_requested_quantity:
-                    messages.error(
-                        request,
-                        f"The product '{product_obj.name}' is not part of this purchase request."
-                    )
-                    return redirect('purchase:create_purchase_order', request_instance.id)
-                                
-                basket = request.session.get('basket', [])
-                total_quantity_in_basket = sum(
-                    item['quantity'] for item in basket if item['id'] == product_obj.id
-                )              
-                new_total_quantity = total_quantity_in_basket + quantity
-                if new_total_quantity > total_requested_quantity:
-                    messages.error(
-                        request,
-                        f"Cannot add {quantity} of '{product_obj.name}' to the basket. "
-                        f"The total quantity ({new_total_quantity}) exceeds the requested quantity "
-                        f"({total_requested_quantity})."
-                    )
-                    return redirect('purchase:create_purchase_order', request_instance.id)
-                               
-
-                product_in_basket = next(
-                    (item for item in basket if item['id'] == product_obj.id),
-                    None
-                )
-                total_amount = float(quantity) * float(product_obj.unit_price)
-
-                if product_in_basket:
-                    product_in_basket['quantity'] += quantity
-                    product_in_basket['total_amount'] += total_amount
-                else:
-                    basket.append({
-                        'item_request_id': item_request_id,
-                        'id': product_obj.id,
-                        'name': product_obj.name,
-                        'product_type': product_obj.product_type,
-                        'category': category.name,
-                        'quantity': quantity,
-                        'sku': product_obj.sku,
-                        'unit_price': float(batch.unit_price),
-                        'supplier_id': supplier.id,
-                        'supplier': supplier.name,
-                        'batch_id': batch.id,
-                      
-                        'total_amount': total_amount,
-                        'purchase_request_order_id': purchase_request_order_id,
-                    })
-                request.session['basket'] = basket
-                request.session.modified = True
-                messages.success(request, f"Added '{product_obj.name}' to the purchase basket")
-                return redirect('purchase:create_purchase_order', request_instance.id)
-            else:
-                messages.error(request, "Form is invalid. Please check the details and try again.")
-
-        elif 'action' in request.POST:
-            action = request.POST['action']
-            product_id = int(request.POST.get('product_id', 0))   
-
-            if action == 'update':
-                new_quantity = int(request.POST.get('quantity', 1))
-                for item in request.session['basket']:
-                    if item['id'] == product_id:
-                        item['quantity'] = new_quantity
-                        break
-            elif action == 'delete':
-                request.session['basket'] = [
-                    item for item in request.session['basket'] if item['id'] != product_id 
-                ]
-            request.session.modified = True
-            messages.success(request, "Purchase basket updated successfully.")
-            return redirect('purchase:create_purchase_order', request_instance.id)
-
-        elif 'confirm_purchase' in request.POST:
-            basket = request.session.get('basket', [])
-            if not basket:
-                messages.error(request, "Purchase basket is empty. Add products before confirming the purchase.")
-                return redirect('purchase:create_purchase_order', request_instance.id)
-            return redirect(f"{reverse('purchase:confirm_purchase_order')}?request_id={request_instance.id}")
-
-    form = PurchaseOrderForm(request_instance=request_instance)
-    basket = request.session.get('basket', [])
-    return render(request, 'purchase/create_purchase_order.html', {'form': form, 'basket': basket})
-
-
-
-
-@login_required
-def confirm_purchase_order(request):
-    request_id = request.GET.get('request_id')
-    basket = request.session.get('basket', [])
-
-    if not basket:
-        messages.error(request, "Purchase basket is empty. Cannot confirm purchase.")
-        return redirect('purchase:purchase_order_list')
-
-    if request.method == 'POST':
-        try:
-            with transaction.atomic(): 
-                total_amount = sum(item['quantity'] * item['unit_price'] for item in basket)
-                supplier_id = basket[0]['supplier_id'] if basket else None                
-                supplier = get_object_or_404(Supplier, id=supplier_id)
-
-                purchase_request_order = get_object_or_404(PurchaseRequestOrder, id=request_id)
-
-                purchase_order = PurchaseOrder(
-                    total_amount=total_amount,
-                    supplier=supplier,
-                    status='IN_PROCESS',
-                    user=request.user,
-                    purchase_request_order=purchase_request_order,
-                    
-                )
-                purchase_order.save()
-
-                for item in basket:
-                    logger.info(f"Basket item: {item}")
-                    
-                    product = get_object_or_404(Product, id=item['id'])
-                    quantity = item['quantity']
-                    order_item = get_object_or_404(PurchaseRequestItem, id=item['item_request_id'])
-                    batch = get_object_or_404(Batch,id=item['batch_id'])
-
-                    purchase_item = PurchaseOrderItem(
-                        purchase_order=purchase_order,
-                        product=product,
-                        quantity=quantity,
-                        batch = batch,
-                        user=request.user,
-                        order_item_id=order_item, 
-                    )
-                    purchase_item.save()
-
-                request.session['basket'] = []
-                request.session.modified = True
-                messages.success(request, "Purchase order created successfully!")
-                return redirect('purchase:create_purchase_order', purchase_request_order.id)
-
-        except Exception as e: 
-            logger.error("Error creating purchase order: %s", e)
-            messages.error(request, f"An error occurred while creating the purchase order: {str(e)}")
-            return redirect('purchase:create_purchase_order', request_id)
-    return render(request, 'purchase/confirm_purchase_order.html', {'basket': basket})
-
-
-
-@login_required
-def create_purchase_order(request, request_id):
-    request_instance = get_object_or_404(PurchaseRequestOrder, id=request_id)
-    PurchaseOrderFormSet = formset_factory(PurchaseOrderForm, extra=0, can_delete=True)
-
-    if request.method == 'POST':        
-        formset = PurchaseOrderFormSet(
-            request.POST,
-            form_kwargs={'request_instance': request_instance}
-        )
-        if formset.is_valid():
-            try:
-                with transaction.atomic():
-                    # Create one PurchaseOrder per request instance
-                    purchase_order = PurchaseOrder.objects.create(
-                        purchase_request_order=request_instance,
-                        total_amount=0,
-                        status='IN_PROCESS',
-                        user=request.user,
-                        order_date=timezone.now()
-                    )
-
-                    total_amount = 0
-                    for form in formset:
-                        if form.cleaned_data and not form.cleaned_data.get('DELETE'):
-                            order_item = form.cleaned_data['order_item_id']
-                            product = form.cleaned_data['product']
-                            batch = form.cleaned_data['batch']
-                            supplier = form.cleaned_data['supplier']
-                            quantity = form.cleaned_data['quantity']
-
-                            item_total = float(quantity) * float(batch.purchase_price if batch else product.unit_price)
-                            total_amount += item_total
-
-                            # Save PurchaseOrderItem
-                            PurchaseOrderItem.objects.create(
-                                order_item_id=order_item,
-                                purchase_order=purchase_order,
-                                product=product,
-                                batch=batch,
-                                supplier=supplier,
-                                quantity=quantity,
-                                total_price=item_total,
-                                user=request.user,
-                                status='IN_PROCESS'
-                            )
-
-                    # Update total amount in purchase order
-                    purchase_order.total_amount = total_amount
-                    purchase_order.supplier=supplier
-                    purchase_order.save()
-
-                messages.success(request, "Purchase order created successfully!")
-                return redirect('purchase:purchase_order_list')
-
-            except Exception as e:
-                messages.error(request, f"Error creating purchase order: {e}")
-        else:
-            print("❌ Formset errors:", formset.errors)
-
-    else:
-        # Pre-fill formset with all request items
-        initial_data = [
-            {
-                'order_item_id': item,
-                'category': item.product.category,
-                'product': item.product,
-                'quantity': item.quantity
-            }
-            for item in request_instance.purchase_request_order.all()
-        ]
-        formset = PurchaseOrderFormSet(
-            initial=initial_data,
-            form_kwargs={'request_instance': request_instance}
-        )
-
-    return render(
-        request,
-        'purchase/create_purchase_order.html',
-        {'formset': formset, 'request_instance': request_instance}
-    )
+def batch_details(request, batch_id):
+    batch = get_object_or_404(Batch, id=batch_id)
+    
+    context = {
+        'batch': batch
+    }
+    return render(request, 'purchase/batch_details.html', context)
 
 
 
@@ -1223,6 +1224,7 @@ def qc_inspect_item(request, item_id):
     else:
         form = QualityControlForm(initial={'total_quantity': purchase_dispatch_item.dispatch_quantity})    
     return render(request, 'purchase/qc_inspect_item.html', {'form': form, 'purchase_order': purchase_order,'purchase_dispatch_item':purchase_dispatch_item,'purchase_shipment': purchase_shipment})
+
 
 
 

@@ -119,3 +119,55 @@ def convert_quotation_to_invoice(supplier_quotation, user=None):
     return invoice
 
 
+
+from .models import PurchaseInvoice
+from purchase.models import PurchaseOrder, PurchaseOrderItem 
+from decimal import Decimal, ROUND_HALF_UP
+
+
+@transaction.atomic
+def create_purchase_invoice_from_po(purchase_order_id, user, shipment=None):  
+    po = PurchaseOrder.objects.select_related('supplier', 'supplier_quotation').prefetch_related('purchase_order_item').get(pk=purchase_order_id)
+
+    # ✅ Validate PO status
+    if po.approval_status not in ["APPROVED", "REVIEWED", "SUBMITTED"]:
+        raise ValueError("Purchase Order must be approved or submitted before creating an invoice.")
+
+    # ✅ Prevent duplicate invoice for same PO
+    existing_invoice = PurchaseInvoice.objects.filter(purchase_shipment__purchase_order=po).first()
+    if existing_invoice:
+        return existing_invoice
+
+    # ✅ Calculate total base amount from PO items
+    total_base = Decimal('0.00')
+    for item in po.purchase_order_item.all():
+        total_base += Decimal(item.total_price or 0)
+
+    # ✅ VAT / AIT calculations
+    vat_amount = Decimal('0.00')
+    ait_amount = Decimal('0.00')
+
+  
+    if po.AIT_type == "exclusive" and po.AIT_rate:
+        ait_amount = (total_base * Decimal(po.AIT_rate) / Decimal('100')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    elif po.AIT_type == "inclusive" and po.AIT_rate:
+        ait_amount = (total_base * Decimal(po.AIT_rate) / (Decimal('100') + Decimal(po.AIT_rate))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    net_due = (total_base + vat_amount - ait_amount).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    # ✅ Create PurchaseInvoice
+    invoice = PurchaseInvoice.objects.create(
+        user=user,
+        purchase_shipment=shipment,
+        supplier=po.supplier,
+        issued_date=timezone.now(),
+        amount_due=po.total_amount,
+        status="SUBMITTED",
+        AIT_rate=po.AIT_rate,
+        AIT_type=po.AIT_type,       
+        vat_amount=po.vat_amount,
+        ait_amount=po.ait_amount,
+        net_due_amount=po.net_due_amount,
+    )
+
+    return invoice

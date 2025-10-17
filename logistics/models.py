@@ -11,7 +11,7 @@ from sales.models import SaleOrderItem,SaleOrder
 from purchase.models import PurchaseOrder,PurchaseOrderItem
 from accounts.models import CustomUser
 from django.utils import timezone
-
+from purchase.models import Batch
 #######################################################################################################
 
 
@@ -73,7 +73,7 @@ class PurchaseShipment(models.Model):
 
     def update_shipment_status(self):       
         dispatch_items = self.shipment_dispatch_item.all() 
-        all_received = dispatch_items.filter(status__in=['RECEIVED','OBI','DELIVERED']).count() == dispatch_items.count()
+        all_received = dispatch_items.filter(status__in=['REACHED','OBI','DELIVERED']).count() == dispatch_items.count()
         any_in_process = dispatch_items.filter(status='IN_PROCESS').exists()
         any_in_custom = dispatch_items.filter(status='CUSTOM_CLEARANCE_IN_PROCESS').exists()
         any_in_transit = dispatch_items.filter(status__in=['IN_TRANSIT', 'ON_BOARD']).exists()
@@ -110,6 +110,7 @@ class PurchaseDispatchItem(models.Model):
     dispatch_item = models.ForeignKey(PurchaseOrderItem,on_delete=models.CASCADE,
         related_name='order_dispatch_item',null=True, blank=True
     )    
+    batch = models.ForeignKey(Batch,on_delete=models.CASCADE, null=True, blank=True,related_name='purchase_dispatch_item_batch') 
     dispatch_quantity = models.PositiveIntegerField(null=True, blank=True)
     dispatch_date = models.DateField(null=True, blank=True) 
     delivery_date = models.DateField(null=True, blank=True)
@@ -243,7 +244,7 @@ class SaleShipment(models.Model):
       
   
 
-from purchase.models import Batch
+
 
 class SaleDispatchItem(models.Model):
     dispatch_id=models.CharField(max_length=20,null=True,blank=True)

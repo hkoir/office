@@ -4,17 +4,16 @@
 
 
 
-
-
-
 <div class="container-fluid main-content my-5" style="margin-top: 0px;">
+     
+</div>
     <div class="row">
         <h4>Dispatch Items for Purchase Order: {{ purchase_order.order_id }}</h4>
 
             <div class="col-12">              
                 <div class="container fluid">
                     <div class="row">                        
-                        <div class="col-12 col-md-4 table-responsive">
+                        <div class="col-12 col-md-4">
                             <table class="table table-hover">
                                 <thead class="table-dark">
                                     <h5 style="color:green;font-weight: bolder;">Summary</h5>
@@ -49,20 +48,20 @@
                
             </div>
 
-            <div class="col-12 mt-4 table-responsive">
+            <div class="col-12 mt-4">
                 <table class="table table-hover">
                     <thead class="table-dark">
                         <tr>
                             <th rowspan="2" style="width: 5%;">#</th>
                             <th rowspan="2" style="width: 15%;">Item Name</th>
-                            <th rowspan="2" style="color:rgb(21, 0, 128);font-weight: bold; width: 10%;">Order Qty</th>
+                            <th rowspan="2" style="color:yellow;font-weight: bold; width: 10%;">Order Qty</th>
                             <th rowspan="2" style="color:green;font-weight: bold; width: 10%;">Dispatch Qty</th>
-                            <th rowspan="2" style="color:rgb(0, 4, 128);font-weight: bold; width: 15%;">Committed Delivery</th>
+                            <th rowspan="2" style="color:yellow;font-weight: bold; width: 15%;">Committed Delivery</th>
                             <th rowspan="2" style="color:green;font-weight: bold; width: 15%;">Actual Delivery</th>
                             <th rowspan="2" style="width: 10%;">Delivery Status</th>
                             <th rowspan="2" style="width: 20%;">Next Action</th>
                             <th rowspan="2" style="width: 10%;">Cancel</th>
-                            <th colspan="2" style="color:red;font-weight: bold; width: 15%;">Quality Control</th>
+                            <th colspan="2" style="color:yellow;font-weight: bold; width: 15%;">Quality Control</th>
                         </tr>
                         <tr>
                             <th>Good Quantity</th>
@@ -81,10 +80,10 @@
                                     <td>{{ dispatch_item.dispatch_quantity }}</td>
                                     <td>{{ dispatch_item.delivery_date }}</td>
                                     <td>
-                                        {% if dispatch_item.status|in_list:"REACHED,OBI,DELIVERED" %}
+                                        {% if dispatch_item.status|item_list:"REACHED,OBI,DELIVERED" %}
                                             {{ dispatch_item.updated_at|date:"M-d,Y" }}
                                         {% else %}
-                                            <span style="color:red;font-weight: bold;">Not Arrived</span>
+                                            <span style="color:brown;font-weight: bold;">Not Arrived</span>
                                         {% endif %}
                                     </td>
                                     <td>{{ dispatch_item.get_status_display }}</td>
@@ -107,7 +106,7 @@
                                                     {% elif dispatch_item.status == "CANCELLED" %}
                                                         <option value="CANCELLED">Cancelled</option>  
                                                     {% else %}
-                                                        <option disabled selected>No action needed</option>
+                                                        <option value = 'COMPLETED'>Completed</option>
                                                     {% endif %}
                                                 </select>
                                                 <button type="submit" class="btn btn-primary btn-sm">Update</button>
@@ -115,14 +114,22 @@
                                         </form>
                                     </td>
                                     <td>
-                                        {% if dispatch_item.status|in_list:"REACHED,OBI,DELIVERED,ONBOARD,CUSTOM_CLEARANCE_IN_PROCESS"|yesno:"true,false" %}
+                                        {% if dispatch_item.status|item_list:"REACHED,OBI,DELIVERED,ONBOARD,CUSTOM_CLEARANCE_IN_PROCESS"|yesno:"true,false" %}
                                         <i class="fas fa-times" style="color:red;font-weight: bold;"></i>
                                         {% else %}
-                                        <a href="{% url 'customerportal:cancel_dispatch_item' dispatch_item.id %}" class="btn btn-sm btn-danger">Cancel</a>
+                                        <a href="{% url 'logistics:cancel_dispatch_item' dispatch_item.id %}" class="btn btn-sm btn-danger">Cancel</a>
                                         {% endif %}
                                     </td>
-                                    <td>{{ qc_quantities|get_item:dispatch_item.id|get_item:'good_quantity'|default:0 }}</td>
-                                    <td>{{ qc_quantities|get_item:dispatch_item.id|get_item:'bad_quantity'|default:0 }}</td>
+                                    <td>
+                                        {% if qc_quantities %}
+                                        {{ qc_quantities|get_item:dispatch_item.id|get_item:'good_quantity'|default:0 }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if qc_quantities %}
+                                        {{ qc_quantities|get_item:dispatch_item.id|get_item:'bad_quantity'|default:0 }}
+                                        {% endif %}
+                                    </td>
                                 </tr>
                             {% endfor %}
                         {% endfor %}

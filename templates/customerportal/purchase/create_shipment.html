@@ -1,0 +1,25 @@
+
+{% extends 'partner_portal_base.html' %}
+{% load custom_filters %}
+{% block content %}
+
+
+
+<div class="container-fluid main-content my-5">     
+    <div class="row">
+        <div class="col-12 col-4"></div>
+        <div class="col-12 col-4">
+            <h2>Create Shipment for {{ purchase_order }}</h2>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Create Shipment</button>
+                </form>
+
+        </div>
+        <div class="col-12 col-4"></div>
+    </div>
+</div>
+
+{% endblock %}

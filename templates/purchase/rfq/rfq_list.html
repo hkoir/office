@@ -49,6 +49,7 @@
                         <th>Date</th>
                         <th>Valid Until</th>
                         <th>Status</th>
+			<th>RFQ details</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -61,12 +62,23 @@
                         <td>{{ rfq.valid_until }}</td>
                         <td>{{ rfq.get_status_display }}</td>
                         <td>
-                            <a href="{% url 'purchase:rfq_detail' rfq.pk %}" class="btn btn-info btn-sm m-2">RFQ Details</a>  
-                             {% if not rfq.rfq_quotation.first %}
-                            <a href="{% url 'purchase:create_supplier_quotation' rfq.pk %}" class="btn btn-info btn-sm m-2">Create Quotation</a>  
-                            {% endif %}  
-                            {% if rfq.rfq_quotation.first %}                         
-                              <a href="{% url 'purchase:supplier_quotation_comparison' rfq.id %}" class="btn btn-sm btn-success">Quotation Comparision</a>
+                            <a href="{% url 'purchase:rfq_detail' rfq.pk %}" class="btn btn-info btn-sm m-2">RFQ Details</a>
+			</td>
+			<td>  
+                             {% if not rfq.rfq_quotation.first and rfq.status == "sent" %}
+                            <a href="{% url 'purchase:create_supplier_quotation' rfq.pk %}" class="btn btn-info btn-sm m-2">
+				Create Quotation</a>  
+                              
+                            {% elif rfq.rfq_quotation.first %}                         
+                              <a href="{% url 'purchase:supplier_quotation_comparison' rfq.id %}" 
+				class="btn btn-sm btn-success">Quotation Comparision</a>
+				{% else %}
+				<span>
+				<form id="send-rfq-form" method="post" action="{% url 'purchase:send_rfq' rfq.id %}">
+                        	{% csrf_token %}
+                        	<button type="submit" class="btn btn-warning">Approve and sent now</button>
+                    		</form>
+				</span>
                               {% endif %}
                         </td>
                       

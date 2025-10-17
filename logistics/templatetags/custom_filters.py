@@ -11,6 +11,11 @@ from decimal import Decimal
 
 
 @register.filter
+def in_group(user, group_name):
+    return user.groups.filter(name=group_name).exists()
+
+
+@register.filter
 def get_balance(balances, key):
     """Safe get from balances dict"""
     if not isinstance(balances, dict):

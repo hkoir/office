@@ -35,29 +35,25 @@ from .forms import TransportRequestForm, ManagerApprovalForm,CreateTransportForm
 from django.urls import reverse
 
 
-
 @login_required
 def transport_dashboard(request):
     menu_items = [
-        {'title': 'Create Transport', 'url': reverse('transport:create_transport')},
-        {'title': 'Available Transport', 'url': reverse('transport:available_transports')},
-        {'title': 'Transport request', 'url': reverse('transport:create_transport_request')},
-        {'title': 'Booking history', 'url': reverse('transport:booking_history')},
-        {'title': 'Penalty_history', 'url': reverse('transport:penalty_history')},
-        {'title': 'create Fuel Pump database', 'url': reverse('transport:create_fuel_pump_database')},
-        {'title': 'Fuel refill', 'url': reverse('transport:create_fuel_refill')},
-        {'title': 'Vehicle fault record', 'url': reverse('transport:create_vehicle_fault')},
-        {'title': 'Vehicle payment update', 'url': reverse('transport:create_vehicle_payment')},
-        {'title': 'Fuel by Pump', 'url': reverse('transport:fuel_by_pump')},
-        {'title': 'Datewise fuel consumed', 'url': reverse('transport:datewise_fuel_withdraw')},
-        {'title': 'Overtime', 'url': reverse('transport:vehicle_overtime_calc')},
-        {'title': 'Vehicle grand summary', 'url': reverse('transport:vehicle_grand_summary')},
-        {'title': 'Management report', 'url': reverse('transport:management_summary_report')},
-       
+        {'title': 'Create Transport', 'url': reverse('transport:create_transport'), 'icon': 'fa-plus-circle', 'color': '#007bff'},
+        {'title': 'Available Transport', 'url': reverse('transport:available_transports'), 'icon': 'fa-truck', 'color': '#28a745'},
+        {'title': 'Transport Request', 'url': reverse('transport:create_transport_request'), 'icon': 'fa-file-signature', 'color': '#ffc107'},
+        {'title': 'Booking History', 'url': reverse('transport:booking_history'), 'icon': 'fa-history', 'color': '#17a2b8'},
+        {'title': 'Penalty History', 'url': reverse('transport:penalty_history'), 'icon': 'fa-gavel', 'color': '#dc3545'},
+        {'title': 'Create Fuel Pump Database', 'url': reverse('transport:create_fuel_pump_database'), 'icon': 'fa-gas-pump', 'color': '#6f42c1'},
+        {'title': 'Fuel Refill', 'url': reverse('transport:create_fuel_refill'), 'icon': 'fa-fill-drip', 'color': '#fd7e14'},
+        {'title': 'Vehicle Fault Record', 'url': reverse('transport:create_vehicle_fault'), 'icon': 'fa-car-crash', 'color': '#20c997'},
+        {'title': 'Vehicle Payment Update', 'url': reverse('transport:create_vehicle_payment'), 'icon': 'fa-credit-card', 'color': '#6610f2'},
+        {'title': 'Fuel by Pump', 'url': reverse('transport:fuel_by_pump'), 'icon': 'fa-oil-can', 'color': '#e83e8c'},
+        {'title': 'Datewise Fuel Consumed', 'url': reverse('transport:datewise_fuel_withdraw'), 'icon': 'fa-calendar-alt', 'color': '#007bff'},
+        {'title': 'Overtime', 'url': reverse('transport:vehicle_overtime_calc'), 'icon': 'fa-stopwatch', 'color': '#28a745'},
+        {'title': 'Vehicle Grand Summary', 'url': reverse('transport:vehicle_grand_summary'), 'icon': 'fa-chart-line', 'color': '#17a2b8'},
+        {'title': 'Management Report', 'url': reverse('transport:management_summary_report'), 'icon': 'fa-file-invoice', 'color': '#ffc107'},
     ]
-
     return render(request, 'fleetmanagement/transport_dashboard.html', {'menu_items': menu_items})
-
 
 
 @login_required

@@ -92,7 +92,7 @@
                         <th class="text-center p-2">Approval</th>
 
 
-                        <th class="text-center p-2">Create Sale Order</th>
+                        <th class="text-center p-2">Convert to sale Order</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -162,7 +162,13 @@
                     {% elif order.approver_approval_status != 'APPROVED' %}
                     <strong><i class="fas fa-times" style="color:red" class="btn btn-secondary">Approval Pending</i></strong>
                     {% else %}
-                    <a href="{% url 'sales:create_sale_order' order.id %}" class="btn btn-sm btn-primary">Create Sale Order</a>
+                        {% if not order.sale_request.exists %}
+                            <a href="{% url 'sales:convert_sale_request' order.id %}" 
+                            class="btn btn-success"
+                            onclick="return confirm('Are you sure you want to convert this Sale Request to a Sale Order?')">
+                            Convert to Sale Order
+                            </a>
+                          {% endif %}
                     {% endif %}
                 </td>
             </tr>

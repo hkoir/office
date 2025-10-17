@@ -44,11 +44,13 @@
         <div class="container mt-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h2>Customer Quotation #{{ quotation.quotation_number }}</h2>
-                <a href="{% url 'sales:convert_customer_quotation' quotation.id %}" 
+		{% if quotation.status == "accepted" %}
+                <a href="{% url 'sales:convert_quotation_to_sale_request' quotation.id %}" 
                 class="btn btn-success"
                 onclick="return confirm('Convert this quotation to a Sale Request Order?')">
                     Convert to Sale Request Order
                 </a>
+		{% endif %}
             </div>
 
             <div class="card mb-3">

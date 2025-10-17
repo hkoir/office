@@ -120,6 +120,71 @@ class StationaryUsageOrderForm(forms.ModelForm):
     )
   
   
+
+
+
+
+from django.forms import inlineformset_factory
+from .models import StationaryPurchaseOrder, StationaryPurchaseItem
+from .models import StationaryUsageRequestOrder, StationaryUsageRequestItem
+
+class StationaryPurchaseOrderForm(forms.ModelForm):
+    class Meta:
+        model = StationaryPurchaseOrder
+        fields = ['supplier', 'order_date']
+        widgets={
+            'order_date':forms.DateInput(attrs={'type':'date'})
+        }
+
+class StationaryPurchaseItemForm(forms.ModelForm):
+    unit_price = forms.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        required=False,
+        label="Unit Price",
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Enter unit price'})
+    )
+    class Meta:
+        model = StationaryPurchaseItem
+        fields = ['stationary_category', 'stationary_product', 'batch', 'quantity']
+
+
+StationaryPurchaseItemFormSet = inlineformset_factory(
+    StationaryPurchaseOrder,
+    StationaryPurchaseItem,
+    form=StationaryPurchaseItemForm,
+    extra=1,
+    can_delete=True
+)
+
+
+
+
+class StationaryUsageRequestOrderForm(forms.ModelForm):
+    class Meta:
+        model = StationaryUsageRequestOrder
+        fields = ['department']
+
+class StationaryUsageRequestItemForm(forms.ModelForm):
+    class Meta:
+        model = StationaryUsageRequestItem
+        fields = ['stationary_category', 'stationary_product', 'batch', 'quantity']
+
+# Inline formset for multiple items
+StationaryUsageRequestItemFormSet = inlineformset_factory(
+    StationaryUsageRequestOrder,
+    StationaryUsageRequestItem,
+    form=StationaryUsageRequestItemForm,
+    extra=1,
+    can_delete=True
+)
+
+
+
+
+
+
+
   
 class PurchaseRequestInvoiceAddForm(forms.ModelForm):
     class Meta:
@@ -228,7 +293,7 @@ class VisitorGroupForm(forms.ModelForm):
 class VisitorLogForm(forms.ModelForm):
     class Meta:
         model = VisitorLog
-        exclude=['user']
+        exclude=['user','check_out']
         widgets = {
             "check_in": forms.DateInput(attrs={"type": "datetime-local"}),
             "check_out": forms.DateInput(attrs={"type": "datetime-local"}),   
@@ -237,12 +302,52 @@ class VisitorLogForm(forms.ModelForm):
                }
 
 
+from django.forms import inlineformset_factory
+from .models import VisitorGroup, VisitorLog,VisitorIDCard
+
+class VisitorGroupCheckInForm(forms.ModelForm):
+    class Meta:
+        model = VisitorGroup
+        fields = ['company', 'address', 'purpose']
+        widgets = {           
+            'address':forms.TextInput(attrs={'style':'height:80px','class':'form-control'}),
+            'purpose':forms.TextInput(attrs={'style':'height:80px','class':'form-control'})
+        }
+
+class VisitorMemberForm(forms.ModelForm):
+    class Meta:
+        model = VisitorLog
+        fields = ['name', 'designation', 'visitor_type','id_card', 'phone','photo']
+        widgets = {
+            'visitor_type': forms.Select(attrs={'class': 'form-select'}),
+            'check_in': forms.TimeInput(attrs={'type': 'time'}),
+            'photo':forms.FileInput(attrs={
+                'accept': 'image/*',
+                'capture': 'camera',
+            })
+            
+            
+        }
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter id_card to only idle ones
+        self.fields['id_card'].queryset = VisitorIDCard.objects.filter(status='idle')
+        self.fields['id_card'].empty_label = "Select ID Card"
+
+VisitorMemberFormSet = inlineformset_factory(
+    VisitorGroup,
+    VisitorLog,
+    form=VisitorMemberForm,
+    extra=2,
+    can_delete=True
+)
+
 
 class VisitorSearchForm(forms.Form):
     query = forms.CharField(
         required=False,
         label="Search Visitor",
-        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter name or phone number"}),
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Enter name or phone number or company or id-card"}),
     )
 
 
@@ -298,6 +403,44 @@ class ExpenseSubmissionItemForm(forms.ModelForm):
         model = ExpenseSubmissionItem
         exclude=['user']
     
+
+
+
+
+
+from django.forms import inlineformset_factory
+from .models import ExpenseSubmissionOrder, ExpenseSubmissionItem
+
+class ExpenseSubmissionOrderForm(forms.ModelForm):
+    class Meta:
+        model = ExpenseSubmissionOrder
+        fields = ['has_advance', 'advance_ref', 'submission_date']
+        widgets = {
+            'submission_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'has_advance': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'advance_ref': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+class ExpenseSubmissionItemForm(forms.ModelForm):
+    class Meta:
+        model = ExpenseSubmissionItem
+        fields = ['category', 'amount', 'description']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-select'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 1}),
+        }
+
+ExpenseSubmissionItemFormSet = inlineformset_factory(
+    ExpenseSubmissionOrder,
+    ExpenseSubmissionItem,
+    form=ExpenseSubmissionItemForm,
+    extra=1,
+    can_delete=True
+)
+
+
+
 
 
 class OfficeDocumentForm(forms.ModelForm):

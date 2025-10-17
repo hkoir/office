@@ -191,9 +191,10 @@
                         <a class="nav-link dropdown-toggle text-warning" href="#" id="placeDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="fas fa-solid fas fa-cogs me-1"></i>&nbsp;Customer Portal
                         </a>
-
+ 
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="max-height: 400px; overflow-y: auto;">                          
                             <li><hr class="dropdown-divider"style="background-color:gray;"></li>
+                            <li><a class="dropdown-item" href="{% url 'customerportal:customer_quotation_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All Quotations</a></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:sale_order_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All Sales order</a></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:return_request_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All return list</a></li>
                             <li><hr class="dropdown-divider"style="background-color:gray;"></li>                            
@@ -213,7 +214,7 @@
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdown" style="max-height: 400px; overflow-y: auto;">
                             <li><hr class="dropdown-divider"style="background-color:gray;"></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:purchase_order_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All purchase orders</a></li>
-                                                                        
+                           <li><a class="dropdown-item" href="{% url 'customerportal:rfq_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All RFQ Quotation</a></li>                                              
                                                       
                           
                         </ul> 

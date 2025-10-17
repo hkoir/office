@@ -4,36 +4,117 @@
 {% load custom_filters %}
 {% block content %}
 
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+    <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+    <a href="{% url 'officemanagement:inventory_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'officemanagement:visitor_reports' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Visitor Report
+    </a>
+
+    <a href="{% url 'officemanagement:meeting_room_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Meeting room report
+    </a>
+
+    <a href="{% url 'officemanagement:advance_reconcilation_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Advance reconcilation report
+    </a>
+    <a href="{% url 'officemanagement:top_expense_categories' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> top expense categories
+    </a>
+
+  </div>
+</div>
 
 <div class="container-fluid main-content">
     <div class="row">    
                   
 
-        <div class="col-12 col-md-4">
+        <div class="col-12">
             <div class="card shadow-lg" style="background-color: aliceblue;">
                 <!-- Card Header -->
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0"> Expense approval</h4>
                 </div> 
                 <div class="card-body">                       
-                    <form method="post" enctype="multipart/form-data" action="" id="add_customer">
-                        {% csrf_token %}
-                       {% for field in form.visible_fields %}
-                        <div class="mb-3">
-                            {{ field.label_tag }}
-                            {{ field|add_class:"form-control" }}
-                            {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
-                            {% endif %}
-                            {% for error in field.errors %}
-                                <div class="text-danger">{{ error }}</div>
-                            {% endfor %}
+                     <form method="POST" enctype="multipart/form-data" class="p-2 m-4">
+                    {% csrf_token %}
+                    <div class="row">  <!-- g-3 adds spacing between columns -->
+
+                        {% for field in form.visible_fields %}
+                            <div class="col-md-3 col-lg-3"> <!-- Adjust columns as needed -->
+                                <div class="mb-3">
+                                    {% if field.field.widget.input_type == "checkbox" %}
+                                        <div class="form-check">
+                                            {{ field }}
+                                            {{ field.label_tag }}
+                                        </div>
+                                    {% else %}
+                                        {{ field.label_tag }}
+                                        {{ field|add_class:"form-control" }}
+                                    {% endif %}
+
+                                    {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                    {% endif %}
+
+                                    {% for error in field.errors %}
+                                        <div class="text-danger">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        <!-- Submit button inline with fields -->
+                        <div class="col-md-4 col-lg-3 align-self-end">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                               Submit
+                            </button>
                         </div>
-                    {% endfor %}
-                        <div class="d-grid">
-                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> Submit</button>
-                        </div>
-                    </form>
+                    </div>
+                </form>
                  </div>
             </div>           
         </div>

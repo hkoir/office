@@ -102,8 +102,10 @@
                     <td class="text-center p-2" style="white-space: nowrap;">
                         {% if order.status == "DELIVERED" %}                       
                         <i class="fas fa-check" style="color:green;font-weight: bold;">{{order.get_status_display}}</i>
-                        {% else %}
-                        <span style="color:red;font-weight: bold;">In Process</span>
+                        {% elif order.status|in_list:'REACHED,OBI' %}
+                        <span style="color:green;font-weight: bold;">Reached</span>
+			{% else %}
+			<span style="color:red;font-weight: bold;">In Process</span>
                         {% endif %}
                     </td>
                     <td class="text-center p-2" style="white-space: nowrap;">{{order.user}}</td>

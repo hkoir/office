@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+    <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+    <a href="{% url 'officemanagement:inventory_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'officemanagement:visitor_reports' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Visitor Report
+    </a>
+
+    <a href="{% url 'officemanagement:meeting_room_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Meeting room report
+    </a>
+
+    <a href="{% url 'officemanagement:advance_reconcilation_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Advance reconcilation report
+    </a>
+    <a href="{% url 'officemanagement:top_expense_categories' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> top expense categories
+    </a>
+
+  </div>
+</div>
+<div class="container mt-4">
+    <h2 class="mb-4">New Expense Submission</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <fieldset class="border p-3 mb-4 rounded">
+            <legend class="w-auto px-2">Submission Info</legend>
+            <div class="row g-3">
+                <div class="col-md-4">{{ order_form.has_advance.label_tag }} {{ order_form.has_advance }}</div>
+                <div class="col-md-4">{{ order_form.advance_ref.label_tag }} {{ order_form.advance_ref }}</div>
+                <div class="col-md-4">{{ order_form.submission_date.label_tag }} {{ order_form.submission_date }}</div>
+            </div>
+        </fieldset>
+
+        <fieldset class="border p-3 rounded">
+            <legend class="w-auto px-2">Expense Items</legend>
+            {{ formset.management_form }}
+            <div id="expense-formset">
+                {% for form in formset %}
+                <div class="expense-form border rounded p-3 mb-3 bg-light position-relative">
+                    <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 remove-form">
+                        🗑 Remove
+                    </button>
+                    <div class="row g-3">
+                        <div class="col-md-3">{{ form.category.label_tag }} {{ form.category }}</div>
+                        <div class="col-md-3">{{ form.amount.label_tag }} {{ form.amount }}</div>
+                        <div class="col-md-6">{{ form.description.label_tag }} {{ form.description }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <button type="button" id="add-expense" class="btn btn-outline-primary mt-2">+ Add Expense Item</button>
+        </fieldset>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-success">Submit Expenses</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formsetContainer = document.getElementById('expense-formset');
+    const addBtn = document.getElementById('add-expense');
+    const totalForms = document.getElementById('id_items_submitted-TOTAL_FORMS');
+
+    function updateFormIndices() {
+        const forms = formsetContainer.querySelectorAll('.expense-form');
+        forms.forEach((form, index) => {
+            form.querySelectorAll('input, select, textarea, label').forEach(el => {
+                if (el.name) el.name = el.name.replace(/items_submitted-\d+-/, `items_submitted-${index}-`);
+                if (el.id) el.id = el.id.replace(/id_items_submitted-\d+-/, `id_items_submitted-${index}-`);
+                if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/id_items_submitted-\d+-/, `id_items_submitted-${index}-`);
+            });
+        });
+        totalForms.value = forms.length;
+    }
+
+    addBtn.addEventListener('click', function() {
+        const firstForm = formsetContainer.querySelector('.expense-form');
+        const newForm = firstForm.cloneNode(true);
+        newForm.querySelectorAll('input, textarea').forEach(el => el.value = '');
+        newForm.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+        formsetContainer.appendChild(newForm);
+        updateFormIndices();
+    });
+
+    formsetContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-form')) {
+            const forms = formsetContainer.querySelectorAll('.expense-form');
+            if (forms.length > 1) {
+                e.target.closest('.expense-form').remove();
+                updateFormIndices();
+            } else {
+                alert("At least one expense item is required.");
+            }
+        }
+    });
+});
+</script>
+
+<style>
+.expense-form { transition: 0.2s ease-in-out; }
+.expense-form:hover { background: #f8f9fa; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+legend { font-weight: 600; font-size: 1.1rem; }
+</style>
+{% endblock %}

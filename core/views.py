@@ -76,7 +76,7 @@ def home(request):
 
 @login_required
 def core_dashboard(request):
-    return render(request,'core/core_dashboard.html')
+    return render(request,'core/dashboard.html')
 
 @login_required
 def only_core_dashboard(request):
@@ -156,7 +156,7 @@ def basic_database_creation(request):
         {
             'name': 'Customer / Supplier Registration',
             'exists': Customer.objects.exists() or Supplier.objects.exists(),
-            'url': reverse('accounts:register_partner_job_seeker')
+            'url': reverse('accounts:register_employee_corporate_user')
         },
         {
             'name': 'Customer',

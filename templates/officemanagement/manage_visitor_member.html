@@ -5,10 +5,73 @@
 {% block content %}
 
 
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+    <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+    <a href="{% url 'officemanagement:inventory_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'officemanagement:visitor_reports' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Visitor Report
+    </a>
+
+    <a href="{% url 'officemanagement:meeting_room_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Meeting room report
+    </a>
+
+    <a href="{% url 'officemanagement:advance_reconcilation_report' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Advance reconcilation report
+    </a>
+    <a href="{% url 'officemanagement:top_expense_categories' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> top expense categories
+    </a>
+
+  </div>
+</div>
 <div class="container-fluid main-content">
     <div class="row">        
 
-        <div class="col-12 col-md-4">
+        <div class="col-12">
             <div class="card shadow-lg" style="background-color: aliceblue;">
                 <!-- Card Header -->
                 <div class="card-header bg-primary text-white text-center">
@@ -17,30 +80,39 @@
                 <div class="card-body">                       
                     <form method="post" enctype="multipart/form-data" action="" id="add_customer">
                         {% csrf_token %}
-                       {% for field in form.visible_fields %}
-                            <div class="mb-3">
+                      <div class="row">
+                        {% for field in form.visible_fields %}
+                            <div class="col-md-4 col-lg-2 mb-3">  
+                            <div class="form-group">
                                 {{ field.label_tag }}
                                 {{ field|add_class:"form-control" }}
                                 {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                <small class="form-text text-muted">{{ field.help_text }}</small>
                                 {% endif %}
                                 {% for error in field.errors %}
-                                    <div class="text-danger">{{ error }}</div>
+                                <div class="text-danger small">{{ error }}</div>
                                 {% endfor %}
                             </div>
+                            </div>
                         {% endfor %}
-                        <div class="d-grid">
-                            <button type="submit" name="customer_submit"value="customer_submit" class="btn btn-primary btn-lg"> {% if instance %} Update {% else %} Add {% endif %}</button>
+
+                        <!-- Button wrapped in column -->
+                        <div class="col-12 mt-3 text-center">
+                            <button type="submit" name="customer_submit" value="customer_submit" class="btn btn-primary btn-lg">
+                            {% if instance %} Update {% else %} Add {% endif %}
+                            </button>
                         </div>
+                        </div>
+
                     </form>
                  </div>
             </div>           
         </div>
 
        
-        <div class="col-12 col-md-8 table-responsive my-4">
+        <div class="col-12 table-responsive my-4">
             <a href="{% url 'officemanagement:create_visitor_group' %}"
-            class="btn btn-sm btn-outline-success">Create new Group/new Company entry</a>
+            class="btn btn-sm btn-outline-success my-4">Create new Group/new Company entry</a>
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>
@@ -48,6 +120,7 @@
                         <th class="text-center p-2">Visitor Type</th>
                     
                         <th class="text-center p-2">Visitor Name</th>
+                          <th class="text-center p-2">Photo ID</th>
                         <th class="text-center p-2">Designation</th>                       
                         <th class="text-center p-2">Phone</th>
                         <th class="text-center p-2">Photo</th>
@@ -63,7 +136,16 @@
                         <tr>
                             <td class="text-center p-1">{{ data.company.company }}</td>
                             <td class="text-center p-1">{{ data.visitor_type }}</td>                         
-                            <td class="text-center p-1">{{ data.name}}</td>                          
+                            <td class="text-center p-1">{{ data.name}}</td>     
+                            <td>
+                                {% if data.photo %}
+                                    <a href="{{ data.photo.url }}" target="_blank">
+                                    <img src="{{ data.photo.url }}" alt="{{ data.name }}" width="40" height="40" class="img-thumbnail">
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">No photo</span>
+                                {% endif %}
+                                </td>                               
                             <td>{{data.designation}}</td>
                             <td>{{data.phone}}</td>
                             

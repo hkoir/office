@@ -37,7 +37,9 @@
   </div>
 </div>
 
-    <div class="row">   
+
+
+  <div class="row">   
         <h2 class="mt-4">RFQ Details: {{ rfq.rfq_number }}</h2>
         <!-- RFQ Info -->
         <fieldset class="border p-3 mb-4">
@@ -51,15 +53,11 @@
                     </a>
                     </span>
                 {% else %}
-                    <form id="send-rfq-form" method="post" 
-                        action="{% url 'purchase:send_rfq' rfq.id %}"
-                        onsubmit="return confirm('Are you sure you want to approve this RFQ? Once approved, it cannot be edited.');">
+                    <form id="send-rfq-form" method="post" action="{% url 'purchase:send_rfq' rfq.id %}"
+                        onsubmit="return confirmSend();">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-warning">
-                            Approval pending. Approve RFQ
-                        </button>
+                        <button type="submit" class="btn btn-warning">Approve and sent RFQ</button>
                     </form>
-
                 {% endif %}
             </div>
 
@@ -86,6 +84,10 @@
                     {{ rfq.get_status_display }}
                 </div>
                 <div class="col-md-6">
+                    <strong>Project delivery date:</strong>
+                    <p>{{ rfq.required_delivery_date }}</p>
+                </div>
+                <div class="col-md-6">
                     <strong>Notes:</strong>
                     <p>{{ rfq.notes }}</p>
                 </div>
@@ -99,15 +101,23 @@
                 <thead class="table-dark">
                     <tr>
                         <th>Product</th>
+                        <th>Specification</th>                     
                         <th>Quantity</th>
-                        <th>Description</th>
+                        <th>UOM</th>
+                        <th>Unit Price</th>                      
+                        <th>Required delivery date</th>
+                        <th>Notes</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for item in rfq.items.all %}
                     <tr>
                         <td>{{ item.product }}</td>
+                        <td>{{ item.specification }}</td>                      
                         <td>{{ item.quantity }}</td>
+                        <td>{{ item.unit_of_measure }}</td>
+                        <td>{{ item.unit_price }}</td>     
+                        <td>{{ item.required_delivery_date}}</td>                      
                         <td>{{ item.notes }}</td>
                     </tr>
                     {% empty %}
@@ -122,16 +132,19 @@
     </div>
 </div>
 
-
-
 <script>
-document.getElementById('send-rfq-form').addEventListener('submit', function(e){
-    let confirmed = confirm("Are you sure you want to send this RFQ?");
-    if(!confirmed){
-        e.preventDefault(); // Stop form submission if user clicks Cancel
-    }
-});
+function confirmSend() {
+    return confirm("⚠️ Are you sure you want to mark this RFQ as SENT?\nOnce sent, it cannot be edited.");
+}
 </script>
 
 
+
+
 {% endblock %}
+
+
+
+
+
+

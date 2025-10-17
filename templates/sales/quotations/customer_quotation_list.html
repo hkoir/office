@@ -52,6 +52,7 @@
                     <th>Valid Until</th>
                     <th>Status</th>
                     <th>Actions</th>
+		    <th>Convert Quotation to Sale request </th>
                 </tr>
             </thead>
             <tbody>
@@ -64,7 +65,7 @@
                     <td>{{ quotation.get_status_display }}</td>
                     <td>
                         <a href="{% url 'sales:customer_quotation_detail' quotation.pk %}" class="btn btn-info btn-sm">View</a>
-                       {% if request.user|in_group:"sales_staff" and quotation.status == "draft" %}
+                       {% if request.user.is_authenticated and quotation.status == "draft" %}
                         <a href="{% url 'sales:change_customer_quotation_status' quotation.pk 'sent' %}" 
                         class="btn btn-warning btn-sm">Send</a>
                     {% endif %}
@@ -77,10 +78,20 @@
                     {% endif %}
 
                     </td>
+
+		 <td>
+                        {% if quotation.status == "accepted" %}
+                         <a href="{% url 'sales:convert_quotation_to_sale_request' quotation.pk %}" 
+                          class="btn btn-success btn-sm">Convert Quotation to Sale request</a>
+                          {% else %}
+                          <span class="badge bg-info">Quotation not accepted yet</span>
+                        {% endif %}
+                    </td>
+
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="text-center">No customer quotations found.</td>
+                    <td colspan="7" class="text-center">No customer quotations found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -14,9 +14,13 @@ urlpatterns = [
     path('view_employee/', views.view_employee, name='view_employee'),
     path('basic_database_creation/', views.basic_database_creation, name='basic_database_creation'),
     path('employee_list/', views.employee_list, name='employee_list'),
-   
-    path('manage_department/', views.manage_department, name='manage_department'),  
+
+    path('create_company/', views.create_company, name='create_company'),
+    path('update_company/<int:id>/', views.create_company, name='update_company'),
+    path('delete_company/<int:id>/', views.delete_company,  name='delete_company'),   
     path('manage_location/', views.manage_location, name='manage_location'),
+   
+    path('manage_department/', views.manage_department, name='manage_department'), 
 
     path('create_positionn/', views.manage_position, name='create_position'),    
     path('update_positionn/<int:id>/', views.manage_position, name='update_position'),    
@@ -30,10 +34,7 @@ urlpatterns = [
     path('create_job_description/', views.manage_job_description, name='create_job_description'),    
     path('update_job_description/<int:id>/', views.manage_job_description, name='update_job_description'),    
     path('delete_job_description/<int:id>/', views.delete_job_descriptiont, name='delete_job_description'),  
-
-    path('create_company/', views.create_company, name='create_company'),
-    path('update_company/<int:id>/', views.create_company, name='update_company'),
-    path('delete_company/<int:id>/', views.delete_company,  name='delete_company'),    
+ 
     
     path('manage_employee/', views.manage_employee, name='manage_employee'),
     path('update_employee/<int:id>/', views.manage_employee, name='update_employee'),
@@ -78,3 +79,4 @@ urlpatterns = [
 
 
 ]
+

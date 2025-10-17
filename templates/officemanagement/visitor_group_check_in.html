@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-start gap-2 mb-3" style="border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">
+
+  <a href="{% url 'officemanagement:create_visitor_group' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-users"></i> Create Visitor Group
+  </a>
+
+  <a href="{% url 'officemanagement:create_visitor_member' %}" class="btn btn-success btn-sm">
+    <i class="fas fa-user-plus"></i> Add Visitor Member
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_group_check_in' %}" class="btn btn-info btn-sm">
+    <i class="fas fa-sign-in-alt"></i> Group Check-In
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_log_list' %}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-list"></i> Visitor Log List
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_id_card_list' %}" class="btn btn-dark btn-sm">
+    <i class="fas fa-id-card"></i> Visitor ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:generate_visitor_id_cards' %}" class="btn btn-warning btn-sm">
+    <i class="fas fa-print"></i> Generate ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:search_visitor' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-search"></i> Search Visitor
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_report' %}" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-chart-line"></i> Visitor Report
+  </a>
+</div>
+
+
+<div class="container mt-4">
+    <h2>Visitor Group Check-In</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <fieldset class="border p-3 mb-4">
+            <legend class="w-auto">Group / Company Information</legend>
+            <div class="row">
+                <div class="col-md-4">{{ group_form.company.label_tag }} {{ group_form.company }}</div>
+                <div class="col-md-4">{{ group_form.address.label_tag }} {{ group_form.address }}</div>
+                 <div class="col-md-4">{{ group_form.purpose.label_tag }} {{ group_form.purpose }}</div>
+                
+            </div>
+        </fieldset>
+
+        <fieldset class="border p-3 mb-4">
+            <legend class="w-auto px-2">Visitor Members</legend>
+            <div class="table-responsive">
+                {{ formset.management_form }}
+                <div id="visitor-formset">
+                    {% for form in formset %}
+                    <div class="visitor-form border rounded p-3 mb-3 bg-light position-relative">
+                        <button type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2 remove-form">
+                            🗑 Remove
+                        </button>
+                        <div class="row">
+                            <div class="col-lg-2 col-md-3 col-sm-6">{{ form.name.label_tag }} {{ form.name }}</div>
+                            <div class="col-lg-2 col-md-3 col-sm-6">{{ form.designation.label_tag }} {{ form.designation }}</div>
+                            <div class="col-lg-2 col-md-3 col-sm-6">{{ form.visitor_type.label_tag }} {{ form.visitor_type }}</div>
+                            <div class="col-lg-2 col-md-3 col-sm-6">{{ form.phone.label_tag }} {{ form.phone }}</div>
+                             <div class="col-lg-2 col-md-3 col-sm-6">{{ form.photo.label_tag }} {{ form.photo }}</div>                           
+                             <div class="col-lg-2 col-md-3 col-sm-6">{{ form.id_card.label_tag }} {{ form.id_card }}</div>
+                        </div>
+                       
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="button" class="btn btn-outline-secondary mt-2" id="add-visitor">+ Add Another Visitor</button>
+        </fieldset>
+
+        <button type="submit" class="btn btn-success">Check In Group</button>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const formsetContainer = document.getElementById('visitor-formset');
+    const addBtn = document.getElementById('add-visitor');
+    const totalForms = document.getElementById('id_visitors-TOTAL_FORMS');
+
+    function updateFormIndices() {
+        const forms = formsetContainer.querySelectorAll('.visitor-form');
+        forms.forEach((form, index) => {
+            form.querySelectorAll('input, select, textarea, label').forEach(el => {
+                if (el.name) el.name = el.name.replace(/visitors-\d+-/, `visitors-${index}-`);
+                if (el.id) el.id = el.id.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+                if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+            });
+        });
+        totalForms.value = forms.length;
+    }
+
+    addBtn.addEventListener('click', function() {
+        const firstForm = formsetContainer.querySelector('.visitor-form');
+        const newForm = firstForm.cloneNode(true);
+        newForm.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.type === 'file') el.value = '';
+            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+        formsetContainer.appendChild(newForm);
+        updateFormIndices();
+    });
+
+    formsetContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-form')) {
+            const forms = formsetContainer.querySelectorAll('.visitor-form');
+            if (forms.length > 1) {
+                e.target.closest('.visitor-form').remove();
+                updateFormIndices();
+            } else {
+                alert("At least one visitor is required.");
+            }
+        }
+    });
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const companyInput = document.querySelector("#id_company");
+    const addressInput = document.querySelector("#id_address");
+    const purposeInput = document.querySelector("#id_purpose");
+    const checkInInput = document.querySelector("#id_expected_check_in_time");
+
+    companyInput.addEventListener("change", function() {
+        const company = companyInput.value.trim();
+        if (!company) return;
+
+        fetch(`/officemanagement/ajax/get-group-details/?company=${encodeURIComponent(company)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.error && data.error === 'not_found') {
+                    // Clear fields if new company
+                    addressInput.value = '';
+                    purposeInput.value = '';
+                    checkInInput.value = '';
+                    return;
+                }
+
+                // Populate existing fields
+                addressInput.value = data.address || '';
+                purposeInput.value = data.purpose || '';
+                checkInInput.value = data.expected_check_in_time || '';
+            })
+            .catch(err => console.error('Error fetching company details:', err));
+    });
+});
+</script>
+
+<!-- 
+<div class="col-lg-3 col-md-4 col-sm-6">
+<label>Photo (Capture)</label>
+<div class="camera-container mb-2">
+    <video width="50" height="50" autoplay class="border" muted></video>
+    <canvas width="50" height="50" class="d-none"></canvas>
+    <input type="hidden" name="captured_photo" class="captured-photo-input">
+</div>
+<button type="button" class="btn btn-sm btn-outline-primary capture-btn">📸 Capture</button>
+</div> -->
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    // Function to initialize webcam for a specific visitor form
+    function initCamera(container) {
+        const video = container.querySelector('video');
+        const canvas = container.querySelector('canvas');
+        const input = container.querySelector('.captured-photo-input');
+        const captureBtn = container.parentElement.querySelector('.capture-btn');
+
+        if (!video || !captureBtn) return;
+
+        // Request webcam access
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(err => {
+                console.error("Camera access denied:", err);
+                alert("Camera access denied. Please allow webcam access.");
+            });
+
+        // Capture button click
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.classList.remove('d-none');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/png');
+            input.value = imageData;
+
+            captureBtn.textContent = "✅ Captured";
+            captureBtn.classList.remove('btn-outline-primary');
+            captureBtn.classList.add('btn-success');
+        });
+    }
+
+    // Initialize camera for all existing visitor forms
+    document.querySelectorAll('.camera-container').forEach(initCamera);
+
+    // Handle dynamically added visitor forms
+    const addBtn = document.getElementById('add-visitor');
+    const formsetContainer = document.getElementById('visitor-formset');
+    const totalForms = document.getElementById('id_visitors-TOTAL_FORMS');
+
+    addBtn.addEventListener('click', function() {
+        const firstForm = formsetContainer.querySelector('.visitor-form');
+        const newForm = firstForm.cloneNode(true);
+
+        // Clear all field values
+        newForm.querySelectorAll('input, select, textarea').forEach(el => {
+            if (el.type === 'file' || el.type === 'hidden') el.value = '';
+            else if (el.tagName === 'SELECT') el.selectedIndex = 0;
+            else el.value = '';
+        });
+
+        // Reset button and canvas
+        const btn = newForm.querySelector('.capture-btn');
+        btn.textContent = "📸 Capture";
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-outline-primary');
+
+        const canvas = newForm.querySelector('canvas');
+        canvas.classList.add('d-none');
+
+        // Append and reindex
+        formsetContainer.appendChild(newForm);
+        const forms = formsetContainer.querySelectorAll('.visitor-form');
+        forms.forEach((form, index) => {
+            form.querySelectorAll('input, select, textarea, label').forEach(el => {
+                if (el.name) el.name = el.name.replace(/visitors-\d+-/, `visitors-${index}-`);
+                if (el.id) el.id = el.id.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+                if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+            });
+        });
+        totalForms.value = forms.length;
+
+        // Reinitialize camera for the new form
+        const newCamera = newForm.querySelector('.camera-container');
+        initCamera(newCamera);
+    });
+
+    // Remove visitor form
+    formsetContainer.addEventListener('click', e => {
+        if (e.target.classList.contains('remove-form')) {
+            const forms = formsetContainer.querySelectorAll('.visitor-form');
+            if (forms.length > 1) {
+                e.target.closest('.visitor-form').remove();
+                const updatedForms = formsetContainer.querySelectorAll('.visitor-form');
+                updatedForms.forEach((form, index) => {
+                    form.querySelectorAll('input, select, textarea, label').forEach(el => {
+                        if (el.name) el.name = el.name.replace(/visitors-\d+-/, `visitors-${index}-`);
+                        if (el.id) el.id = el.id.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+                        if (el.htmlFor) el.htmlFor = el.htmlFor.replace(/id_visitors-\d+-/, `id_visitors-${index}-`);
+                    });
+                });
+                totalForms.value = updatedForms.length;
+            } else {
+                alert("At least one visitor is required.");
+            }
+        }
+    });
+});
+</script>
+
+
+<style>
+/* Optional styling to make fields look cleaner */
+input, select, textarea {
+    width: 100% !important;
+}
+.visitor-form {
+    min-width: 100%;
+}
+legend {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

@@ -27,7 +27,17 @@ from recruitment.models import  Candidate
 from clients.models import SubscriptionPlan
 from recruitment.models import Job 
 
+from supplier.models import Supplier
+from purchase.models import SupplierQuotation,SupplierQuotationItem,RFQ,RFQItem,PurchaseOrderItem
+from purchase.forms import SupplierQuotationForm,SupplierQuotationItemFormSet
 
+import logging
+from django.utils import timezone
+import uuid
+logger = logging.getLogger(__name__)
+from sales.models import CustomerQuotation
+from django.core.exceptions import PermissionDenied
+from logistics.forms import PurchaseShipmentForm,PurchaseDispatchItemForm
 
 def partner_landing_page(request):
     return render(request,'customerportal/partner_landing_page.html')
@@ -46,11 +56,374 @@ def job_landing_page(request):
 
 
 
+
+
+################ Supplier quotation #######################################################
+
+@login_required
+def rfq_list(request):
+    rfqs = RFQ.objects.filter(status = 'sent').order_by('-date')
+    supplier = Supplier.objects.filter(user=request.user).first()
+    if supplier:
+        rfqs = rfqs.filter(suppliers=supplier)
+    return render(request, "customerportal/rfq/rfq_list.html", {"rfqs": rfqs})
+
+
+
+@login_required
+def rfq_detail2(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)    
+    supplier = Supplier.objects.get(user=request.user)
+    has_quotation = rfq.rfq_quotation.filter(supplier=supplier).exists()
+
+    return render(request, "customerportal/rfq/rfq_detail.html", {"rfq": rfq,'has_quotation':has_quotation})
+
+
+@login_required
+def rfq_detail(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)
+
+    try:
+        supplier = Supplier.objects.get(user=request.user)
+        quotation = rfq.rfq_quotation.filter(supplier=supplier).first()
+        has_quotation = quotation is not None
+    except Supplier.DoesNotExist:
+        supplier = None
+        quotation = None
+        has_quotation = False  # default if user isn’t a supplier
+
+    return render(
+        request,
+        "customerportal/rfq/rfq_detail.html",
+        {
+            "rfq": rfq,
+            "has_quotation": has_quotation,
+            "quotation": quotation,
+            "supplier": supplier,
+        },
+    )
+
+
+
+@login_required
+def create_supplier_quotation(request, pk):
+    rfq = get_object_or_404(RFQ, pk=pk)
+    supplier = Supplier.objects.filter(user=request.user).first()
+    if not supplier:
+        messages.warning(request, "No supplier found for the logged-in user.")
+        logger.warning(f"User {request.user} tried to access create_supplier_quotation but has no supplier linked.")
+    logger.debug(f"Accessed create_supplier_quotation view | RFQ ID: {rfq.id}, Supplier: {supplier}")
+
+    existing_quotation = rfq.rfq_quotation.filter(supplier=supplier).first()
+    if existing_quotation:
+        messages.info(request, "You have already submitted a quotation for this RFQ.")
+        logger.info(f"Supplier {supplier} already has quotation {existing_quotation.id} for RFQ {rfq.id}")
+        return redirect("customerportal:supplier_quotation_detail", pk=existing_quotation.id)
+
+    initial_data = [{"product": item.product, "quantity": item.quantity} for item in rfq.items.all()]
+    logger.debug(f"Initial formset data: {initial_data}")
+
+    if request.method == "POST":
+        logger.debug("Received POST request for SupplierQuotationForm and Formset.")
+        form = SupplierQuotationForm(request.POST)
+        formset = SupplierQuotationItemFormSet(request.POST)
+
+        if form.is_valid() and formset.is_valid():
+            logger.debug("Both form and formset are valid. Saving quotation...")
+            quotation = form.save(commit=False)
+            quotation.rfq = rfq
+
+            if not quotation.quotation_number:
+                quotation.quotation_number = f"SQ-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+
+            quotation.save()
+            logger.info(f"Created new SupplierQuotation: {quotation.quotation_number} (ID: {quotation.id})")
+
+            formset.instance = quotation
+            formset.save()
+            quotation.calculate_totals()  # Recalculate totals now that items exist
+            quotation.save(update_fields=['subtotal', 'vat_amount', 'ait_amount', 'total_amount', 'net_due_amount'])
+            logger.debug("Formset saved successfully.")
+
+            messages.success(request, f"Quotation {quotation.quotation_number} created.")
+            return redirect("customerportal:supplier_quotation_detail", pk=quotation.pk)
+        else:
+            logger.info("Form submission failed validation.")
+            logger.info(f"Form errors: {form.errors.as_json()}")
+            logger.info(f"Formset errors: {formset.errors}")
+            messages.error(request, f"Please correct the errors below and resubmit.{formset.errors}--{form.errors.as_json()}")
+    else:
+        logger.debug("Rendering empty quotation form and formset.")
+        form = SupplierQuotationForm(initial={'supplier': supplier})
+        formset = SupplierQuotationItemFormSet(initial=initial_data)
+
+    return render(
+        request,
+        "customerportal/quotations/create_supplier_quotation.html",
+        {
+            "form": form,
+            "formset": formset,
+            "rfq": rfq,
+        },
+    )
+
+
+def supplier_quotation_detail(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    return render(request, 'customerportal/quotations/supplier_quotation_detail.html', {
+        'quotation': quotation
+    })
+
+
+@login_required
+def supplier_quotation_list(request):
+    quotations = SupplierQuotation.objects.all().order_by('-date')
+    return render(request, "customerportal/quotations/supplier_quotation_list.html", {"quotations": quotations})
+
+@login_required
+def send_supplier_quotation(request, pk):
+    quotation = get_object_or_404(SupplierQuotation, pk=pk)
+    if quotation.status == "draft":
+        quotation.status = "sent"
+        quotation.save()
+        messages.success(request, f"Quotation {quotation.quotation_number} has been sent to supplier.")
+    else:
+        messages.warning(request, f"Quotation {quotation.quotation_number} is not in draft status.")
+    return redirect("customerportal:supplier_quotation_detail", pk=pk)
+
+
+
+
+
+############### Customer quotation #############################################
+
+
+def customer_quotation_detail(request, pk):
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    return render(request, 'customerportal/quotations/customer_quotation_detail.html', {
+        'quotation': quotation
+    })
+
+
+@login_required
+def customer_quotation_list(request):
+    user = request.user
+    customer = Customer.objects.filter(user=user).first()
+    quotations = CustomerQuotation.objects.filter(customer=customer).order_by('-date')
+    return render(request, "customerportal/quotations/customer_quotation_list.html", {"quotations": quotations})
+
+
+from customer.models import Customer
+@login_required
+def change_customer_quotation_status(request, pk, status):    
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    valid_statuses = [choice[0] for choice in CustomerQuotation.STATUS_CHOICES]
+
+    if status not in valid_statuses:
+        messages.error(request, f"Invalid status '{status}'.")
+        return redirect("customerportal:customer_quotation_detail", pk=pk)
+    
+    user = request.user
+    customer = Customer.objects.filter(user=user).first()
+
+    if not customer or quotation.customer != customer:
+        raise PermissionDenied("You are not authorized to view or change this quotation.")
+
+    # Status permission checks
+    if status == "sent" and not user.groups.filter(name="sales_staff").exists():
+        raise PermissionDenied("You are not authorized to send quotations.")
+    if status in ["accepted", "rejected"] and not user.is_authenticated:
+        raise PermissionDenied("Only a sales manager can accept or reject quotations.")
+
+    quotation.status = status
+    quotation.save()
+    messages.success(request, f"Quotation {quotation.quotation_number} status updated to {status.capitalize()}.")
+    return redirect("customerportal:customer_quotation_detail", pk=pk)
+
+
+
+
+
+
+@login_required
+def create_purchase_shipment(request, purchase_order_id):
+    purchase_order = get_object_or_404(PurchaseOrder, id=purchase_order_id)
+
+    if not purchase_order.approver_approval_status:
+        messages.error(request, 'You cannot proceed due to pending permission.')
+        return redirect('customerportal:purchase_order_list')
+
+    if request.method == 'POST':
+        form = PurchaseShipmentForm(request.POST)
+        if form.is_valid():
+            try:
+                shipment = form.save(commit=False)
+                shipment.user = request.user
+                shipment.purchase_order = purchase_order
+                shipment.save()
+                messages.success(request, f"Shipment {shipment.shipment_id} created successfully!")
+                return redirect('customerportal:purchase_order_list')
+            except Exception as e:
+                messages.error(request, f"Error creating shipment: {e}")
+    else:
+        form = PurchaseShipmentForm()
+
+    return render(request, 'customerportal/purchase/create_shipment.html', {
+        'form': form,
+        'purchase_order': purchase_order,
+    })
+
+
+@login_required
+def create_purchase_dispatch_item(request, dispatch_id):
+    purchase_shipment = get_object_or_404(PurchaseShipment, id=dispatch_id)
+    purchase_order = purchase_shipment.purchase_order
+    purchase_order_items = purchase_order.purchase_order_item.all()
+
+    if 'basket' not in request.session:
+        request.session['basket'] = []
+    basket = request.session.get('basket', [])
+        
+    form = PurchaseDispatchItemForm(request.POST or None, purchase_shipment=purchase_shipment)
+
+    if request.method == 'POST':
+        # Handle adding/updating/deleting items or confirming dispatch
+        if 'add_to_basket' in request.POST:
+            if form.is_valid():
+                dispatch_item = form.cleaned_data['dispatch_item']
+                dispatch_quantity = form.cleaned_data['dispatch_quantity']
+                dispatch_date = form.cleaned_data['dispatch_date']
+                delivery_date = form.cleaned_data['delivery_date']
+
+                # Calculate dispatched quantity total including current session basket
+                dispatched_quantity_total = (
+                    dispatch_item.order_dispatch_item.aggregate(total=Sum('dispatch_quantity'))['total'] or 0
+                )
+                total_in_basket = sum(
+                    item['quantity'] for item in request.session['basket'] if item['id'] == dispatch_item.id
+                )
+
+                if dispatched_quantity_total + total_in_basket + dispatch_quantity > dispatch_item.quantity:
+                    messages.error(request, f"Cannot add {dispatch_quantity} units of '{dispatch_item.product.name}' to the dispatch. The total would exceed ordered quantity.")
+                    return redirect('customerportal:create_purchase_dispatch_item', dispatch_id=dispatch_id)
+
+                # Update session basket
+                dispatch_date_str = dispatch_date.strftime('%Y-%m-%d') if dispatch_date else None
+                delivery_date_str = delivery_date.strftime('%Y-%m-%d') if delivery_date else None
+                basket = request.session.get('basket', [])
+                product_in_basket = next((item for item in basket if item['id'] == dispatch_item.id), None)
+
+                if product_in_basket:
+                    product_in_basket['quantity'] += dispatch_quantity
+                    product_in_basket['dispatch_date'] = dispatch_date_str
+                    product_in_basket['delivery_date'] = delivery_date_str
+                else:
+                    basket.append({
+                        'id': dispatch_item.id,
+                        'name': dispatch_item.product.name,
+                        'quantity': dispatch_quantity,
+                        'dispatch_date': dispatch_date_str,
+                        'delivery_date': delivery_date_str,
+                        'purchase_shipment_id': purchase_shipment.id
+                    })
+
+                request.session['basket'] = basket
+                request.session.modified = True
+                messages.success(request, f"Added '{dispatch_item.product.name}' to the dispatch basket")
+                return redirect('customerportal:create_purchase_dispatch_item', dispatch_id=dispatch_id)
+
+        elif 'action' in request.POST:
+            action = request.POST['action']
+            product_id = int(request.POST.get('product_id', 0))
+            basket = request.session.get('basket', [])
+
+            if action == 'update':
+                new_quantity = int(request.POST.get('quantity', 1))
+                for item in basket:
+                    if item['id'] == product_id:
+                        item['quantity'] = new_quantity
+                        break
+            elif action == 'delete':
+                basket = [item for item in basket if item['id'] != product_id]
+
+            request.session['basket'] = basket
+            request.session.modified = True
+            messages.success(request, "Basket updated successfully.")
+            return redirect('customerportal:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
+
+        elif 'confirm_dispatch' in request.POST:
+            basket = request.session.get('basket', [])
+            if not basket:
+                messages.error(request, "The dispatch basket is empty. Add items before confirming.")
+                return redirect('customerportal:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
+
+            return redirect('customerportal:confirm_purchase_dispatch_item')
+
+    # GET request: show form with initialized basket
+    basket = request.session.get('basket', [])
+    form = PurchaseDispatchItemForm(purchase_shipment=purchase_shipment,initial={'purchase_shipment':purchase_shipment})
+
+    return render(request, 'customerportal/purchase/create_purchase_dispatch_item.html', {
+        'form': form,
+        'basket': basket,
+        'purchase_shipment': purchase_shipment,
+    })
+
+
+@login_required
+def confirm_purchase_dispatch_item(request):
+    basket = request.session.get('basket', [])
+
+    purchase_shipment_id = basket[0].get('purchase_shipment_id') if basket else None
+    if not basket or not purchase_shipment_id:
+        messages.error(request, "The dispatch basket is empty or Purchase shipment ID is missing. Please add items to the dispatch basket.")       
+        return redirect('customerportal:dispatch_item_list') 
+    purchase_shipment = get_object_or_404(PurchaseShipment, id=purchase_shipment_id)
+
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+
+                for item in basket:
+                    dispatch_item = get_object_or_404(PurchaseOrderItem, id=item['id'])
+
+                    item_instance = PurchaseDispatchItem.objects.create(
+                        purchase_shipment=purchase_shipment,
+                        dispatch_item=dispatch_item,                        
+                        dispatch_quantity=item['quantity'],
+                        dispatch_date=item['dispatch_date'],
+                        delivery_date=item['delivery_date'],
+                        status='IN_PROCESS',
+                        user=request.user,
+                        batch=dispatch_item.batch 
+                    )
+
+                create_notification(
+                    request.user,
+                    message=f'Items for purchase Shipment number: {purchase_shipment.shipment_id} have been dispatched by vendor: {purchase_shipment.purchase_order.supplier}',
+                    notification_type='SHIPMENT-NOTIFICATION'
+                )
+   
+                request.session['basket'] = []
+                request.session.modified = True
+                messages.success(request, "Purchase dispatch confirmed and created successfully.")                        
+                return redirect('customerportal:purchase_order_list')
+        except Exception as e:
+            messages.error(request, f"An error occurred while confirming the dispatch: {str(e)}")
+            return redirect('customerportal:create_purchase_dispatch_item', dispatch_id=purchase_shipment.id)
+    return render(request, 'customerportal/purchase/confirm_purchase_dispatch_item.html', {'basket': basket})
+
+
+
+
+
+###############################################################################################
+
 @login_required
 def sale_order_list(request):
     sale_order_number=None
     form = CommonFilterForm(request.GET or None)
-    sale_orders = SaleOrder.objects.all().order_by('-created_at')
+    sale_orders = SaleOrder.objects.filter(approver_approval_status__isnull=False).order_by('-created_at')
         
     if request.user.is_authenticated:
         if request.user.groups.filter(name='Customer').exists():
@@ -321,7 +694,7 @@ from shipment.models import PurchaseShipment
 @login_required
 def purchase_order_list(request):
     purchase_order = None
-    purchase_orders = PurchaseOrder.objects.all().order_by("-created_at")
+    purchase_orders = PurchaseOrder.objects.filter(approver_approval_status__isnull=False).order_by("-created_at")
 
     form = CommonFilterForm(request.GET or None)
     if form.is_valid():
@@ -403,7 +776,7 @@ def dispatch_item_list(request, purchase_order_id):
 
 
 @login_required
-def update_dispatch_status(request, dispatch_item_id):
+def update_dispatch_status2(request, dispatch_item_id):
     dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
     if request.method == 'POST':
         new_status = request.POST.get('new_status')
@@ -436,6 +809,119 @@ def update_dispatch_status(request, dispatch_item_id):
 
 
     return redirect('customerportal:dispatch_item_list', purchase_order_id=shipment.purchase_order.id)
+
+
+@login_required
+def update_dispatch_status33(request, dispatch_item_id):
+    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+    purchase_order = dispatch_item.dispatch_item.purchase_order
+    purchase_request_order = purchase_order.purchase_request_order
+
+    if request.method == 'POST':
+        if dispatch_item.status in ['OBI','REACHED']:
+            messages.info(request,'item has already been updated')
+            return redirect('customerportal:update_dispatch_status',dispatch_item_id)
+        
+        new_status = request.POST.get('new_status')
+        old_status = dispatch_item.status
+        dispatch_item.status = new_status
+        if new_status == 'COMPLETED':
+            messages.warning(request,'No further updated is needed for this item')
+            return redirect('customerportal:update_dispatch_status',dispatch_item_id)
+        
+        dispatch_item.save()  
+        create_notification(request.user, message=f'Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}',notification_type='SHIPMENT-NOTIFICATION')     
+
+    shipment = dispatch_item.purchase_shipment
+    shipment.update_shipment_status()
+
+    try:
+        shipment = PurchaseShipment.objects.get(id=shipment.id)
+        total_dispatch_items = shipment.shipment_dispatch_item.count()
+        reached_items_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
+        all_items_reached = reached_items_count == total_dispatch_items
+
+        if all_items_reached:
+            shipment.status = 'REACHED'
+            shipment.purchase_order.status = 'REACHED'
+            shipment.purchase_order.purchase_request_order.status = 'REACHED'
+            purchase_order.status = 'REACHED'
+            purchase_request_order.status = 'REACHED'
+            purchase_order.save()
+            purchase_request_order.save()
+            shipment.save()
+            shipment.purchase_order.save()
+
+            logger.info(f"Shipment {shipment.id} marked as REACHED.")
+
+            for dispatch_item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
+                create_notification(request.user, message=f'Item {dispatch_item.dispatch_item.product} has just reached',notification_type='SHIPMENT-NOTIFICATION')
+
+    except PurchaseShipment.DoesNotExist:
+        logger.error(f"Shipment {shipment.id} not found.")
+
+
+    return redirect('customerportal:dispatch_item_list', purchase_order_id=shipment.purchase_order.id)
+
+
+@login_required
+@transaction.atomic
+def update_dispatch_status(request, dispatch_item_id):
+    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+    purchase_order = dispatch_item.dispatch_item.purchase_order
+    purchase_request_order = purchase_order.purchase_request_order
+    shipment = dispatch_item.purchase_shipment
+
+    if request.method == 'POST':
+        # Prevent updating if already completed
+        if dispatch_item.status in ['OBI', 'DELIVERED', 'COMPLETED']:
+            messages.info(request, 'This item has already been updated.')
+            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        new_status = request.POST.get('new_status')
+        old_status = dispatch_item.status
+        dispatch_item.status = new_status
+        dispatch_item.save()
+
+        create_notification(
+            request.user,
+            message=f"Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}",
+            notification_type='SHIPMENT-NOTIFICATION'
+        )
+
+        # If dispatch item is completed, no further updates needed
+        if new_status == 'COMPLETED':
+            messages.warning(request, 'No further update is needed for this item.')
+            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        # Update shipment status based on its items
+        total_items = shipment.shipment_dispatch_item.count()
+        reached_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
+
+        if total_items > 0 and reached_count == total_items:
+            # All items reached -> update shipment, PO, and request order
+            shipment.status = 'REACHED'
+            purchase_order.status = 'REACHED'
+            if purchase_request_order:
+                purchase_request_order.status = 'REACHED'
+
+            # Save all objects once
+            if purchase_request_order:
+                purchase_request_order.save()
+            purchase_order.save()
+            shipment.save()
+
+            # Notify for all items
+            for item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
+                create_notification(
+                    request.user,
+                    message=f"Item {item.dispatch_item.product} has just reached",
+                    notification_type='SHIPMENT-NOTIFICATION'
+                )
+
+            messages.success(request, f"Shipment {shipment.id} and related orders marked as REACHED.")
+
+    return redirect('customerportal:dispatch_item_list', purchase_order_id=purchase_order.id)
 
 
 
@@ -494,6 +980,76 @@ def create_purchase_invoice(request, order_id):
     else:
         form = PurchaseInvoiceForm(initial=initial_data)
     return render(request, 'customerportal/purchase/create_invoice.html', {'form': form})
+
+
+from finance.utils import create_purchase_invoice_from_po
+@login_required
+def create_purchase_invoice_from_purchase_order(request, po_id):
+    po = get_object_or_404(PurchaseOrder, id=po_id)
+
+    # Calculate financial summary
+    po_items = po.purchase_order_item.all()
+    subtotal = sum((item.unit_price or 0) * (item.quantity or 0) for item in po_items)
+    vat = getattr(po, "vat_amount", 0) or 0
+    ait = getattr(po, "ait_amount", 0) or 0  
+    total_vat_amount = po.vat_amount
+    total_ait_amount = po.ait_amount
+    total_amount = po.total_amount
+    net_due_amount =po.net_due_amount
+    AIT_rate = po.AIT_rate
+    AIT_type = po.AIT_type
+
+    if request.method == "POST":
+        # User confirmed creation
+        try:
+            invoice = create_purchase_invoice_from_po(po_id, request.user)
+            messages.success(request, f"Purchase Invoice {invoice.invoice_number} created successfully.")
+            return redirect("customerportal:purchase_order_list")
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f"Error creating invoice: {e}")
+        return redirect("customerportal:purchase_order_list")
+
+    # Render preview before confirming
+    context = {
+        "po": po,
+        "po_items": po_items,
+        "total_amount": total_amount,
+        'net_due_amount':net_due_amount,
+        "vat_amount": total_vat_amount,
+        "ait_amount": total_ait_amount,
+        "AIT_rate":AIT_rate,
+        "AIT_type":AIT_type,
+        
+    }
+    return render(request, "customerportal/purchase/confirm_financial_summary.html", context)
+
+
+from purchase.models import SupplierQuotation
+from finance.utils import convert_quotation_to_invoice
+
+@login_required
+def create_purchase_invoice_from_quotation(request, quotation_id):
+    quotation = get_object_or_404(SupplierQuotation, id=quotation_id)
+    shipment = quotation.supplier_quotations.first().purchase_shipment.first()
+    purchase_orders = quotation.supplier_quotations.all()
+    first_po = purchase_orders.first()
+    if not first_po:
+        messages.error(request, "No Purchase Order linked to this quotation.")
+        return redirect("customerportal:supplier_quotation_detail", pk=quotation.id)
+
+    first_shipment = first_po.purchase_shipment.first()
+    if not first_shipment:
+        messages.error(request, "No Purchase Shipment linked to this Purchase Order.")
+        return redirect("customerportal:purchase_order_list", pk=first_po.id)
+    invoice = convert_quotation_to_invoice(quotation, user=request.user)   
+    invoice.purchase_shipment = first_shipment
+    invoice.save() 
+    messages.success(request, f"Invoice {invoice.invoice_number} created from quotation {quotation.quotation_number}.")
+    return redirect("customerportal:purchase_order_list")
+
+
 
 
 @login_required
@@ -927,7 +1483,6 @@ from django.template.loader import render_to_string
 from django.core.mail import EmailMessage,send_mail
 from io import BytesIO
 import base64
-
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4,letter
 from recruitment.models import BQQuestionPaper

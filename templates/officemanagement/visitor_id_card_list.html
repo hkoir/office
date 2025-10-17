@@ -1,0 +1,109 @@
+<!-- visitor_id_card_list.html -->
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="d-flex flex-wrap justify-content-start gap-2 mb-3" style="border-bottom: 2px solid #f1f1f1; padding-bottom: 10px;">
+
+  <a href="{% url 'officemanagement:create_visitor_group' %}" class="btn btn-primary btn-sm">
+    <i class="fas fa-users"></i> Create Visitor Group
+  </a>
+
+  <a href="{% url 'officemanagement:create_visitor_member' %}" class="btn btn-success btn-sm">
+    <i class="fas fa-user-plus"></i> Add Visitor Member
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_group_check_in' %}" class="btn btn-info btn-sm">
+    <i class="fas fa-sign-in-alt"></i> Group Check-In
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_log_list' %}" class="btn btn-secondary btn-sm">
+    <i class="fas fa-list"></i> Visitor Log List
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_id_card_list' %}" class="btn btn-dark btn-sm">
+    <i class="fas fa-id-card"></i> Visitor ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:generate_visitor_id_cards' %}" class="btn btn-warning btn-sm">
+    <i class="fas fa-print"></i> Generate ID Cards
+  </a>
+
+  <a href="{% url 'officemanagement:search_visitor' %}" class="btn btn-outline-primary btn-sm">
+    <i class="fas fa-search"></i> Search Visitor
+  </a>
+
+  <a href="{% url 'officemanagement:visitor_report' %}" class="btn btn-outline-success btn-sm">
+    <i class="fas fa-chart-line"></i> Visitor Report
+  </a>
+</div>
+
+
+
+<div class="card shadow-sm my-5">
+  <div class="card-header bg-primary text-white text-center">
+    <h5 class="mb-0">Office Management Actions</h5>
+  </div>
+  <div class="card-body text-center d-flex flex-wrap justify-content-center gap-2">
+
+
+    <a href="{% url 'officemanagement:office_expense_advance' %}" 
+       class="btn btn-info btn-sm">
+       <i class="fas fa-money-bill-wave"></i> Expense / Advance
+    </a>
+
+    <a href="{% url 'officemanagement:office_meeting_room_booking' %}" 
+       class="btn btn-warning btn-sm text-white">
+       <i class="fas fa-handshake"></i> Meeting Room Booking
+    </a>
+
+    <a href="{% url 'officemanagement:office_visitor_management' %}" 
+       class="btn btn-secondary btn-sm">
+       <i class="fas fa-user-friends"></i> Visitor Management
+    </a>
+
+    <a href="{% url 'officemanagement:office_documentations' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Documentations
+    </a>
+
+       <a href="{% url 'officemanagement:office_supplies_stationary' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> Office Supplies & Stationary
+    </a>
+
+        <a href="{% url 'officemanagement:office_it_support_ticket' %}" 
+       class="btn btn-dark btn-sm">
+       <i class="fas fa-file-alt"></i> IT support
+    </a>
+
+  </div>
+</div>
+
+<div class="container mt-4">
+    <h2>Visitor ID Card List</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Card Number</th>
+                <th>Status</th>
+                <th>QR Code</th>
+                <th>Issued</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for card in id_cards %}
+            <tr>
+                <td>{{ card.card_number }}</td>
+                <td>{{ card.status }}</td>
+                <td>
+                    {% if card.qr_code %}
+                        <img src="{{ card.qr_code.url }}" width="60" height="60">
+                    {% endif %}
+                </td>
+                <td>{{ card.issue_date|date:"Y-m-d" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

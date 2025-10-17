@@ -146,6 +146,10 @@ class CompanyPolicyForm(forms.ModelForm):
     class Meta:
         model = CompanyPolicy
         exclude = ['user','policy_code']
+        widgets = {
+            'office_start_time': forms.TimeInput(attrs={'type': 'time'}),
+            'office_end_time': forms.TimeInput(attrs={'type': 'time'}),
+        }
 
 class SalaryStructureForm(forms.ModelForm):      
     class Meta:

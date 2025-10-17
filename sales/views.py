@@ -89,10 +89,10 @@ def change_customer_quotation_status(request, pk, status):
         return redirect("sales:customer_quotation_detail", pk=pk)
     
     user = request.user
-    if status == "sent" and not user.groups.filter(name="sales_staff").exists():
+    if status == "sent" and not user.is_authenticated:
         raise PermissionDenied("You are not authorized to send quotations.")
-    if status in ["accepted", "rejected"] and not user.groups.filter(name="sales_manager").exists():
-        raise PermissionDenied("Only a sales manager can accept or reject quotations.")
+    #if status in ["accepted", "rejected"] and not user.groups.filter(name="sales_manager").exists():
+     #   raise PermissionDenied("Only a sales manager can accept or reject quotations.")
 
     quotation.status = status
     quotation.save()
@@ -100,24 +100,110 @@ def change_customer_quotation_status(request, pk, status):
     return redirect("sales:customer_quotation_detail", pk=pk)
 
 
+
+
+
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from django.utils import timezone
+from decimal import Decimal
+from django.contrib.auth.decorators import login_required
+from .models import CustomerQuotation, SaleRequestOrder, SaleRequestItem
+
 @login_required
+@transaction.atomic
 def convert_quotation_to_sale_request(request, pk):
     quotation = get_object_or_404(CustomerQuotation, pk=pk)
+
+    if quotation.status != "accepted":
+        messages.error(request, "Quotation must be accepted before creating a Sale Request Order.")
+        return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+
     try:
-        sro = create_sale_request_from_quotation(
-            pk,
-            request.user,
-            department="Sales",  # or pass from form
+        sro = SaleRequestOrder.objects.create(
+            department="Sales",
+            user=request.user,
+            order_date=timezone.now().date(),
+            status="IN_PROCESS",
+            total_amount=Decimal(0),
+            customer=quotation.customer,
             remarks="Converted from quotation",
+            customer_quotation=quotation,
         )
-        messages.success(request, f"Sale Request {sro.order_id} created from quotation {quotation.quotation_number}")
-        return redirect("sale_request_detail", pk=sro.pk)
-    except ValueError as e:
-        messages.error(request, str(e))
-        return redirect("customer_quotation_detail", pk=quotation.pk)
+
+        total_amount = Decimal(0)
+        for item in quotation.sales_quotation_items.all():
+            SaleRequestItem.objects.create(
+                sale_request_order=sro,
+                product=item.product,
+                quantity=item.quantity,
+                unit_selling_price=item.unit_price,
+                user=request.user,
+                status="PENDING",
+            )
+            total_amount += item.quantity * item.unit_price
+
+        sro.total_amount = total_amount
+        sro.save(update_fields=["total_amount"])
+
+        messages.success(request, f"Sale Request {sro.order_id} created successfully.")
+        return redirect("sales:sale_request_order_list")
+
+    except Exception as e:
+        transaction.set_rollback(True)
+        messages.error(request, f"Error while creating Sale Request: {e}")
+        return redirect("sales:customer_quotation_detail", pk=quotation.pk)
 
 
 
+@transaction.atomic
+def convert_sale_request_to_sale_order(request, request_order_id):
+    sale_request_order = get_object_or_404(SaleRequestOrder, id=request_order_id)
+
+    # Check if already converted
+    existing_order = SaleOrder.objects.filter(sale_request_order=sale_request_order).first()
+    if existing_order:
+        messages.warning(request, f"This request order is already converted to Sale Order {existing_order.order_id}.")
+        return redirect('sales:sale_order_list')
+
+    # Generate sale order ID
+    new_order_id = f"SO-{sale_request_order.order_id}"
+
+    # Create SaleOrder
+    sale_order = SaleOrder.objects.create(
+        sale_request_order=sale_request_order,
+        order_id=new_order_id,
+        customer=sale_request_order.customer,
+        user=request.user,
+        total_amount=sale_request_order.total_amount,
+        remarks=f"Converted from Sale Request Order {sale_request_order.order_id}",
+        status="IN_PROCESS",
+    )
+
+    # Get all SaleRequestItems and convert to SaleOrderItems
+    request_items = SaleRequestItem.objects.filter(sale_request_order=sale_request_order)
+    for item in request_items:
+        total_price = (item.unit_selling_price or 0) * (item.quantity or 0)
+
+        SaleOrderItem.objects.create(
+            sale_order=sale_order,
+            sale_request_item=item,
+            user=request.user,
+            product=item.product,
+            quantity=item.quantity,
+            unit_selling_price=item.unit_selling_price,
+            total_price=total_price,
+            batch=item.batch,
+            status="PENDING",
+        )
+
+    # Optionally update status of SaleRequestOrder
+    sale_request_order.status = "READY_FOR_DISPATCH"
+    sale_request_order.save()
+
+    messages.success(request, f"Sale Request {sale_request_order.order_id} successfully converted to Sale Order {sale_order.order_id}.")
+    return redirect('sales:sale_order_list')
 
 
 

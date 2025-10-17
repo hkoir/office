@@ -19,7 +19,7 @@ from purchase.models import  QualityControl,PurchaseOrder
 from myproject.utils import create_notification
 from django.core.paginator import Paginator
 from core.forms import CommonFilterForm
-
+from purchase.models import Batch
 
 
 
@@ -308,7 +308,7 @@ def confirm_purchase_dispatch_item(request):
                 for item in basket:
                     dispatch_item = get_object_or_404(PurchaseOrderItem, id=item['id'])
 
-                    PurchaseDispatchItem.objects.create(
+                    item_instance = PurchaseDispatchItem.objects.create(
                         purchase_shipment=purchase_shipment,
                         dispatch_item=dispatch_item,
                         dispatch_quantity=item['quantity'],
@@ -316,6 +316,7 @@ def confirm_purchase_dispatch_item(request):
                         delivery_date=item['delivery_date'],
                         status='IN_PROCESS',
                         user=request.user,
+                        batch=dispatch_item.batch
                     )
 
                 create_notification(
@@ -388,11 +389,13 @@ def dispatch_item_list(request, purchase_order_id):
 
 
 @login_required
-def update_dispatch_status(request, dispatch_item_id):
+def update_dispatch_status44(request, dispatch_item_id):
     dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+    purchase_order = dispatch_item.dispatch_item.purchase_order
+    purchase_request_order = purchase_order.purchase_request_order
 
     if request.method == 'POST':
-        if dispatch_item.status in ['OBI','DELIVERED']:
+        if dispatch_item.status in ['OBI','REACHED']:
             messages.info(request,'item has already been updated')
             return redirect('logistics:update_dispatch_status',dispatch_item_id)
         
@@ -419,8 +422,11 @@ def update_dispatch_status(request, dispatch_item_id):
             shipment.status = 'REACHED'
             shipment.purchase_order.status = 'REACHED'
             shipment.purchase_order.purchase_request_order.status = 'REACHED'
+            purchase_order.status = 'REACHED'
+            purchase_request_order.status = 'REACHED'
+            purchase_order.save()
+            purchase_request_order.save()
             shipment.save()
-            shipment.purchase_order.save()
 
             logger.info(f"Shipment {shipment.id} marked as REACHED.")
 
@@ -433,6 +439,66 @@ def update_dispatch_status(request, dispatch_item_id):
 
     return redirect('logistics:dispatch_item_list', purchase_order_id=shipment.purchase_order.id)
 
+
+
+@login_required
+@transaction.atomic
+def update_dispatch_status(request, dispatch_item_id):
+    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+    purchase_order = dispatch_item.dispatch_item.purchase_order
+    purchase_request_order = purchase_order.purchase_request_order
+    shipment = dispatch_item.purchase_shipment
+
+    if request.method == 'POST':
+        # Prevent updating if already completed
+        if dispatch_item.status in ['OBI', 'DELIVERED', 'COMPLETED']:
+            messages.info(request, 'This item has already been updated.')
+            return redirect('logistics:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        new_status = request.POST.get('new_status')
+        old_status = dispatch_item.status
+        dispatch_item.status = new_status
+        dispatch_item.save()
+
+        create_notification(
+            request.user,
+            message=f"Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}",
+            notification_type='SHIPMENT-NOTIFICATION'
+        )
+
+        # If dispatch item is completed, no further updates needed
+        if new_status == 'COMPLETED':
+            messages.warning(request, 'No further update is needed for this item.')
+            return redirect('logistics:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        # Update shipment status based on its items
+        total_items = shipment.shipment_dispatch_item.count()
+        reached_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
+
+        if total_items > 0 and reached_count == total_items:
+            # All items reached -> update shipment, PO, and request order
+            shipment.status = 'REACHED'
+            purchase_order.status = 'REACHED'
+            if purchase_request_order:
+                purchase_request_order.status = 'REACHED'
+
+            # Save all objects once
+            if purchase_request_order:
+                purchase_request_order.save()
+            purchase_order.save()
+            shipment.save()
+
+            # Notify for all items
+            for item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
+                create_notification(
+                    request.user,
+                    message=f"Item {item.dispatch_item.product} has just reached",
+                    notification_type='SHIPMENT-NOTIFICATION'
+                )
+
+            messages.success(request, f"Shipment {shipment.id} and related orders marked as REACHED.")
+
+    return redirect('logistics:dispatch_item_list', purchase_order_id=purchase_order.id)
 
 
 
@@ -592,7 +658,7 @@ def create_sale_dispatch_item(request, dispatch_id):
 
 
 
-from purchase.models import Batch
+
 @login_required
 def confirm_sale_dispatch_item(request):
     basket = request.session.get('basket', [])

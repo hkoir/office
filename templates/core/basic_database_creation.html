@@ -5,8 +5,8 @@
     
 <div class="container-fluid main-content py-4 d-flex justify-content-center flex-wrap gap-3">
 
-  <a href="{% url 'accounts:register' %}" class="btn btn-primary">Staff Registration</a>
-  <a href="{% url 'accounts:register_partner_job_seeker' %}" class="btn btn-primary">Customer / Supplier Registration</a>
+  <a href="{% url 'accounts:register' %}" class="btn btn-primary">Customer/Job seeker Registration</a>
+  <a href="{% url 'accounts:register_employee_corporate_user' %}" class="btn btn-primary">Corporate Customer / Supplier Registration</a>
 
   <a href="{% url 'core:create_company' %}" class="btn btn-success">Create Company</a>
   <a href="{% url 'core:manage_location' %}" class="btn btn-success">Create Company Location</a>

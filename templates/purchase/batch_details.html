@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <h3 class="text-center mb-4">Batch Details: {{ batch.batch_number }}</h3>
+    
+    <div class="row g-3">
+        <!-- Left Column: Images -->
+        <div class="col-md-4">
+            {% if batch.image %}
+                <div class="mb-3">
+                    <label class="form-label">Product Image</label>
+                    <img src="{{ batch.image.url }}" class="img-fluid rounded shadow-sm" alt="Product Image">
+                </div>
+            {% endif %}
+
+            {% if batch.barcode_image %}
+                <div class="mb-3">
+                    <label class="form-label">Barcode</label>
+                    <img src="{{ batch.barcode_image.url }}" class="img-fluid rounded shadow-sm" alt="Barcode">
+                </div>
+            {% endif %}
+
+            {% if batch.qr_code_image %}
+                <div class="mb-3">
+                    <label class="form-label">QR Code</label>
+                    <img src="{{ batch.qr_code_image.url }}" class="img-fluid rounded shadow-sm" alt="QR Code">
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Details -->
+        <div class="col-md-8 table-responsive">
+            <table class="table table-bordered table-striped">
+                <tbody>
+                    <tr>
+                        <th>Batch Number</th>
+                        <td>{{ batch.batch_number }}</td>
+                    </tr>
+                    <tr>
+                        <th>Product Type</th>
+                        <td>{{ batch.get_product_type_display }}</td>
+                    </tr>
+                    <tr>
+                        <th>Product</th>
+                        <td>{{ batch.product.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Manufacture Date</th>
+                        <td>{{ batch.manufacture_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>Expiry Date</th>
+                        <td>{{ batch.expiry_date }}</td>
+                    </tr>
+                    <tr>
+                        <th>VAT %</th>
+                        <td>{{ batch.vat_percentage }}</td>
+                    </tr>
+                    <tr>
+                        <th>Purchase Price</th>
+                        <td>{{ batch.purchase_price }}</td>
+                    </tr>
+                   
+                    <tr>
+                        <th>Regular Price</th>
+                        <td>{{ batch.regular_price }}</td>
+                    </tr>
+                    <tr>
+                        <th>Discounted Price</th>
+                        <td>{{ batch.discounted_price }}</td>
+                    </tr>
+                    <tr>
+                        <th>Quantity</th>
+                        <td>{{ batch.quantity }}</td>
+                    </tr>
+                    <tr>
+                        <th>Remaining Quantity</th>
+                        <td>{{ batch.remaining_quantity }}</td>
+                    </tr>
+                    
+                    <tr>
+                        <th>Brand</th>
+                        <td>{{ batch.brand }}</td>
+                    </tr>
+                    
+                    <tr>
+                        <th>Supplier</th>
+                        <td>{{ batch.supplier.name }}</td>
+                    </tr>                    
+                 
+                    <tr>
+                        <th>Barcode</th>
+                        <td>{{ batch.barcode }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

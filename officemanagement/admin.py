@@ -5,6 +5,8 @@ from.models import StationaryPurchaseOrder,StationaryPurchaseItem,MeetingRoomBoo
 
 from.models import MeetingRoom,ExpenseSubmissionItem,ExpenseSubmissionOrder,ITSupportTicket,StationaryUsageRequestOrder
 
+from.models import VisitorGroup,VisitorLog,VisitorIDCard
+
 admin.site.register(StationaryProduct)
 admin.site.register(StationaryCategory)
 admin.site.register(StationaryBatch)
@@ -25,3 +27,7 @@ admin.site.register(ExpenseSubmissionOrder)
 admin.site.register(ExpenseSubmissionItem)
 
 admin.site.register(ITSupportTicket)
+
+admin.site.register(VisitorGroup)
+admin.site.register(VisitorLog)
+admin.site.register(VisitorIDCard)

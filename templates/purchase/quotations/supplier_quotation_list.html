@@ -80,7 +80,7 @@
                            {% if request.user.is_staff %}
                             {% if quotation.status == "approved" %}
                             {% if not quotation.supplier_quotations.first %}
-                            <a href="{% url 'purchase:convert_supplier_quotation' quotation.id %}"
+                            <a href="{% url 'purchase:convert_supplier_quotation_to_po' quotation.id %}"
                               class="btn btn-primary"
                               onclick="return confirm('Convert this quotation to a Purchase Order?')">
                                 Convert to Purchase Order
@@ -89,20 +89,12 @@
                             {% endif %}
                             {% endif %}
 
-                         {% if quotation.status == "approved" %}
-                            {% with supplier_q=quotation.supplier_quotations.first %}
-                              {% if supplier_q %}
-                                {% with shipment=supplier_q.purchase_shipment.first %}
-                                  {% if not shipment or not shipment.shipment_invoices.exists %}
-                                    <a href="{% url 'finance:create_purchase_invoice_from_quotation' quotation.id %}"
-                                      class="btn btn-primary"
-                                      onclick="return confirm('Convert this quotation to Invoice?')">
-                                      Convert to Invoice
-                                    </a>
-                                  {% endif %}
-                                {% endwith %}
-                              {% endif %}
-                            {% endwith %}
+                         {% if quotation.supplier_quotations.first.status == "DELIVERED" %}
+                             <a href="{% url 'finance:create_purchase_invoice_from_quotation' quotation.id %}"
+                               class="btn btn-primary"
+                               onclick="return confirm('Convert this quotation to Invoice?')">
+                                   Convert to Invoice
+                              </a>
                           {% endif %}
 
 
