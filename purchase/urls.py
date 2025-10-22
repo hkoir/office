@@ -37,6 +37,7 @@ urlpatterns = [
   path("supplier-quotation/<int:pk>/reject/", views.reject_supplier_quotation, name="reject_supplier_quotation"),
 
   path('supplier-quotation/<int:quotation_id>/convert/', views.convert_quotation_to_po,name='convert_supplier_quotation_to_po'),
+  path('select_or_create_batch/<int:po_id>/', views.select_or_create_batch,name='select_or_create_batch'),
   path('add_batch_details/<int:po_id>/', views.add_batch_details,name='add_batch_details'),
   path('batch_list/', views.batch_list,name='batch_list'),
   path('batch/<int:batch_id>/', views.batch_details, name='batch_details'),

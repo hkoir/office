@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>Confirm Conversion to Purchase Order</h3>
+    <hr>
+
+    <h5>Quotation Details</h5>
+    <table class="table table-bordered">
+        <tr><th>Supplier</th><td>{{ quotation.supplier.name }}</td></tr>
+        <tr><th>Quotation ID</th><td>{{ quotation.quotation_number }}</td></tr>
+        <tr><th>Status</th><td>{{ quotation.status }}</td></tr>
+        <tr><th>Total Amount</th><td>{{ quotation.total_amount }}</td></tr>
+	 <tr><th>AIT</th><td>{{ quotation.ait_amount }}||{{ quotation.AIT_rate }}%||{{ quotation.AIT_type }}</td></tr>
+	<tr><th>Total VAT</th><td>{{ quotation.vat_amount }}</td></tr>
+        <tr><th>Net Due</th><td>{{ quotation.net_due_amount }}</td></tr>
+        <tr><th>Delivery Date</th><td>{{ quotation.quoted_delivery_date }}</td></tr>
+    </table>
+
+    <h5>Items</h5>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit</th>
+                <th>Unit Price</th>
+		<th>VAT</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in quotation.purchase_quotation_items.all %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unit_of_measure }}</td>
+                <td>{{ item.unit_price }}</td>
+		<td>{{item.vat_amount}}||{{item.VAT_rate}}%||{{item.VAT_type}}
+                <td>{{ item.total_price }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-success">
+            ✅ Confirm & Convert to Purchase Order
+        </button>
+        <a href="{% url 'purchase:supplier_quotation_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

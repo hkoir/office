@@ -13,14 +13,13 @@ from.models import ExistingOrder,ExistingOrderItems,OperationsDeliveryItem,Opera
 from product.models import Product
 from.forms import ExistingOrderForm,OperationsDeliveryForm,OperationsRequestForm
 
-from inventory.models import Warehouse,Location
 from inventory.models import InventoryTransaction,Warehouse,Location
 from myproject.utils import create_notification
 from core.forms import CommonFilterForm
 from django.core.paginator import Paginator
 from inventory.models import Inventory
 from django.contrib.auth.decorators import login_required,permission_required
-
+from purchase.models import Batch
 
 
 @login_required
@@ -78,7 +77,10 @@ def add_existing_items(request):
                         'sku': product_obj.sku,
                         'unit_price': float(product_obj.unit_price),
                         'total_amount': total_amount,
-                        'batch_id':batch.id
+                        'batch_id':batch.id,
+                        'warehouse_name': warehouse.name,
+                        'location_name': location.name,
+                        'batch_number':batch.batch_number
                     })
 
                 request.session['basket'] = basket
@@ -130,16 +132,17 @@ def confirm_add_existing_items(request):
 
     if request.method == 'POST':
         try:
-            with transaction.atomic(): 
+            with transaction.atomic():
+                # Calculate total amount
                 total_amount = sum(item['quantity'] * item['unit_price'] for item in basket)
-                
-                existing_order = ExistingOrder(
+
+                # Create existing order
+                existing_order = ExistingOrder.objects.create(
                     total_amount=total_amount,
                     status='ADDED',
                     user=request.user
                 )
-                existing_order.save()
-               
+
                 for item in basket:
                     product = get_object_or_404(Product, id=item['id'])
                     quantity = item['quantity']
@@ -147,65 +150,62 @@ def confirm_add_existing_items(request):
                     location_id = item.get('location_id')
                     batch_id = item.get('batch_id')
 
-                    if not warehouse_id or not location_id:
-                        raise ValueError("Warehouse or location data is missing.")
+                    if not warehouse_id or not location_id or not batch_id:
+                        raise ValueError("Warehouse, location, or batch data is missing.")
 
                     warehouse = get_object_or_404(Warehouse, id=warehouse_id)
                     location = get_object_or_404(Location, id=location_id)
-                    batch = get_object_or_404(Location, id=batch_id)
+                    batch = get_object_or_404(Batch, id=batch_id)  # Fixed: use Batch
 
-                    existing_order_item = ExistingOrderItems(
+                    # Create order item
+                    existing_order_item = ExistingOrderItems.objects.create(
                         existing_order=existing_order,
                         product=product,
                         quantity=quantity,
                         batch=batch,
                         total_amount=total_amount,
                         user=request.user
+                    )              
+                   
+                    inventory, _ = Inventory.objects.get_or_create(
+                        warehouse=warehouse,
+                        location=location,
+                        product=product,
+                        batch=batch,
+                        user=request.user,
+                        defaults={'quantity': 0}
                     )
-                    existing_order_item.save()
+                    inventory.quantity += quantity
+                    inventory.save()
 
-                    inventory_transaction = InventoryTransaction.objects.create(
+                    # Record inventory transaction
+                    InventoryTransaction.objects.create(
                         user=request.user,
                         warehouse=warehouse,
                         location=location,
-                         batch=batch,
                         product=product,
+                        batch=batch,
                         transaction_type='EXISTING_ITEM_IN',
                         quantity=quantity,
                         existing_items_order=existing_order,
+                        inventory_transaction=inventory
                     )
 
-                    inventory, created = Inventory.objects.get_or_create(
-                        warehouse=warehouse,
-                        location=location,
-                        product=product,
-                         batch=batch,
-                        user=request.user,                      
-                        defaults={
-                            'quantity':0,
-                        }
+                    # Send notification per item
+                    create_notification(
+                        request.user,
+                        message=f'{quantity} units of {product.name} from existing stock have been added to inventory',
+                        notification_type='OPERATIONS-NOTIFICATION'
                     )
-    
-                if not created:
-                    inventory.quantity += quantity                    
-                    inventory.save()
-                    messages.success(request, "Inventory updated successfully.")
-                else:                    
-                    inventory.quantity = quantity
-                    inventory.save()
-                    messages.success(request, "Inventory created successfully.")
 
-                inventory_transaction.inventory_transaction= inventory
-                inventory_transaction.save()
-            
-            create_notification(request.user,message=f'{product} from existing resource has been added into stock',notification_type='OPERATIONS-NOTIFICATION')
+                # Clear basket after success
+                request.session['basket'] = []
+                request.session.modified = True
 
-            request.session['basket'] = []
-            request.session.modified = True
-            messages.success(request, "Order created successfully!")
-            return redirect('operations:add_existing_items')
+                messages.success(request, "Order created successfully!")
+                return redirect('operations:add_existing_items')
 
-        except Exception as e: 
+        except Exception as e:
             logger.error("Error creating order: %s", e)
             messages.error(request, f"An error occurred while creating the order: {str(e)}")
             return redirect('operations:add_existing_items')
@@ -475,6 +475,7 @@ def create_operations_items_delivery(request, request_id):
                         'warehouse_id': warehouse.id,                        
                         'location_id': location.id,
                         'batch_id':batch.id,
+                        'batch_number':batch.batch_number,
                         'warehouse_name': warehouse.name,                        
                         'location_name': location.name,                    
                         'total_amount': total_amount,
@@ -518,7 +519,6 @@ def create_operations_items_delivery(request, request_id):
     basket = request.session.get('basket', [])
     return render(request, 'operations/create_operations_items_delivery.html', {'form': form, 'basket': basket})
 
-from purchase.models import Batch
 
 @login_required
 def confirm_operations_items_delivery(request):
@@ -583,9 +583,9 @@ def confirm_operations_items_delivery(request):
                         quantity=item['quantity'],
                         operations_request_order=operations_request_order,
                         inventory_transaction=inventory
-                    )      
-
-                    batch.remaining_quantity -= item['quantity']
+                    )                           
+                  
+                    batch.remaining_quantity = (batch.remaining_quantity or 0) - item['quantity']
                     batch.save()       
                     
                     create_notification(request.user,message=f'request from operations for{product} has been delivered',notification_type='OPERATION-NOTIFICATION')

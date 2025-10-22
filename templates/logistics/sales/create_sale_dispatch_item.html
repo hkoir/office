@@ -2,77 +2,136 @@
 
 {% block content %}
 
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'sales:create_customer_quotation' %}" class="btn btn-sm btn-success w-100">
+        Create Customer Quotation
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:customer_quotation_list' %}" class="btn btn-sm btn-success w-100">
+        Customer Quotation List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_request_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sales Request Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:sale_shipment_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Shipment List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Invoice List
+      </a>
+    </div>
+  </div>
+</div>
+
 
 <div class="container-fluid main-content">
-    <div class="row">
-        <!-- Left Sidebar: Form -->
-        <div class="col-12 col-md-4">
-            <div class="card shadow" style="background-color: aliceblue;">
-                 <!-- Card Header -->
-                 <div class="card-header bg-primary text-white text-center">
-                    <h5 class="mb-0"> Create Dispatch Item</h5>
-                </div> 
-                <div class="card-body">                   
-                    <form method="post" enctype="multipart/form-data" id="add_dispatch_item">
-                        {% csrf_token %}                    
-
-                        {{ form.as_p }}
-                        <div class="d-grid">
-                        <button type="submit" name="add_to_basket" class="btn btn-lg btn-primary">Add to List</button>
-                    </div>
-                    </form>
-                </div>
+  <div class="row g-3">
+    <!-- Left Sidebar: Form -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm h-100" style="background-color: aliceblue;">
+        <div class="card-header bg-primary text-white text-center">
+          <h5 class="mb-0">Create Dispatch Item</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" enctype="multipart/form-data" id="add_dispatch_item">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="d-grid">
+              <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">
+                Add to List
+              </button>
             </div>
+          </form>
         </div>
-
-        <!-- Right Side: Dispatch Items List -->
-        <div class="col-12 col-md-8">
-            {% if basket %}
-            <table class="table table-hover">
-                <thead class="table-dark">
-                    <h4>Items to be Dispatched</h4>
-                    <tr>
-                        <th>Product</th>
-                        <th style="white-space: nowrap;">Quantity</th>
-                        <th>Change</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in basket %}
-                    <tr>
-                        <td style="white-space: nowrap;">{{ item.name }}</td>
-                        <td style="white-space: nowrap;">{{ item.quantity }}</td>
-                        <td style="white-space: nowrap;">
-                            <!-- Update Quantity -->
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="product_id" value="{{ item.id }}">
-                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control d-inline w-25">
-                                <button type="submit" name="action" value="update" class="btn btn-sm btn-warning">Update</button>
-                            </form>
-
-                            <!-- Delete Item -->
-                            <form method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <input type="hidden" name="product_id" value="{{ item.id }}">
-                                <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-            <!-- Confirm Dispatch -->
-            <form method="post">
-                {% csrf_token %}
-                <button type="submit" name="confirm_dispatch" value="confirm_dispatch" class="btn btn-success">Confirm Dispatch</button>
-            </form>
-            {% else %}
-                <p>No products added to the list yet.</p>
-            {% endif %}
-        </div>
+      </div>
     </div>
+
+    <!-- Right Side: Dispatch Items List -->
+    <div class="col-12 col-lg-8">
+      {% if basket %}
+      <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Items to be Dispatched</h5>
+          <form method="post" class="m-0">
+            {% csrf_token %}
+            <button type="submit" name="confirm_dispatch" value="confirm_dispatch" class="btn btn-success btn-sm">
+              Confirm Dispatch
+            </button>
+          </form>
+        </div>
+        <div class="card-body p-0">
+          <!-- Make table horizontally scrollable on smaller screens -->
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle text-center mb-0">
+              <thead class="table-dark">
+                <tr>
+                  <th style="min-width: 160px;">Product</th>
+                  <th style="min-width: 120px;">Warehouse</th>
+                  <th style="min-width: 120px;">Location</th>
+                  <th style="min-width: 100px;">Batch</th>
+                  <th style="min-width: 80px;">Qty</th>
+                  <th style="min-width: 180px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in basket %}
+                <tr>
+                  <td class="text-truncate">{{ item.name }}</td>
+                  <td>{{ item.warehouse_name }}</td>
+                  <td>{{ item.location_name }}</td>
+                  <td>{{ item.batch_number }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>
+                    <!-- Update Quantity -->
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="product_id" value="{{ item.id }}">
+                      <input
+                        type="number"
+                        name="quantity"
+                        value="{{ item.quantity }}"
+                        min="1"
+                        class="form-control d-inline w-auto"
+                        style="width: 70px;"
+                      >
+                      <button type="submit" name="action" value="update" class="btn btn-warning btn-sm">Update</button>
+                    </form>
+
+                    <!-- Delete Item -->
+                    <form method="post" class="d-inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="product_id" value="{{ item.id }}">
+                      <button type="submit" name="action" value="delete" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-info mt-3 text-center">
+        No products added to the list yet.
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 

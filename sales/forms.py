@@ -15,27 +15,45 @@ from .models import CustomerQuotation, CustomerQuotationItem
 class CustomerQuotationForm(forms.ModelForm):
     class Meta:
         model = CustomerQuotation
-        fields = ["customer", "date","valid_until", "status", "notes"]
+        fields = ["customer", "date", "valid_until",'quoted_delivery_date', "status", "notes","AIT_rate","AIT_type","currency"]
         widgets={
-            'notes':forms.TextInput(attrs={
+            'notes':forms.Textarea(attrs={
                 'style':'height:50px'
             }),
             'valid_until': forms.DateInput(attrs={'type':'date'}),
-             'date': forms.DateInput(attrs={'type':'date'})
+             'date': forms.DateInput(attrs={'type':'date'}),
+	     'quoted_delivery_date': forms.DateInput(attrs={'type':'date'})
         }
+
 
 class CustomerQuotationItemForm(forms.ModelForm):
     class Meta:
         model = CustomerQuotationItem
-        fields = ["product", "quantity", "unit_price", "vat_percentage"]
+        fields = ["product", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
+
+        widgets={
+            'specification':forms.Textarea(attrs={
+                'style':'height:50px;width:250px'
+            }),
+             'notes':forms.Textarea(attrs={
+                'style':'height:50px;width:250px'
+            }),
+            'quoted_delivery_date': forms.DateInput(attrs={'type':'date'}),
+            
+        }
+
+
 
 CustomerQuotationItemFormSet = inlineformset_factory(
     CustomerQuotation,
     CustomerQuotationItem,
     form=CustomerQuotationItemForm,
-    extra=1,
+    extra=2,
     can_delete=True
 )
+
+
+
 
 
 

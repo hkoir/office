@@ -18,6 +18,8 @@ urlpatterns = [
     path('download_purchase_invoice/<int:purchase_order_id>/', views.download_purchase_invoice, name='download_purchase_invoice'),
     path('download_sale_invoice/<int:sale_order_id>/', views.download_sale_invoice, name='download_sale_invoice'),
 
+
+    path('create_sale_invoice_from_sale_order/<int:so_id>/', views.create_sale_invoice_from_sale_order, name='create_sale_invoice_from_sale_order'),
     path('create_sale_invoice/<int:order_id>/', views.create_sale_invoice, name='create_sale_invoice'),
     path('create_sale_payment/<int:invoice_id>/', views.create_sale_payment, name='create_sale_payment'),
     path('sale_invoice_list/', views.sale_invoice_list, name='sale_invoice_list'),    

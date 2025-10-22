@@ -98,12 +98,17 @@ class Batch(models.Model):
        
 
         is_new = not self.pk
-        if is_new:
+        if is_new:           
             self.remaining_quantity = self.quantity
+        else:
+            old = Batch.objects.filter(pk=self.pk).only('quantity', 'remaining_quantity').first()
+            if old:
+                delta = self.quantity - old.quantity
+                if delta > 0:                   
+                    self.remaining_quantity += delta             
+        
         super().save(*args, **kwargs)
         
-        #if is_new and self.quantity > 0:
-         #   create_units_for_batch(batch=self)
 
 
 
@@ -459,6 +464,9 @@ class SupplierQuotationItem(models.Model):
     def __str__(self):
         return f"{self.product} ({self.quantity})"
 
+
+
+
 class PurchaseOrder(models.Model):
     order_id = models.CharField(max_length=20, unique=True, blank=True)
     purchase_request_order = models.ForeignKey(
@@ -647,41 +655,26 @@ class PurchaseOrder(models.Model):
         return "UNKNOWN"
     
     def get_payment_action(self):
-        # 1️⃣ Must be approved before payment
         if self.approver_approval_status != "APPROVED":
             return {"status": "APPROVAL_PENDING"}
-
-        # 2️⃣ Must have at least one shipment
         shipments = self.purchase_shipment.all()
         if not shipments.exists():
             return {"status": "NO_SHIPMENT"}
-
-        # 3️⃣ Must have at least one submitted invoice
         invoices = PurchaseInvoice.objects.filter(purchase_shipment__in=shipments)
         if not invoices.exists():
             return {"status": "NO_INVOICE"}
-
-        # Only invoices in these statuses are valid for payment
-        payable_statuses = ["SUBMITTED", "APPROVED", "READY_FOR_PAYMENT"]
-        submitted_invoices = invoices.filter(status__in=payable_statuses)
-
+        if invoices.filter(status="FULLY_PAID").count() == invoices.count():
+            return {"status": "FULLY_PAID"}
+        submitted_invoices = invoices.filter(status__in=["SUBMITTED", "PARTIALLY_PAID"])
         if not submitted_invoices.exists():
-            # Invoice exists but not yet submitted or approved
             return {"status": "INVOICE_NOT_READY"}
-
-        # 4️⃣ If there are submitted invoices, check for payments
         payments = PurchasePayment.objects.filter(purchase_invoice__in=submitted_invoices)
         if not payments.exists():
             return {"status": "NO_PAYMENT", "invoice": submitted_invoices.first()}
-
-        # 5️⃣ Check if all submitted invoices are fully paid
-        if all(inv.is_fully_paid for inv in submitted_invoices):
-            return {"status": "FULLY_PAID"}
-
-        # 6️⃣ Otherwise, some invoices are partially paid
-        unpaid_invoice = next((inv for inv in submitted_invoices if not inv.is_fully_paid), None)
-        return {"status": "PARTIAL", "invoice": unpaid_invoice}
-
+        if invoices.filter(status="PARTIALLY_PAID").exists():
+            unpaid_invoice = invoices.filter(status="PARTIALLY_PAID").first()
+            return {"status": "PARTIAL", "invoice": unpaid_invoice}
+        return {"status": "INVOICE_NOT_READY"}
 
     
     def get_first_invoice(self):
@@ -756,6 +749,7 @@ class QualityControl(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='quality_control_user')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='qc_product', null=True, blank=True)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
+    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,null=True,blank=True)
     good_quantity = models.PositiveIntegerField(null=True, blank=True)
     bad_quantity = models.PositiveIntegerField(null=True, blank=True)
     inspection_date = models.DateField(null=True, blank=True)

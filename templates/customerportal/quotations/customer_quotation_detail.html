@@ -19,13 +19,13 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <p>
-                    <strong>Customer:</strong> {{ quotation.customer.name }}<br>
+                    <strong>Customer:</strong> {{ request.user.username }}<br>
                     <strong>Quotation Date:</strong> {{ quotation.date }}<br>
                     <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
-                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
-                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
-                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
-                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
+                    <strong>Sub Total:</strong> {{ quotation.subtotal|add_commas }}<br>
+                    <strong>VAT:</strong> {{ quotation.vat_amount|add_commas }}<br>
+                    <strong>AIT:</strong> {{ quotation.ait_amount|add_commas }}&nbsp;||{{quotation.AIT_rate}}&nbsp;%||&nbsp;{{quotation.AIT_type}}<br>
+                    <strong>Net Amount:</strong> {{ quotation.net_due_amount|add_commas }}<br>
                     <strong>Status:</strong> {{ quotation.status }}<br>
                     <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}<br>                    
 
@@ -39,7 +39,7 @@
                     <h4>Quoted Items</h4>
                     <span>
                     {% if quotation.status == "sent" %}
-                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.id 'accepted' %}" 
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.id 'approved' %}" 
                         class="btn btn-success btn-sm">Accept</a>
                         <a href="{% url 'customerportal:change_customer_quotation_status' quotation.id 'rejected' %}" 
                         class="btn btn-danger btn-sm">Reject</a>
@@ -60,16 +60,18 @@
                             <tr>
                                 <th>Product</th>
                                 <th>Quantity</th>
-                                <th>Unit Price</th>                               
+                                <th>Unit Price</th>  
+				<th>VAT</th>                          
                                 <th>Line Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in quotation.sales_quotation_items.all %}
+                            {% for item in quotation.sale_quotation_items.all %}
                             <tr>
                                 <td>{{ item.product.name }}</td>
                                 <td>{{ item.quantity }}</td>
-                                <td>{{ item.unit_price }}</td>                              
+                                <td>{{ item.unit_price }}</td>
+				<td>{{ item.vat_amount }}&nbsp;%&nbsp;||&nbsp;{{item.VAT_rate}}&nbsp;||{{item.VAT_type}}</td>                              
                                 <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price }}</td>
                             </tr>
                             {% empty %}

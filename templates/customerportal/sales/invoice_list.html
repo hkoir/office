@@ -1,0 +1,153 @@
+{% extends 'partner_portal_base.html' %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+
+
+<div class="container-fluid main-content">
+   
+    <div class="row">
+        <div class="col-12">     
+            <div class="container">
+                <div class="row">
+                    <div class="col-7">
+                        <form method ="GET" action="">
+                            <label for="id_sale_invoice_id"> Sale invoice</label>
+                             {{ form.sale_invoice_id }}
+                            <button type="Submit" class="btn btn-primary">Search</button>                           
+                        </form>           
+                    </div>
+                    <div class="col-5">                  
+                        {% if invoice_number %}
+                            Search result for sale order: <b>{{ invoice_number }}</b>
+                            {% else %}
+                        <span> ID does not match</span>
+                        {% endif %}  
+                    
+                    </div>
+                </div>
+            </div>
+
+        </div>      
+        <hr class="mt-2">
+        <div class="col-12 table-responsive">
+
+            <h2>Invoice List</h2>
+
+            <table class="table table-hover">
+                <thead class="table-dark">
+                    <tr class="btn-primary text-white">
+                        <th>Invoice Number</th>
+                        <th>Sale Order</th>
+                        <th>Shipment ID</th>
+                        <th>Customer</th>
+                        <th>Amount Due</th>
+                        <th>Amount Paid</th>
+                        <th>Tax Rate</th>
+                        <th>Issued Date</th>
+                        <th>Actions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in page_obj %}
+                        <tr>
+                            <td>{{ invoice.invoice_number }}</td>
+                            <td>{{ invoice.sale_shipment.sales_order }}</td>
+                            <td>{{ invoice.sale_shipment.shipment_id }}</td>
+                            <td>{{ invoice.sale_shipment.sales_order.customer }}</td>
+                            <td>{{ invoice.net_due_amount|add_commas }}</td>
+                            <td>{{ invoice.total_paid|add_commas }}</td>
+                            <td>{{ invoice.tax_rate }}%</td>
+                            <td>{{ invoice.issued_date|date:"Y-m-d H:i" }}</td>
+                                        
+                            {% if invoice.is_fully_paid %}
+                            <td><i class="fas fa-check" style="color:green;font-weight: bold;">Payment clear</i></td>
+                            {%else %}
+                            <td style="white-space: nowrap;">
+                                <a href="{% url 'customerportal:create_sale_payment' invoice_id=invoice.id %}" class="btn btn-sm btn-primary">
+                                    Add Payment
+                                </a>
+                            </td>
+                            {% endif %}
+            
+                            <td style="white-space: nowrap;">
+                                <a href="{% url 'customerportal:sale_invoice_detail' invoice.id %}" class="btn btn-sm btn-primary">
+                                    invoice details
+                                </a>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="7">No invoices available.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+</div>
+
+
+
+
+<script>
+    $(document).ready(function() {
+        $('#id_sale_invoice_id').select2({
+            width: '70%',
+            placeholder: 'Search sale invoice...',
+            allowClear: true,
+            ajax: {
+                url: "{% url 'accounts:common_search' %}",  // Ensure this URL is correct
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: $.map(data.results, function(item) {
+                            return {
+                                id: item.id,
+                                text: item.text
+                            };
+                        })
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 1,
+            placeholder: 'Search for sale invoice',
+            allowClear: true
+        });
+    });
+
+    </script>
+    
+
+
+{% endblock %}

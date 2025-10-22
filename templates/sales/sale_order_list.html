@@ -232,68 +232,68 @@
                                     <span>No Shipment Found</span>
                                 {% endif %}
                             {% endwith %}
-                        </td>
-                        
-                        
-                        
-             
-                                            
-                                    <td style="white-space: nowrap;">   
-                                        
-                                        {% with shipment=order.sale_shipment.first %}
-                                        {% if shipment%}      
-                                            {% if shipment.is_fully_invoiced  %} 
-                                                <i class="fas fa-check" style="color:green;font-weight: bold;">Invoice submitted</i>
-                                            {% else %}
-                                                <a href="{% url 'finance:create_sale_invoice' shipment.id %}" class="btn btn-sm btn-primary">Create Invoice</a>
-                                             {% endif %}
-                                             {% else %}
-                                             <span> Create shipment first</span>
-                                             {% endif %}
-                                        {% endwith %}
-                                    </td>
+                        </td>                                         
+                                                         
+                   <td style="white-space: nowrap;">
+                    {% if order.sale_shipment.exists %}
+                        {% if order.sale_shipment.all.0.sale_shipment_invoices.exists %}
+                            <i class="fas fa-check" style="color:green;font-weight: bold;">Invoice submitted</i>
+                        {% else %}
+                            <a href="{% url 'finance:create_sale_invoice_from_sale_order' order.id %}" 
+                            class="btn btn-sm btn-primary">Create Invoice from SO</a>
+                        {% endif %}
+                    {% else %}
+                        <span>Create shipment first</span>
+                    {% endif %}
+                </td>
+
                            
                         
-                   <!-- Payment status section -->
-               <td>
-                {% if invoice.is_fully_paid %}
-                <span style="color:green; font-weight: bold;">Fully Paid</span>
-            {% elif invoice.total_paid == 0 %}
-                <span style="color:red; font-weight: bold;">No Payment Made</span>
-            {% elif invoice.total_paid > 0 and invoice.remaining_balance < invoice.amount_due %}
-                <span style="color:orange; font-weight: bold;">Partially Paid</span>
-            {% else %}
-                <span style="color:red; font-weight: bold;">No Payment Made</span>
-            {% endif %}
-         </td>
-            
-
-                                    <td style="white-space: nowrap;">
-                                        {% with shipment=order.sale_shipment.first %}
-                                            {% if shipment %}
+                                    <!-- Payment status section -->
+                                      <!-- Payment Status -->
+                                        <td>
+                                            {% with shipment=order.sale_shipment.first %}
+                                            {% if shipment and shipment.sale_shipment_invoices.exists %}
                                                 {% with invoice=shipment.sale_shipment_invoices.first %}
-                                                    {% if invoice %}
-                                                        {% with payment=invoice.sale_payment_invoice.first %}
-                                                            {% if payment %}
-                                                                {% if payment.is_fully_paid %}
-                                                                    <span><i class="fas fa-check" style="color:green; font-weight: bold;">Fully Paid</i></span>
-                                                                {% else %}
-                                                                    <a href="{% url 'finance:create_sale_payment' invoice.id %}" class="btn btn-primary">Make Payment</a>
-                                                                {% endif %}
-                                                            {% else %}
-                                                                <a href="{% url 'finance:create_sale_payment' invoice.id %}" class="btn btn-primary">Make Payment</a>
-                                                            {% endif %}
-                                                        {% endwith %}
-                                                    {% else %}
-                                                        <span> No invoice found</span>
-                                                    {% endif %}
+                                                {% if invoice.status == "FULLY_PAID" %}
+                                                    <span class="badge bg-success">Payment Done</span>
+                                                {% elif invoice.status == "SUBMITTED" %}
+                                                   <span class="badge badge-info">Waiting for Customer payment</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">{{ invoice.status }}</span>
+                                                {% endif %}
                                                 {% endwith %}
                                             {% else %}
-                                                <span> No shipment found</span>
+                                                <span class="badge bg-secondary">No Invoice</span>
                                             {% endif %}
-                                        {% endwith %}
-                                    </td>                                 
-                                         
+                                            {% endwith %}
+                                        </td>
+
+                                   <td style="white-space: nowrap;">
+                                    {% with shipment=order.sale_shipment.first %}
+                                        {% if shipment %}
+                                            {% with invoice=shipment.sale_shipment_invoices.first %}
+                                                {% if invoice %}
+                                                    {% if invoice.status == "FULLY_PAID" %}
+                                                        <span><i class="fas fa-check" style="color:green; font-weight: bold;"></i> Fully Paid</span>
+                                                    {% elif invoice.status == "PARTIALLY_PAID" %}
+                                                        <span class="badge bg-warning text-dark">Partially Paid</span>
+                                                        <a href="{% url 'finance:create_sale_payment' invoice.id %}" class="btn btn-sm btn-primary">Make Payment</a>
+                                                    {% elif invoice.status == "SUBMITTED" %}
+                                                        <a href="{% url 'finance:create_sale_payment' invoice.id %}" class="btn btn-sm btn-primary">Make Payment</a>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">No Payment</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span>No invoice found</span>
+                                                {% endif %}
+                                            {% endwith %}
+                                        {% else %}
+                                            <span>No shipment found</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+
                         
                         <td>
                             {% with order.sale_shipment.first.sale_shipment_invoices.first as first_invoice %}

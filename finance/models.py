@@ -147,7 +147,7 @@ class SaleInvoice(models.Model):
     vat_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     ait_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     net_due_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True) # Added for calculation
-    
+    customer = models.ForeignKey('customer.Customer', on_delete=models.CASCADE, related_name='invoice_customer',null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -195,7 +195,7 @@ class SaleInvoice(models.Model):
     def save(self, *args, **kwargs):
         if not self.invoice_number:
             self.invoice_number = f"SINV-{uuid.uuid4().hex[:8].upper()}"
-        self.calculate_tax_amounts()
+        #self.calculate_tax_amounts()
         super().save(*args, **kwargs)
 
     def __str__(self):

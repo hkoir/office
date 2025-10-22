@@ -1,114 +1,96 @@
-{% extends 'base.html' %}  
-
+{% extends 'base.html' %}
+{% load custom_filters %}
 {% block content %}
 
+{% include 'manufacture/quick_access_button.html' %}
 
+<div class="container-fluid">
+   
+<h5 class="text-center">Create batch if not availaable.
+ <a href="{% url 'purchase:create_batch' %}?next={{ request.path }}" 
+            class="btn btn-sm btn-outline-success">
+            + Create New Batch
+        </a>
+</h5>
+ <h2 class="text-center mb-4">Submit Finished Goods for Order: {{ materials_request_order }}</h2>
 
+    <form method="post">
+        {% csrf_token %}
+        {{ formset.management_form }}
 
-<div class="container-fluid main-content">
-    <div class="row">
-        <div class="col-12 col-md-4">
-            <div class="card shadow" style="padding:10px;background-color:aliceblue;">
-                <div class="card-body">                    
-
-                    <h4 class="mb-4" style="color:green;font-weight: bold;">Submit Finished Goods</h4>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div>
-                            {{ form.materials_request_order.label_tag }}
-                            {{ form.materials_request_order }}
-                        </div>
-                        <div>
-                            {{ form.product.label_tag }}
-                            {{ form.product }}
-                        </div>
-                        <div>
-                            {{ form.quantity.label_tag }}
-                            {{ form.quantity }}
-                        </div>
-                        <div>
-                            {{ form.status.label_tag }}
-                            {{ form.status }}
-                        </div>
-                        <div>
-                            {{ form.remarks.label_tag }}
-                            {{ form.remarks }}
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                        <a href="{% url 'manufacture:materials_request_order_list'%}" class="btn btn-secondary">Cancel</a>
-                    </form>                    
-                </div>
-            </div>   
-        </div>     
-
-
-       
-        <div class="col-12 col-md-8 table-responsive">
-            
-            <h4>All production items</h4>
-
-            <table class="table table-hover">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
                 <thead class="table-dark">
-                    <tr class="btn-primary text-white">
-                        <th>Request Order</th>
-                        <th>product ID</th>
-                        <th>Product</th>       
-                        <th>Category</th>           
-                        <th>Quantity</th>
-                        <th>Status</th>
-                      
-                    
+                    <tr>
+                        {% for field in formset.empty_form.visible_fields %}
+                            {% if field.name != 'DELETE' %}
+                                <th>{{ field.label }}</th>
+                            {% endif %}
+                        {% endfor %}
+                        <th>Delete?</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in page_obj %}
+                    {% for form in formset %}
                     <tr>
-                        <td>{{ item.materials_request_order.order_id }}</td>
-                        <td>{{ item.goods_id }}</td>
-                        <td>{{ item.product.name }}</td>
-                        <td>{{ item.product.category.name }}</td>
-                        <td>{{ item.quantity }}</td>
-
-                        <td>{{ item.status }}</td>                       
-                   
-                    
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6">No items found.</td>
+                        {% for field in form.visible_fields %}
+                            {% if field.name != 'DELETE' %}
+                                <td>{{ field|add_class:"form-control" }}</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm delete-row">Delete</button>
+                            {{ form.DELETE }}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
-                
             </table>
-             
-            <div class="pagination">
-                <span class="step-links">
-                    {% if page_obj.has_previous %}
-                        <a href="?page=1">&laquo; first</a>
-                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
-                    {% endif %}
 
-                    <span class="current">
-                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-                    </span>
+            <!-- Hidden empty row template -->
+            <table style="display: none;">
+                <tbody id="empty-form-row">
+                    <tr>
+                        {% for field in formset.empty_form.visible_fields %}
+                            {% if field.name != 'DELETE' %}
+                                <td>{{ field|add_class:"form-control" }}</td>
+                            {% endif %}
+                        {% endfor %}
+                        <td>
+                            <button type="button" class="btn btn-danger btn-sm delete-row">Delete</button>
+                            {{ formset.empty_form.DELETE }}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-                    {% if page_obj.has_next %}
-                        <a href="?page={{ page_obj.next_page_number }}">next</a>
-                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-                    {% endif %}
-                </span>
-            </div>
-
-
+            <button type="button" id="add-item" class="btn btn-primary mt-2">+ Add Item</button>
+            <button type="submit" class="btn btn-success mt-2">Submit Finished Goods</button>
         </div>
-
-    </div>
-
-   
+    </form>
 </div>
 
+<script>
+    const addItemBtn = document.getElementById('add-item');
+    const totalForms = document.getElementById('id_{{ formset.prefix }}-TOTAL_FORMS');
+    const tableBody = document.querySelector('table tbody');
+    const emptyFormRow = document.getElementById('empty-form-row').innerHTML;
 
+    addItemBtn.addEventListener('click', () => {
+        let formCount = parseInt(totalForms.value);
+        let newRow = emptyFormRow.replace(/__prefix__/g, formCount);
+        tableBody.insertAdjacentHTML('beforeend', newRow);
+        totalForms.value = formCount + 1;
+    });
 
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('delete-row')) {
+            const row = e.target.closest('tr');
+            const checkbox = row.querySelector('input[type=checkbox][name$="-DELETE"]');
+            if (checkbox) checkbox.checked = true;
+            row.style.display = 'none';
+        }
+    });
+</script>
 
 {% endblock %}

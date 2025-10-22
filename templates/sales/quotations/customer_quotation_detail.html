@@ -56,12 +56,47 @@
             <div class="card mb-3">
                 <div class="card-body">
                     <p>
-                    <strong>Customer:</strong> {{ quotation.customer.name }}<br>
+                    <strong>Customer:</strong> {{ request.user.username }}<br>
                     <strong>Quotation Date:</strong> {{ quotation.date }}<br>
                     <strong>Valid Until:</strong> {{ quotation.valid_until }}<br>
-                    <strong>Total Amount:</strong> {{ quotation.total_amount|add_commas }}<br>
-                    <strong>Status:</strong> {{ quotation.status }}<br>
-                    <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}
+                    <strong>Sub total Amount:</strong> {{ quotation.subtotal|add_commas }}<br>
+		    <strong>VAT:</strong> {{ quotation.vat_amount }}<br>
+		    <strong>AIT:</strong> {{ quotation.ait_amount }}&nbsp;||{{quotation.AIT_rate}}%||{{quotation.AIT_type}}<br>
+                    <strong>Net Amount:</strong> {{ quotation.net_due_amount|add_commas }}<br>
+		     <strong>Status:</strong> {{ quotation.status }}<br>
+                    <strong>Remarks:</strong> {{ quotation.notes|default:"-" }}<br>
+			
+                      {% if quotation.status == 'draft' %}
+                      <a href="{% url 'sales:change_customer_quotation_status' quotation.pk 'sent' %}" 
+			class="btn btn-warning btn-sm">Review and submit</a>
+                      {% else %}
+                      <span class="badge bg-info">Quotation has been submitted</span>
+                      {% endif %}
+                      &nbsp;||&nbsp;
+                        {% if quotation.status != 'approved' %}
+                        <span class="badge bg-warning">Waiting for Approval by Buyer</span>
+                      {% else %}
+                      <span class="badge bg-success">Quotation has been accepted</span>
+                      {% endif %}
+                      &nbsp;|&nbsp;
+			
+<td>
+    {% if quotation.status == "approved" %}
+       {% if not quotation.customer_sales_quotation.exists %}
+            <a href="{% url 'sales:convert_quotation_to_sale_request' quotation.pk %}"
+               class="btn btn-success btn-sm">
+               Convert Quotation to Sale Request
+            </a>
+        {% else %}
+            <span class="badge bg-secondary">Already Converted</span>
+        {% endif %}
+   {% elif quotation.status == "rejected" %}
+        <span class="badge bg-danger">Rejected</span>
+    {% else %}
+       <span class="badge bg-info">Pending Approval</span>
+   {% endif %}
+ </td>
+		
                     </p>
                 </div>
             </div>
@@ -75,16 +110,18 @@
                             <tr>
                                 <th>Product</th>
                                 <th>Quantity</th>
-                                <th>Unit Price</th>                               
+                                <th>Unit Price</th> 
+				<th>VAT</th>
                                 <th>Line Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in quotation.sales_quotation_items.all %}
+                            {% for item in quotation.sale_quotation_items.all %}
                             <tr>
                                 <td>{{ item.product.name }}</td>
                                 <td>{{ item.quantity }}</td>
-                                <td>{{ item.unit_price }}</td>                              
+                                <td>{{ item.unit_price }}</td>
+				<td>{{ item.vat_amount }}||{{item.VAT_rate}}%||{{item.VAT_type}}</td>                              
                                 <td>{{ item.quantity|floatformat:2|default:0|multiply:item.unit_price }}</td>
                             </tr>
                             {% empty %}

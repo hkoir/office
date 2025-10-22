@@ -1,50 +1,98 @@
-{% extends 'base.html' %}  
+{% extends 'base.html' %}
+{% load static %}
 {% load custom_filters %}
+
 {% block content %}
 
 
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10 col-12">
+      <div class="card shadow-lg border-0 rounded-3">
+        <div class="card-header bg-primary text-white text-center py-3">
+          <h4 class="mb-0">
+            <i class="bi bi-box-seam me-2"></i>
+            Warehouse Entry / Complete QC for 
+            <span class="fw-bold">{{ quality_control.product.name }}</span><br>
+            <span class="badge bg-info">
+              <a href="{% url 'purchase:batch_details' batch.id %}">Batch:{{batch.batch_number}}</a></span>
+          </h4>
+        </div>
 
+        <div class="card-body p-4">
+          <form method="post" id="qcForm">
+            {% csrf_token %}
+           
+            <!-- Warehouse -->
+            <div class="mb-3">
+              <label for="id_warehouse" class="form-label fw-semibold">
+                <i class="bi bi-building me-1"></i>Select Warehouse
+              </label>
+              {{ form.warehouse|form_control }}
+            </div>
 
-<h2>Warehouse entry/Complete Quality Control for {{ quality_control.product.name }}</h2>
-<form method="post" class="mt-3">
-    {% csrf_token %}
+            <!-- Location -->
+            <div class="mb-3">
+              <label for="id_location" class="form-label fw-semibold">
+                <i class="bi bi-geo-alt me-1"></i>Select Location
+              </label>
+              <select id="id_location" name="location" class="form-select">
+                <option value="">Select Location</option>
+              </select>
+            </div>
 
-    <div class="form-group">
-        <label for="id_warehouse" class="font-weight-bold">Select Warehouse:</label>
-        {{ form.warehouse|form_control }}
+            <!-- Submit -->
+            <div class="text-end mt-4">
+              <button type="submit" class="btn btn-success px-4">
+                <i class="bi bi-check-circle me-1"></i> Complete QC
+              </button>
+              <a href="{% url 'purchase:qc_dashboard' %}" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-arrow-left me-1"></i> Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <div class="card-footer text-center text-muted small py-2">
+          <i class="bi bi-info-circle me-1"></i>
+          Please verify all details before completing QC.
+        </div>
+      </div>
     </div>
-
-    <div class="form-group mt-2">
-        <label for="id_location" class="font-weight-bold">Select Location:</label>
-        <select id="id_location" name="location" class="form-control">
-            <option value="">Select Location</option>
-            <!-- Options will be populated via AJAX -->
-        </select>
-    </div>
-
-    <button type="submit" class="btn btn-primary mt-3">Complete QC</button>
-</form>
+  </div>
+</div>
 
 
-
-<!-- Include the JavaScript for AJAX location filtering -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    $(document).ready(function() {
-        $('#id_warehouse').change(function() {
-            var warehouseId = $(this).val();
-            $.ajax({
-                url: "{% url 'inventory:get_locations' %}",  // The URL for the AJAX endpoint
-                data: {
-                    'warehouse_id': warehouseId
-                },
-                success: function(data) {
-                    $('#id_location').html(data);
-                }
-            });
-        });
+  $(document).ready(function() {
+    $('#id_warehouse').change(function() {
+      var warehouseId = $(this).val();
+      if (!warehouseId) {
+        $('#id_location').html('<option value="">Select Location</option>');
+        return;
+      }
+      $.ajax({
+        url: "{% url 'inventory:get_locations' %}",
+        data: { 'warehouse_id': warehouseId },
+        success: function(data) {
+          $('#id_location').html(data);
+        },
+        error: function() {
+          alert("Error loading locations. Please try again.");
+        }
+      });
     });
+
+    // Optional UX enhancement: show spinner while loading
+    $(document).ajaxStart(function() {
+      $('#id_location').prop('disabled', true).html('<option>Loading...</option>');
+    });
+    $(document).ajaxStop(function() {
+      $('#id_location').prop('disabled', false);
+    });
+  });
 </script>
-
-
 {% endblock %}
+
+
+

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h4 class="mb-3 text-center">Select Existing Batch or Create New</h4>
+  <form method="post">
+    {% csrf_token %}
+    <table class="table table-bordered table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Product</th>
+          <th>Ordered Quantity</th>
+          <th>Select Existing Batch</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in po_items %}
+        <tr>
+          <td>{{ item.product.name }}</td>
+          <td>{{ item.quantity }}</td>
+          <td>
+            <select name="batch_{{ item.id }}" class="form-select">
+              <option value="">-- Create New Batch --</option>
+              {% for batch in batches %}
+                {% if batch.product.id == item.product.id %}
+                <option value="{{ batch.id }}">
+                  {{ batch.batch_number }} ({{ batch.remaining_quantity }} units)
+                </option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="d-flex justify-content-end mt-3">
+      <button type="submit" class="btn btn-success">Continue</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

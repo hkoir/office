@@ -341,25 +341,19 @@
                     {% with action=order.get_payment_action %}
                         {% if action.status == "APPROVAL_PENDING" %}
                             <span class="text-muted">Approval pending</span>
-
                         {% elif action.status == "NO_SHIPMENT" %}
                             <span class="text-muted">No shipment found</span>
-
                         {% elif action.status == "NO_INVOICE" %}
                             <span class="text-muted">No invoice found</span>
-
                         {% elif action.status == "INVOICE_NOT_READY" %}
                             <span class="text-warning">Invoice not submitted</span>
-
                         {% elif action.status == "NO_PAYMENT" and action.invoice %}
                             <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
                             class="btn btn-sm btn-primary">
                                 Make Payment
                             </a>
-
                         {% elif action.status == "FULLY_PAID" %}
                             <span class="text-success fw-bold"><i class="fas fa-check"></i> Fully Paid</span>
-
                         {% elif action.status == "PARTIAL" %}
                             <a href="{% url 'finance:create_purchase_payment' action.invoice.id %}" 
                             class="btn btn-sm btn-warning">

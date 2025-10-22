@@ -163,7 +163,7 @@ def complete_quality_control(request, qc_id):
            
             try:
                 with transaction.atomic():
-
+                   
                     inventory_transaction = InventoryTransaction.objects.create(
                         user=request.user,
                         warehouse=warehouse,
@@ -235,6 +235,7 @@ def complete_manufacture_quality_control(request, qc_id):
     total_quantity = quality_control.total_quantity
     good_quantity = quality_control.good_quantity
     bad_quantity = quality_control.bad_quantity
+    batch = quality_control.batch
 
     if good_quantity + bad_quantity > total_quantity:
         messages.error(request, "Invalid quantities: good + bad exceeds total.")
@@ -278,16 +279,18 @@ def complete_manufacture_quality_control(request, qc_id):
                         transaction_type='MANUFACTURE_IN',
                         quantity=good_quantity,
                         manufacture_order=materials_request_order,
+                        batch=batch
                     )
                     inventory, created = Inventory.objects.get_or_create(
                         warehouse=warehouse,
                         location=location,
                         product=quality_control.product,
+                        batch=batch,
                         user=request.user,
                         defaults={
                             'quantity': good_quantity 
                         }
-                    )
+                    )                   
         
                     if not created:
                         inventory.quantity += good_quantity

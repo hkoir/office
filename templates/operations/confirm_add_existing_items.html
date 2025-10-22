@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-
+{% include 'operations/quick_access_button.html' %}
 
 <div class="container-fluid main-content">
     <div class="row">        
@@ -15,8 +15,11 @@
                             <th>Product</th>
                             <th>Category</th>                            
                             <th style="white-space: nowrap;">Quantity</th>
-                            <th style="white-space: nowrap;" >Unit Price</th>                       
-                            <th>Change</th>
+                            <th style="white-space: nowrap;" >Unit Price</th>   
+                            <th>Warehouse</th>  
+                            <th>Warehouse location</th>  
+                            <th>Batch</th>                    
+                            
                         </tr>
                     </thead>
                     <tbody>
@@ -27,20 +30,10 @@
                            
                             <td style="white-space: nowrap;">{{ item.quantity }}</td>
                             <td style="white-space: nowrap;">{{ item.unit_price }}</td>
-                        
-                            <td style="white-space: nowrap;">
-                                <form method="post" style="display:inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="product_id" value="{{ item.id }}">
-                                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control d-inline w-25">
-                                    <button type="submit" name="action" value="update" class="btn btn-sm btn-warning">Update</button>
-                                </form>
-                                <form method="post" style="display:inline;">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="product_id" value="{{ item.id }}">                                  
-                                    <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger">Delete</button>
-                                </form>
-                            </td>
+                              <td>{{ item.warehouse_name }}</td>
+                            <td>{{ item.location_name }}</td>
+                            <td>{{ item.batch_number }}</td>
+                                                    
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -48,7 +41,7 @@
         
                 <form method="post">
                     {% csrf_token %}
-                    <button type="submit" name="confirm_purchase" class="btn btn-success">Confirm Purchase</button>
+                    <button type="submit" name="confirm_purchase" class="btn btn-success">Confirm adding</button>
                 </form>
             {% else %}
                 <p>No products added to the list yet.</p>

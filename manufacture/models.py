@@ -68,7 +68,7 @@ class MaterialsRequestOrder(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.order_id
+        return self.order_id or f"Order #{self.pk}" or "Unnamed Order"
 
 
 
@@ -150,6 +150,8 @@ class FinishedGoodsReadyFromProduction(models.Model):
     materials_request_order = models.ForeignKey(MaterialsRequestOrder, on_delete=models.CASCADE,null=True,blank=True)
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_finished_goods',null=True,blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE,null=True, blank=True)
+    location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     STATUS_CHOICES = [
     ('SUBMITTED', 'Submitted'),
@@ -177,6 +179,7 @@ class ManufactureQualityControl(models.Model):
          on_delete=models.CASCADE,related_name='goods_quality')
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     good_quantity = models.PositiveIntegerField(null=True, blank=True)
     bad_quantity = models.PositiveIntegerField(null=True, blank=True)
@@ -204,6 +207,7 @@ class ReceiveFinishedGoods(models.Model):
     quality_control=models.ForeignKey(ManufactureQualityControl,on_delete=models.CASCADE,related_name='quality_received')
     receiving_id = models.CharField(max_length=20)      
     product = models.ForeignKey(Product, on_delete=models.CASCADE)  
+    batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
     warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE, related_name='received_finish_goods',null=True, blank=True)
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()

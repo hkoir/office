@@ -2,15 +2,14 @@
 
 {% block content %}
 
+{% include 'manufacture/quick_access_button.html' %}
 
-
-<h2>Quality Control Inspection for {{ purchase_order_item.product.name }}:{{finish_goods_item}} </h2>
+<h2>Quality Control Inspection for Product code: {{ purchase_order_item.product.name }}:{{finish_goods_item.goods_id}} </h2>
 
 <div class="card mt-4">
     <div class="card-body">
-        <h5>Order ID: {{ purchase_order_item.purchase_order.order_id }}</h5>
-        <p><strong>Product:</strong> {{ purchase_order_item.product.name }}:{{finish_goods_item}} </p>
-        <p><strong>Supplier:</strong> {{ purchase_order_item.purchase_order.supplier.name }}</p>
+        <h5>Materials Request ID: {{ finish_goods_item.materials_request_order.order_id}}</h5>
+        <p><strong>Product:</strong> {{finish_goods_item.product}} </p>      
         <p><strong>Total Quantity:</strong> {{ purchase_order_item.quantity }}:{{finish_goods_item.quantity}}</p>
     </div>
 </div>

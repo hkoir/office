@@ -2,7 +2,40 @@
 
 {% block content %}
 
-
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'sales:create_customer_quotation' %}" class="btn btn-sm btn-success w-100">
+        Create Customer Quotation
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:customer_quotation_list' %}" class="btn btn-sm btn-success w-100">
+        Customer Quotation List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_request_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sales Request Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'sales:sale_order_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Order List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'logistics:sale_shipment_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Shipment List
+      </a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'finance:sale_invoice_list' %}" class="btn btn-sm btn-success w-100">
+        Sale Invoice List
+      </a>
+    </div>
+  </div>
+</div>
 
 <div class="container-fluid main-content my-5">
     <div class="row">
@@ -13,26 +46,55 @@
 
     <h4>Items to dispatch</h4>
     {% if basket %}
-    <table class="table table-hover">
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
         <thead class="table-dark">
             <tr>
                 <th>Product</th>
-              
-                <th>Quantity</th>
-                          
+                <th>Warehouse</th>
+                <th>Location</th>
+                <th>Batch</th>
+                <th style="white-space: nowrap;">Quantity</th>
+                <th style="white-space: nowrap;">Change</th>
             </tr>
         </thead>
         <tbody>
             {% for item in basket %}
             <tr>
                 <td>{{ item.name }}</td>
-               
+                <td>{{ item.warehouse_name|default:"N/A" }}</td>
+                <td>{{ item.location_name|default:"N/A" }}</td>
+                <td>{{ item.batch_number|default:"N/A" }}</td>
                 <td>{{ item.quantity }}</td>
-                          
+                <td>
+                    <div class="d-flex flex-wrap gap-2">
+                        <!-- Update Quantity -->
+                        <form method="post" class="d-inline-flex align-items-center">
+                            {% csrf_token %}
+                            <input type="hidden" name="product_id" value="{{ item.id }}">
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" class="form-control form-control-sm me-1" style="width: 70px;">
+                            <button type="submit" name="action" value="update" class="btn btn-sm btn-warning">Update</button>
+                        </form>
+
+                        <!-- Delete Item -->
+                        <form method="post" class="d-inline-flex align-items-center">
+                            {% csrf_token %}
+                            <input type="hidden" name="product_id" value="{{ item.id }}">
+                            <button type="submit" name="action" value="delete" class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No items in the dispatch basket.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
 
     <form method="post">
         {% csrf_token %}

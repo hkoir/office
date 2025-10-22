@@ -44,21 +44,51 @@ def sale_dashboard(request):
 
 
 
+
+import logging
+from django.utils import timezone
+import uuid
+
+logger = logging.getLogger(__name__)
 @login_required
 def create_customer_quotation(request):
     if request.method == "POST":
+        logger.debug("Received POST request for CustomerQuotationForm and Formset.")
         form = CustomerQuotationForm(request.POST)
         formset = CustomerQuotationItemFormSet(request.POST)
+
         if form.is_valid() and formset.is_valid():
-            quotation = form.save()
+            logger.debug("Both form and formset are valid. Saving quotation...")
+            quotation = form.save(commit=False)
+
+            if not quotation.quotation_number:
+                quotation.quotation_number = f"SQ-{timezone.now().strftime('%Y%m%d%H%M%S')}-{uuid.uuid4().hex[:6]}"
+            quotation.save()  # Save the main instance first
             formset.instance = quotation
             formset.save()
-            messages.success(request, f"Quotation {quotation.quotation_number} created.")
+            quotation.calculate_totals()
+            quotation.save(update_fields=['subtotal', 'vat_amount', 'ait_amount', 'total_amount', 'net_due_amount'])
+
+            logger.debug("Quotation and related items saved successfully.")
+            messages.success(request, f"Quotation {quotation.quotation_number} created successfully.")
             return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+
+        else:
+            logger.warning("Form submission failed validation.")
+            logger.warning(f"Form errors: {form.errors.as_json()}")
+            logger.warning(f"Formset errors: {formset.errors}")
+            messages.error(request, f"Please correct the errors below and resubmit.")
     else:
+        logger.debug("Rendering empty quotation form and formset.")
         form = CustomerQuotationForm()
         formset = CustomerQuotationItemFormSet()
-    return render(request, "sales/quotations/create_customer_quotation.html", {"form": form, "formset": formset})
+
+    return render(
+        request,
+        "sales/quotations/create_customer_quotation.html",
+        {"form": form, "formset": formset},
+    )
+
 
 
 
@@ -103,107 +133,193 @@ def change_customer_quotation_status(request, pk, status):
 
 
 
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-from django.utils import timezone
-from decimal import Decimal
-from django.contrib.auth.decorators import login_required
 from .models import CustomerQuotation, SaleRequestOrder, SaleRequestItem
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+import uuid
+
+
 
 @login_required
 @transaction.atomic
 def convert_quotation_to_sale_request(request, pk):
     quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    quotation_items = quotation.sale_quotation_items.all()
 
-    if quotation.status != "accepted":
-        messages.error(request, "Quotation must be accepted before creating a Sale Request Order.")
+    if quotation.status != "approved":
+        messages.error(request, "Quotation must be approved before creating a Sale Request Order.")
         return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+   
+    if request.method == "POST":
+        try:
+            order_id = f"SRO-{timezone.now().year}-{uuid.uuid4().hex[:6].upper()}"
 
-    try:
-        sro = SaleRequestOrder.objects.create(
-            department="Sales",
-            user=request.user,
-            order_date=timezone.now().date(),
-            status="IN_PROCESS",
-            total_amount=Decimal(0),
-            customer=quotation.customer,
-            remarks="Converted from quotation",
-            customer_quotation=quotation,
-        )
-
-        total_amount = Decimal(0)
-        for item in quotation.sales_quotation_items.all():
-            SaleRequestItem.objects.create(
-                sale_request_order=sro,
-                product=item.product,
-                quantity=item.quantity,
-                unit_selling_price=item.unit_price,
+            sro = SaleRequestOrder.objects.create(
+                customer_quotation=quotation,
+                order_id=order_id,
+                department="Sales",
                 user=request.user,
-                status="PENDING",
+                order_date=timezone.now().date(),
+                status="IN_PROCESS",
+                AIT_rate=quotation.AIT_rate,
+                AIT_type=quotation.AIT_type,
+                subtotal=Decimal(quotation.subtotal or 0),
+                total_amount=Decimal(quotation.total_amount or 0),
+                vat_amount=Decimal(quotation.vat_amount or 0),
+                ait_amount=Decimal(quotation.ait_amount or 0),
+                net_due_amount=Decimal(quotation.net_due_amount or 0),
+                currency=quotation.currency,
+
+                remarks=f"Converted from Quotation #{quotation.quotation_number}",
             )
-            total_amount += item.quantity * item.unit_price
 
-        sro.total_amount = total_amount
-        sro.save(update_fields=["total_amount"])
+            # Copy quotation items
+            for item in quotation.sale_quotation_items.all():
+                SaleRequestItem.objects.create(
+                    sale_request_order=sro,
+                    user=request.user,
+                    product=item.product,
+                    quantity=item.quantity,
+                    unit_selling_price=item.unit_price,
+                    unit_price=item.unit_price,
+                    unit_of_measure=item.unit_of_measure,
+                    quoted_delivery_date=item.quoted_delivery_date,
+                    currency=item.currency,
+                    specification=item.specification,
+                    notes=item.notes,
+                    VAT_rate=item.VAT_rate,
+                    VAT_type=item.VAT_type,
+                    vat_amount=item.vat_amount,
+                    total_price=item.total_price or ((item.unit_price or 0) * (item.quantity or 0)),
+                    status="PENDING",
+                )
 
-        messages.success(request, f"Sale Request {sro.order_id} created successfully.")
-        return redirect("sales:sale_request_order_list")
+            messages.success(request, f"Sale Request Order {sro.order_id} created successfully.")
+            return redirect("sales:sale_request_order_list")
 
-    except Exception as e:
-        transaction.set_rollback(True)
-        messages.error(request, f"Error while creating Sale Request: {e}")
-        return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+        except Exception as e:
+            transaction.set_rollback(True)
+            messages.error(request, f"Error while creating Sale Request: {e}")
+            return redirect("sales:customer_quotation_detail", pk=quotation.pk)
+
+    # ✅ Otherwise (GET) — show preview confirmation page
+    context = {
+        "quotation": quotation,
+        "quotation_items": quotation_items,
+        "total_amount": quotation.total_amount,
+        "vat_amount": quotation.vat_amount,
+        "ait_amount": quotation.ait_amount,
+        "net_due_amount": quotation.net_due_amount,
+    }
+    return render(request, "sales/confirm_quotation_conversion.html", context)
+
+import uuid
+from decimal import Decimal
+from django.db import transaction
+from django.contrib import messages
 
 
 
+@login_required
 @transaction.atomic
 def convert_sale_request_to_sale_order(request, request_order_id):
     sale_request_order = get_object_or_404(SaleRequestOrder, id=request_order_id)
+    sale_request_items = sale_request_order.sale_request_order.all()
 
-    # Check if already converted
     existing_order = SaleOrder.objects.filter(sale_request_order=sale_request_order).first()
     if existing_order:
-        messages.warning(request, f"This request order is already converted to Sale Order {existing_order.order_id}.")
-        return redirect('sales:sale_order_list')
-
-    # Generate sale order ID
-    new_order_id = f"SO-{sale_request_order.order_id}"
-
-    # Create SaleOrder
-    sale_order = SaleOrder.objects.create(
-        sale_request_order=sale_request_order,
-        order_id=new_order_id,
-        customer=sale_request_order.customer,
-        user=request.user,
-        total_amount=sale_request_order.total_amount,
-        remarks=f"Converted from Sale Request Order {sale_request_order.order_id}",
-        status="IN_PROCESS",
-    )
-
-    # Get all SaleRequestItems and convert to SaleOrderItems
-    request_items = SaleRequestItem.objects.filter(sale_request_order=sale_request_order)
-    for item in request_items:
-        total_price = (item.unit_selling_price or 0) * (item.quantity or 0)
-
-        SaleOrderItem.objects.create(
-            sale_order=sale_order,
-            sale_request_item=item,
-            user=request.user,
-            product=item.product,
-            quantity=item.quantity,
-            unit_selling_price=item.unit_selling_price,
-            total_price=total_price,
-            batch=item.batch,
-            status="PENDING",
+        messages.warning(
+            request,
+            f"This Sale Request Order is already converted to Sale Order {existing_order.order_id}."
         )
+        return redirect("sales:sale_order_list")
 
-    # Optionally update status of SaleRequestOrder
-    sale_request_order.status = "READY_FOR_DISPATCH"
-    sale_request_order.save()
+    if request.method == "POST":
+        try:
+            order_id = f"SO-{timezone.now().year}-{uuid.uuid4().hex[:6].upper()}"
 
-    messages.success(request, f"Sale Request {sale_request_order.order_id} successfully converted to Sale Order {sale_order.order_id}.")
-    return redirect('sales:sale_order_list')
+            sale_order = SaleOrder.objects.create(
+                sale_request_order=sale_request_order,
+                order_id=order_id,               
+                user=request.user,
+                order_date=timezone.now().date(),
+                status="IN_PROCESS",
+                AIT_rate=sale_request_order.AIT_rate,
+                AIT_type=sale_request_order.AIT_type,
+                subtotal=Decimal(sale_request_order.subtotal or 0),
+                total_amount=Decimal(sale_request_order.total_amount or 0),
+                vat_amount=Decimal(sale_request_order.vat_amount or 0),
+                ait_amount=Decimal(sale_request_order.ait_amount or 0),
+                net_due_amount=Decimal(sale_request_order.net_due_amount or 0),
+                currency=sale_request_order.currency,
+                customer=sale_request_order.customer,
+                remarks=f"Converted from Sale Request #{sale_request_order.order_id}",
+            )
+
+            total_amount = Decimal(0)
+            for item in sale_request_items:
+                # Get warehouse/location input from POST
+                warehouse_id = request.POST.get(f'warehouse_{item.id}')
+                location_id = request.POST.get(f'location_{item.id}')
+                batch_id = request.POST.get(f'batch_{item.id}')
+
+                total_price = (item.unit_selling_price or 0) * (item.quantity or 0)
+                SaleOrderItem.objects.create(
+                    sale_order=sale_order,
+                    sale_request_item=item,
+                    user=request.user,
+                    product=item.product,
+                    quantity=item.quantity,
+                    unit_selling_price=item.unit_selling_price,
+                    unit_price=item.unit_price,
+                    unit_of_measure=item.unit_of_measure,
+                    quoted_delivery_date=item.quoted_delivery_date,
+                    currency=item.currency,
+                    specification=item.specification,
+                    notes=item.notes,
+                    VAT_rate=item.VAT_rate,
+                    VAT_type=item.VAT_type,
+                    vat_amount=item.vat_amount,
+                    total_price=total_price,
+                    status="PENDING",
+                    warehouse_id=warehouse_id or None,
+                    location_id=location_id or None,
+                    batch_id=batch_id or None,
+                )
+                total_amount += total_price
+
+            sale_order.total_amount = total_amount
+            sale_order.save(update_fields=["total_amount"])
+
+            sale_request_order.status = "READY_FOR_DISPATCH"
+            sale_request_order.save(update_fields=["status"])
+
+            messages.success(request, f"Sale Order {sale_order.order_id} created successfully.")
+            return redirect("sales:sale_order_list")
+
+        except Exception as e:
+            transaction.set_rollback(True)
+            messages.error(request, f"Error while creating Sale Order: {e}")
+            return redirect("sales:sale_request_order_list")
+
+    # GET — show preview with warehouse/location inputs
+    from inventory.models import Warehouse, Location
+    context = {
+        "sale_request_order": sale_request_order,
+        "sale_request_items": sale_request_items,
+        "warehouses": Warehouse.objects.all(),
+        "locations": Location.objects.all(),
+        "batches": Batch.objects.all(),
+        "total_amount": sale_request_order.total_amount,
+        "vat_amount": sale_request_order.vat_amount,
+        "ait_amount": sale_request_order.ait_amount,
+        "net_due_amount": sale_request_order.net_due_amount,
+    }
+    return render(request, "sales/confirm_sale_request_conversion.html", context)
 
 
 
@@ -938,144 +1054,8 @@ def qc_dashboard(request, sale_order_id=None):
 
 
 
-@login_required
-def qc_inspect_item2(request, item_id):
-    sale_dispatch_item = get_object_or_404(SaleDispatchItem, id=item_id)
-    sale_order = sale_dispatch_item.dispatch_item.sale_order
-    sale_request_order = sale_order.sale_request_order
-    shipment = sale_dispatch_item.sale_shipment   
-    sale_order_item = sale_dispatch_item.dispatch_item
-    sale_request_item = sale_order_item.sale_request_item
-   
-
-    if request.method == 'POST':
-        form = QualityControlForm(request.POST, initial_warehouse=sale_dispatch_item.warehouse, initial_location=sale_dispatch_item.location)
-        
-        if form.is_valid():
-            qc_entry = form.save(commit=False)
-            qc_entry.sale_dispatch_item = sale_dispatch_item
-            qc_entry.user = request.user
-            qc_entry.quality_checked_by = 'BY-EMPLOYEE'
-            qc_entry.inspection_date = timezone.now()
-            qc_entry.save()
-            
-            sale_dispatch_item.status = 'DISPATCHED' # status changed from "READY-FOR-DISPATCH"
-            sale_dispatch_item.save()
-
-            good_quantity = qc_entry.good_quantity
-            warehouse = sale_dispatch_item.warehouse
-            location = sale_dispatch_item.location
-           
-            if warehouse and location:
-                try:
-                    with transaction.atomic():
-
-                        if InventoryTransaction.objects.filter(
-                            sales_order=sale_dispatch_item.dispatch_item.sale_order,
-                            transaction_type='OUTBOUND',
-                            product=qc_entry.product,
-                        ).exists():
-                            messages.error(request, "This transaction has already been recorded.")
-                            return redirect('sales:qc_dashboard')
-                        
-                        inventory, created = Inventory.objects.get_or_create(
-                                    warehouse=warehouse,
-                                    location=location,
-                                    product=qc_entry.product,
-                                    user=request.user,
-                                    
-                                    defaults={
-                                        'quantity': 0
-                                    }
-                                )
-
-                        if not created:
-                            inventory.quantity -= good_quantity
-                            inventory.save()
-                            messages.success(request, "Inventory updated successfully.")
-                        else:                       
-                            messages.success(request, "something went wrong. inventory not updated.")
-                                              
-                        inventory_transaction = InventoryTransaction.objects.create(
-                            user=request.user,
-                            warehouse=warehouse,
-                            location=location,
-                            product=qc_entry.product,
-                            transaction_type='OUTBOUND',  
-                            quantity=good_quantity,
-                            sales_order=sale_dispatch_item.dispatch_item.sale_order,
-                            sale_unit_cost = sale_order_item.unit_selling_price
-                        )
-                        
-                        inventory_transaction.inventory_transaction = inventory
-                        inventory_transaction.save()                        
-
-                except Inventory.DoesNotExist:
-                    messages.error(request, f"Product {qc_entry.product.name} not found in {warehouse.name} at {location.name}.")
-                    return redirect('sales:qc_dashboard')
-                except ValueError as ve:
-                    messages.error(request, str(ve))
-                    return redirect('sales:qc_dashboard')
-                except Exception as e:
-                    messages.error(request, f"Unexpected error: {e}")
-                    return redirect('sales:qc_dashboard')        
-
-            sale_order.status = 'DISPATCHED'
-            sale_order.save()
-
-            sale_order_item.status ='DISPATCHED'
-            sale_order_item.save()
-
-            sale_request_order.status ='DISPATCHED'
-            sale_request_order.save()
-
-            sale_request_item.status = 'DISPATCHED'
-            sale_request_item.save()
-
-            all_items_delivered = sale_order.sale_order.filter(status='DELIVERED').count() == sale_order.sale_order.count()
-            if all_items_delivered:
-                sale_order.status = 'DELIVERED'
-                sale_order.save()
-
-            total_requested_quantity = sale_request_order.sale_request_order.aggregate(Sum('quantity'))['quantity__sum']
-            total_ordered_quantity = SaleOrderItem.objects.filter(
-                sale_request_item__sale_request_order=sale_request_order
-            ).aggregate(total_ordered=Sum('quantity'))['total_ordered']
-
-            if total_ordered_quantity >= total_requested_quantity:
-                sale_request_order.status = 'DELIVERED'
-                sale_request_order.save()
-
-            update_sale_order(sale_order.id)          
-            update_sale_request_order(sale_request_order.id)
-
-            create_notification(request.user, message=f'Sale request order number: {sale_request_order} has been dispatched', notification_type='SALES-NOTIFICATION')
-
-            messages.success(request, "Quality control inspection recorded and inventory updated successfully.")
-            return redirect('sales:qc_dashboard')
-        else:  
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field.capitalize()}: {error}")
-    else:
-        form = QualityControlForm(
-            initial={
-                'total_quantity': sale_dispatch_item.dispatch_quantity,
-                'warehouse': sale_dispatch_item.warehouse,
-                'location': sale_dispatch_item.location,
-            },
-            initial_warehouse=sale_dispatch_item.warehouse,
-            initial_location=sale_dispatch_item.location
-        )
-
-    return render(request, 'sales/qc_inspect_item.html', {
-        'form': form,
-        'sale_dispatch_item': sale_dispatch_item
-    })
-
-
-
 from purchase.models import Batch
+
 @login_required
 def qc_inspect_item(request, item_id):
     sale_dispatch_item = get_object_or_404(SaleDispatchItem, id=item_id)
@@ -1084,7 +1064,8 @@ def qc_inspect_item(request, item_id):
     shipment = sale_dispatch_item.sale_shipment   
     sale_order_item = sale_dispatch_item.dispatch_item
     sale_request_item = sale_order_item.sale_request_item
-    batch = sale_dispatch_item.batch  
+
+    batch = sale_dispatch_item.batch or sale_order_item.batch
 
     if request.method == 'POST':
         form = QualityControlForm(request.POST,initial_warehouse=sale_dispatch_item.warehouse,initial_location=sale_dispatch_item.location)
@@ -1124,15 +1105,13 @@ def qc_inspect_item(request, item_id):
                             batch.remaining_quantity = 0  
                         batch.save()
 
-                        inventory, created = Inventory.objects.get_or_create(
-                            warehouse=warehouse,
-                            location=location,
-                            product=qc_entry.product,
-                            batch=batch,
-                            defaults={'quantity': 0} 
-                        )
+                        inventory = Inventory.objects.filter(
+                        warehouse=warehouse,
+                        location=location,
+                        product=qc_entry.product,
+                        ).first()
 
-                        if not created:
+                        if inventory:
                             if inventory.quantity >= good_quantity:
                                 inventory.quantity -= good_quantity
                                 inventory.save()
@@ -1141,9 +1120,9 @@ def qc_inspect_item(request, item_id):
                                 messages.error(request, "Not enough stock in inventory.")
                                 return redirect('sales:qc_dashboard')
                         else:
-                            messages.warning(request, "Inventory entry created but quantity is zero.")
-
-                        # Record the transaction
+                            messages.error(request, "No inventory record found for this product, warehouse, and batch.")
+                            return redirect('sales:qc_dashboard')
+                                                # Record the transaction
                         inventory_transaction = InventoryTransaction.objects.create(
                             user=request.user,
                             warehouse=warehouse,

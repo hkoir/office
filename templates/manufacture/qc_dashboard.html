@@ -3,7 +3,7 @@
 {% block content %}
 
 
-
+{% include 'manufacture/quick_access_button.html' %}
 
 
 <div class="container-fluid main-content">
@@ -22,7 +22,7 @@
                         <th>Qantity</th>
                         <th>Status</th>                        
                         <th>Inspection</th>
-                        <th>QC Confirmation</th>
+                        <!-- <th>QC Confirmation</th> -->
                     </tr>
                 </thead>
                 <tbody>
@@ -49,7 +49,7 @@
                         
                 
                         <!-- Complete QC Button -->
-                        <td>
+                        <!-- <td>
                             {% if item.status == 'DELIVERED' %}                              
                                 <a href="{% url 'inventory:complete_manufacture_quality_control' item.goods_quality.first.id %}" class="btn btn-primary">Complete QC</a>
                                
@@ -59,7 +59,7 @@
                                 <span>Inspection Pending</span>
                             {% endif %}
                         </td>
-                        
+                         -->
                         
                     </tr>
                     {% empty %}

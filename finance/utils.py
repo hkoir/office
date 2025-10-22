@@ -171,3 +171,46 @@ def create_purchase_invoice_from_po(purchase_order_id, user, shipment=None):
     )
 
     return invoice
+
+
+
+
+
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import transaction
+from django.utils import timezone
+from django.core.exceptions import ObjectDoesNotExist
+from logistics.models import SaleShipment
+from sales.models import SaleOrder,SaleOrderItem
+
+from .models import PurchaseInvoice,SaleInvoice
+
+@transaction.atomic
+def create_sale_invoice_from_so(sale_order_id, user, shipment=None):  
+    so = (
+        SaleOrder.objects
+        .select_related('customer')
+        .prefetch_related('sale_order')
+        .get(pk=sale_order_id)
+    )
+
+    # ✅ Validate Sale Order status
+    if not so.approver_approval_status == "APPROVED":
+        raise ValueError("Sale Order must be approved or submitted before creating an invoice.")
+
+ 
+    invoice = SaleInvoice.objects.create(
+        user=user,       
+        sale_shipment=shipment if isinstance(shipment, SaleShipment) else None,
+        issued_date=timezone.now(),
+        amount_due=so.total_amount,
+        status="SUBMITTED",
+        AIT_rate=so.AIT_rate,
+        AIT_type=so.AIT_type,
+        vat_amount=so.vat_amount,
+        ait_amount=so.ait_amount,
+        net_due_amount=so.net_due_amount,
+        customer=so.customer
+    )
+
+    return invoice

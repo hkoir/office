@@ -59,7 +59,7 @@
                 {% for quotation in quotations %}
                 <tr>
                     <td>{{ quotation.quotation_number }}</td>
-                    <td>{{ quotation.customer }}</td>
+                    <td>{{ request.user.username }}</td>
                     <td>{{ quotation.date }}</td>
                     <td>{{ quotation.valid_until }}</td>
                     <td>{{ quotation.get_status_display }}</td>
@@ -71,7 +71,7 @@
                     {% endif %}
 
                     {% if quotation.status == "sent" %}
-                        <a href="{% url 'sales:change_customer_quotation_status' quotation.pk 'accepted' %}" 
+                        <a href="{% url 'sales:change_customer_quotation_status' quotation.pk 'approved' %}" 
                         class="btn btn-success btn-sm">Accept</a>
                         <a href="{% url 'sales:change_customer_quotation_status' quotation.pk 'rejected' %}" 
                         class="btn btn-danger btn-sm">Reject</a>
@@ -79,14 +79,25 @@
 
                     </td>
 
-		 <td>
-                        {% if quotation.status == "accepted" %}
-                         <a href="{% url 'sales:convert_quotation_to_sale_request' quotation.pk %}" 
-                          class="btn btn-success btn-sm">Convert Quotation to Sale request</a>
-                          {% else %}
-                          <span class="badge bg-info">Quotation not accepted yet</span>
-                        {% endif %}
-                    </td>
+
+
+<td>
+    {% if quotation.status == "approved" %}
+        {% if not quotation.customer_sales_quotation.exists %}
+            <a href="{% url 'sales:convert_quotation_to_sale_request' quotation.pk %}" 
+               class="btn btn-success btn-sm">
+               Convert Quotation to Sale Request
+            </a>
+        {% else %}
+            <span class="badge bg-secondary">Already Converted</span>
+        {% endif %}
+    {% elif quotation.status == "rejected" %}
+        <span class="badge bg-danger">Rejected</span>
+    {% else %}
+        <span class="badge bg-info">Pending Approval</span>
+    {% endif %}
+</td>
+
 
                 </tr>
                 {% empty %}
@@ -101,7 +112,7 @@
         <p>Status: 
             {% if quotation.status == "draft" %}<span class="badge bg-secondary">Draft</span>{% endif %}
             {% if quotation.status == "sent" %}<span class="badge bg-info">Sent</span>{% endif %}
-            {% if quotation.status == "accepted" %}<span class="badge bg-success">Accepted</span>{% endif %}
+            {% if quotation.status == "approved" %}<span class="badge bg-success">Accepted</span>{% endif %}
             {% if quotation.status == "rejected" %}<span class="badge bg-danger">Rejected</span>{% endif %}
         </p>
         </div>

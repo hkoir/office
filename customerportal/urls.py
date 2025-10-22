@@ -19,6 +19,13 @@ urlpatterns = [
     path('sale-order/<int:sale_order_id>/dispatch-items/', views.sale_dispatch_item_list, name='sale_dispatch_item_list'),
     path('sale-dispatch-item/<int:dispatch_item_id>/update-status/', views.update_sale_dispatch_status, name='update_sale_dispatch_status'),
     path('sale-order/<int:sale_order_id>/item_dispatched/', views.item_dispatched, name='item_dispatched'),
+   
+    path('sale_invoice_list/', views.sale_invoice_list, name='sale_invoice_list'),
+    path('sale_invoice_detail/<int:invoice_id>/', views.sale_invoice_detail, name='sale_invoice_detail'),
+    path('create_sale_payment/<int:invoice_id>/', views.create_sale_payment, name='create_sale_payment'),
+
+
+
 
     path('customer_qc_dashboard/', views.customer_qc_dashboard, name='customer_qc_dashboard'),
     path('customer_qc_dashboard/<int:sale_order_id>/', views.customer_qc_dashboard, name='customer_qc_dashboard_with_order'), 
@@ -38,6 +45,7 @@ urlpatterns = [
     path('dispatch-item/<int:dispatch_item_id>/update-status/', views.update_dispatch_status, name='update_dispatch_status'),
     path('create_purchase_invoice/<int:order_id>/', views.create_purchase_invoice, name='create_purchase_invoice'),
     path('create_purchase_invoice_from_purchase_order/<int:po_id>/', views.create_purchase_invoice_from_purchase_order, name='create_purchase_invoice_from_purchase_order'),
+    path('create_purchase_invoice_from_quotation/<int:quotation_id>/', views.create_purchase_invoice_from_quotation, name='create_purchase_invoice_from_quotation'),
     path('add_purchase_invoice_attachement/<int:invoice_id>/', views.add_purchase_invoice_attachment, name='add_purchase_invoice_attachment'),
 
 
@@ -73,6 +81,6 @@ urlpatterns = [
   path('create_purchase_shipment/<int:purchase_order_id>/', views.create_purchase_shipment, name='create_purchase_shipment'),
   path('create_purchase_dispatch_item/<int:dispatch_id>/', views.create_purchase_dispatch_item, name='create_purchase_dispatch_item'),   
   path('confirm_purchase_dispatch_item/', views.confirm_purchase_dispatch_item, name='confirm_purchase_dispatch_item'),
-  path('create_purchase_invoice_from_quotation/<int:quotation_id>/', views.create_purchase_invoice_from_quotation, name='create_purchase_invoice_from_quotation'),
+  
 
 ]

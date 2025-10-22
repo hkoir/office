@@ -1,0 +1,24 @@
+
+
+
+
+<div class="container-fluid main-content py-4">
+  <div class="row g-2 justify-content-center text-center">
+    <div class="col-auto">
+      <a href="{% url 'operations:operations_dashboard' %}" class="btn btn-sm btn-success">Operations dashboard</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'operations:add_existing_items' %}" class="btn btn-sm btn-success">Add items into stock</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'operations:existing_items_list' %}" class="btn btn-sm btn-success">Existing item addition list</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'operations:create_operations_items_request' %}" class="btn btn-sm btn-success">Create operation's requirement</a>
+    </div>
+    <div class="col-auto">
+      <a href="{% url 'operations:operations_request_order_list' %}" class="btn btn-sm btn-success">Operation's requirement list</a>
+    </div>
+    
+  </div>
+</div>

@@ -24,7 +24,7 @@
                 {% for quotation in quotations %}
                 <tr>
                     <td>{{ quotation.quotation_number }}</td>
-                    <td>{{ quotation.customer }}</td>
+                    <td>{{ request.user.username }}</td>
                     <td>{{ quotation.date }}</td>
                     <td>{{ quotation.valid_until }}</td>
                     <td>{{ quotation.get_status_display }}</td>
@@ -33,7 +33,7 @@
 		     <a href="{% url 'customerportal:customer_quotation_detail' quotation.pk %}" class="btn btn-info btn-sm">View</a>
 
                     {% if quotation.status == "sent" %}
-                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.pk 'accepted' %}" 
+                        <a href="{% url 'customerportal:change_customer_quotation_status' quotation.pk 'approved' %}" 
                         class="btn btn-success btn-sm">Accept</a>
                         <a href="{% url 'customerportal:change_customer_quotation_status' quotation.pk 'rejected' %}" 
                         class="btn btn-danger btn-sm">Reject</a>

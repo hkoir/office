@@ -172,6 +172,9 @@ from decimal import Decimal
 
 @login_required
 def create_purchase_payment(request, invoice_id):
+    if not request.user.groups.filter(name="Approver").exists():
+        messages.error(request, "You are not authorized to create invoices. Only approvers can perform this action.")
+        return redirect('purchase:purchase_order_list')
     invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)
 
     if invoice.status not in ["SUBMITTED", "PARTIALLY_PAID"]:
@@ -314,8 +317,12 @@ def add_purchase_payment_attachment(request, invoice_id):
 
 
 
-from django.db.models.functions import Coalesce
+
+
 from django.db.models import F, Sum, Value, DecimalField
+from django.db.models.functions import Coalesce
+from django.contrib.auth.decorators import login_required
+
 
 
 @login_required
@@ -333,7 +340,7 @@ def generate_purchase_invoice(purchase_order):
     # --- Get unpaid invoices ---
     unpaid_invoices = PurchaseInvoice.objects.filter(
         purchase_shipment__in=valid_shipments
-    ).exclude(status__in=['FULLY_PAID', 'CANCELLED'])
+    ).exclude(status='CANCELLED')
 
     if not unpaid_invoices.exists():
         return {
@@ -412,13 +419,16 @@ def generate_purchase_invoice(purchase_order):
 
 
 
+
+
+
 @login_required
-def generate_purchase_invoice_pdf(purchase_order, mode="download"):
+def generate_purchase_invoice_pdf(request,purchase_order, mode="download"):
     supplier = purchase_order.supplier
     supplier_address = 'Unknown'
     product_summary = []
     grand_total = 0
-    supplier_info = Supplier.objects.filter(id=purchase_order.supplier_id).first()
+    supplier_info = Supplier.objects.filter(user = request.user).first()
     if supplier_info:
         supplier_name = supplier_info.name
         supplier_phone = supplier_info.phone
@@ -568,7 +578,7 @@ def generate_purchase_invoice_pdf(purchase_order, mode="download"):
 def download_purchase_invoice(request, purchase_order_id):
     purchase_order = get_object_or_404(PurchaseOrder, id=purchase_order_id)   
     mode = request.GET.get('mode', 'download')     
-    return generate_purchase_invoice_pdf(purchase_order,mode=mode)
+    return generate_purchase_invoice_pdf(request,purchase_order,mode=mode)
 
 
 
@@ -611,6 +621,65 @@ def purchase_invoice_detail(request, invoice_id):
 
 
 # ########################### sale invoices #################################################################
+
+
+
+
+
+from sales.models import SaleOrder
+from finance.utils import create_sale_invoice_from_so 
+@login_required
+def create_sale_invoice_from_sale_order(request, so_id):
+    so = get_object_or_404(SaleOrder, id=so_id)
+
+    shipment = so.sale_shipment.first() 
+
+       # ✅ Prevent duplicate invoice for same SO
+    existing_invoice = SaleInvoice.objects.filter(sale_shipment=shipment).first()
+    if existing_invoice:
+        messages.warning(request,'Invoice exist')
+        return redirect('sales:sale_order_list')
+
+    # Calculate financial summary
+    so_items = so.sale_order.all()     
+   
+    total_vat_amount = so.vat_amount
+    total_ait_amount = so.ait_amount
+    total_amount = so.total_amount
+    net_due_amount =so.net_due_amount
+    AIT_rate = so.AIT_rate
+    AIT_type = so.AIT_type
+
+    if request.method == "POST":
+        # User confirmed creation
+        try:
+            invoice = create_sale_invoice_from_so(so_id, request.user, shipment=shipment)
+            messages.success(request, f"Purchase Invoice {invoice.invoice_number} created successfully.")
+            return redirect("sales:sale_order_list")
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f"Error creating invoice: {e}")
+        return redirect("sales:sale_order_list")
+
+    # Render preview before confirming
+    context = {
+        "so": so,
+        "so_items": so_items,
+        "total_amount": total_amount,
+        'net_due_amount':net_due_amount,
+        "vat_amount": total_vat_amount,
+        "ait_amount": total_ait_amount,
+        "AIT_rate":AIT_rate,
+        "AIT_type":AIT_type,
+        
+    }
+    return render(request, "finance/sales/confirm_financial_summary.html", context)
+
+
+
+
+
 @login_required
 def create_sale_invoice(request, order_id):
     sale_shipment = get_object_or_404(SaleShipment, id=order_id)
@@ -847,67 +916,85 @@ def add_sale_payment_attachment(request, invoice_id):
     return render(request, 'finance/attachmenet/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
-
-
-
 @login_required
 def generate_sale_invoice(sale_order):
-    valid_shipments = SaleShipment.objects.filter(sales_order=sale_order, status__in=['DELIVERED','REACHED'])
-    valid_dispatch_items = SaleDispatchItem.objects.filter(sale_shipment__in=valid_shipments, status__in=['DELIVERED','REACHED'])
+    # --- Valid shipments ---
+    valid_shipments = SaleShipment.objects.filter(
+        sales_order=sale_order,
+        status__in=['DELIVERED', 'REACHED']
+    )
 
+    valid_dispatch_items = SaleDispatchItem.objects.filter(
+        sale_shipment__in=valid_shipments,
+        status__in=['DELIVERED', 'REACHED']
+    )
 
-    unpaid_invoices = SaleInvoice.objects.filter(
+    # --- Include ALL invoices except cancelled ones ---
+    all_invoices = SaleInvoice.objects.filter(
         sale_shipment__in=valid_shipments
-    ).exclude(status__in=['FULLY_PAID', 'CANCELLED']) 
+    ).exclude(status='CANCELLED')
 
-    if not unpaid_invoices.exists():
-        return {"error": "No pending invoices for this purchase order"}
-    
-    invoice_summary = unpaid_invoices.aggregate(
+    if not all_invoices.exists():
+        return {
+            "error": "No invoices found for this sale order.",
+            "product_summary": [],
+            "grand_total": 0,
+            "vat_amount": 0,
+            "ait_amount": 0,
+            "net_payable": 0,
+            "paid_amount": 0,
+            "due_amount": 0,
+            "invoice_status": [],
+        }
+
+    # --- Aggregate all invoices ---
+    invoice_summary = all_invoices.aggregate(
         total_vat=Sum('vat_amount'),
         total_ait=Sum('ait_amount'),
         total_net=Sum('net_due_amount'),
         total_paid=Sum('sale_payment_invoice__amount'),
-        total_due=Sum(F('net_due_amount') - F('sale_payment_invoice__amount'))
     )
 
+    total_vat = invoice_summary['total_vat'] or 0
+    total_ait = invoice_summary['total_ait'] or 0
+    total_net = invoice_summary['total_net'] or 0
+    total_paid = invoice_summary['total_paid'] or 0
+    total_due = total_net - total_paid
+
+    # --- Product summary ---
     product_data = valid_dispatch_items.values(
-        'dispatch_item__product__name', 'dispatch_item__product__unit_price', 'dispatch_item__batch__sale_price'
+        'dispatch_item__product__name',
+        'dispatch_item__batch__sale_price'
     ).annotate(
         total_quantity=Sum('dispatch_quantity'),
-        total_amount=Sum(
-            F('dispatch_quantity') * F('dispatch_item__batch__sale_price')  
-        )
+        total_amount=Sum(F('dispatch_quantity') * F('dispatch_item__batch__sale_price'))
     )
 
     product_summary = [
         {
             "product_name": item['dispatch_item__product__name'],
-            "unit_price": item['dispatch_item__batch__sale_price'], 
+            "unit_price": item['dispatch_item__batch__sale_price'] or 0,
             "quantity": item['total_quantity'],
-            "amount": item['total_amount'] if item['total_amount'] is not None else 0 
+            "amount": item['total_amount'] or 0
         }
         for item in product_data
     ]
 
-    grand_total = (
-        sum(item['amount'] for item in product_summary)
-      
-    )
+    grand_total = sum(item['amount'] for item in product_summary)
 
-
+    # --- Return structured invoice data ---
     return {
         "sale_order": sale_order,
         "valid_shipments": valid_shipments,
         "valid_dispatch_items": valid_dispatch_items,
         "product_summary": product_summary,
         "grand_total": grand_total,
-        "vat_amount": invoice_summary['total_vat'] or 0,
-        "ait_amount": invoice_summary['total_ait'] or 0,
-        "net_payable": invoice_summary['total_net'] or 0,
-        "paid_amount": invoice_summary['total_paid'] or 0,
-        "due_amount": invoice_summary['total_due'] or 0, 
-        "invoice_status": list(unpaid_invoices.values_list('status', flat=True).distinct())  
+        "vat_amount": total_vat,
+        "ait_amount": total_ait,
+        "net_payable": total_net,
+        "paid_amount": total_paid,
+        "due_amount": total_due,
+        "invoice_status": list(all_invoices.values_list('status', flat=True).distinct())
     }
 
 
@@ -915,12 +1002,19 @@ def generate_sale_invoice(sale_order):
 
 
 
-
 @login_required
-def generate_sale_invoice_pdf(sale_order, mode="download"):
+def generate_sale_invoice_pdf(request,sale_order, mode="download"):
     customer = sale_order.customer
     customer_address = 'Unknown'
-    customer_info = Customer.objects.filter(id=sale_order.customer_id).first()
+    customer_logo_path=None
+    customer_name = None
+    customer_phone=None
+    customer_email=None
+    customer_address=None
+    customer_website=None
+
+    #customer_info = Customer.objects.filter(id=sale_order.customer_id).first()
+    customer_info = Customer.objects.filter(user=request.user).first()
     if customer_info:
         customer_name = customer_info.name
         customer_phone = customer_info.phone
@@ -1066,7 +1160,7 @@ def generate_sale_invoice_pdf(sale_order, mode="download"):
 def download_sale_invoice(request, sale_order_id):
     sale_order = get_object_or_404(SaleOrder, id=sale_order_id)       
     mode = request.GET.get('mode', 'download') 
-    return generate_sale_invoice_pdf(sale_order, mode=mode)
+    return generate_sale_invoice_pdf(request,sale_order, mode=mode)
 
 
 

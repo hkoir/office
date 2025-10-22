@@ -14,8 +14,9 @@ urlpatterns = [
   path('customer-quotation/<int:pk>/', views.customer_quotation_detail, name='customer_quotation_detail'),
   path('customer-quotations/', views.customer_quotation_list, name='customer_quotation_list'),
   path("quotation/<int:pk>/status/<str:status>/", views.change_customer_quotation_status, name="change_customer_quotation_status"),
-  path('customer-quotation/<int:pk>/convert/', views.convert_quotation_to_sale_request,name='convert_quotation_to_sale_request'),
 
+
+  path('customer-quotation/<int:pk>/convert/', views.convert_quotation_to_sale_request,name='convert_quotation_to_sale_request'),
   path('create_sale_request/', views.create_sale_request, name='create_sale_request'),
   path('cconfirm_sale_request/', views.confirm_sale_request, name='confirm_sale_request'),
   path('process-sale-request/<int:order_id>/', views.process_sale_request, name='process_sale_request'),

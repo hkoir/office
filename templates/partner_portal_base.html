@@ -166,6 +166,43 @@
     color: white !important;
     font-family: 'Poppins', 'Roboto', sans-serif !important; /* Force font for links */
 }     
+
+
+
+
+
+
+/* Remove default padding/margin for all lists */
+ul, li {
+    margin: 0;
+    padding: 0;
+    list-style: none; /* remove bullets */
+}
+
+/* Optional: tighten spacing in dropdowns */
+.navbar .dropdown-menu li {
+    padding: 0; 
+    margin: 0;
+}
+
+/* Remove default padding/margin for all lists */
+ul, li {
+    margin: 0;
+    padding: 0;
+    list-style: none; /* remove bullets */
+}
+
+/* Optional: tighten spacing in dropdowns */
+.navbar .dropdown-menu li {
+    padding: 0; 
+    margin: 0;
+}
+
+/* If needed, adjust padding for links inside li */
+.navbar .dropdown-menu .dropdown-item {
+    padding: 5px 10px; /* Reduce vertical spacing */
+}
+
 </style>
 
 </head>
@@ -196,7 +233,8 @@
                             <li><hr class="dropdown-divider"style="background-color:gray;"></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:customer_quotation_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All Quotations</a></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:sale_order_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All Sales order</a></li>
-                            <li><a class="dropdown-item" href="{% url 'customerportal:return_request_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All return list</a></li>
+                           <li><a class="dropdown-item" href="{% url 'customerportal:sale_invoice_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;Invoice list</a></li>
+			                <li><a class="dropdown-item" href="{% url 'customerportal:return_request_list' %}" style="text-decoration: none;"><i class="fas fa-tasks"></i>&nbsp;All return list</a></li>
                             <li><hr class="dropdown-divider"style="background-color:gray;"></li>                            
                             <li><a class="dropdown-item" href="{% url 'customerportal:ticket_list' %}"><i class="fas fa-tasks"></i>&nbsp;Ticket List</a></li>
                             <li><a class="dropdown-item" href="{% url 'customerportal:create_ticket' %}"><i class="fas fa-plus-circle"></i>&nbsp;Create Ticket</a></li>                                                                            
@@ -235,14 +273,14 @@
                                 <form action="{% url 'accounts:logout' %}" method="post" >
                                     {% csrf_token %}
                                     <button type="submit" class="dropdown-item" style="text-decoration: none;"> <i class="fa fa-sign-out-alt" aria-hidden="true"></i>&nbsp;Logout</button>
-                                     <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i>&nbsp; Corporate Register</a></li>
+                                     <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i>Corporate Register</a></li>
                                 </form>
                             </li>
                            
                             <li><a class="dropdown-item" href="{% url 'accounts:password_change' %}" style="text-decoration: none;"><i class="fas fa-key"></i>&nbsp;Change Password </a></li>
                             {% else %}
                             <li><a class="dropdown-item" href="{% url 'accounts:login' %}"><i class="fa fa-sign-in-alt" aria-hidden="true">&nbsp; Login</a></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i>&nbsp; Corporate Register</a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:register_corporate_user_only' %}"><i class="fas fa-user-plus me-2"></i> Corporate Register</a></li>
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'accounts:pwdreset' %}" style="text-decoration: none;"><i class="fas fa-lock"></i>&nbsp; Forgot Password</a></li>
                             {% endif %}
@@ -257,14 +295,14 @@
                         {% if request.user.is_authenticated %}
 
                             <a href="{% url 'accounts:update_profile_picture' %}">
-                                {% if profile_picture_url %}
-                                    <img class="profile-picture" src="{{ profile_picture_url }}">
+                                {% if request.user.photo_id %}
+                                    <img class="profile-picture" src="{{ request.user.photo_id.url }}">
                                 {% else %}
                                     <i class="fas fa-user-circle user-icon"></i>
                                 {% endif %}
                             </a>
                             <br>
-                            <span class="welcome-message" style="color:yellow;">Welcome {{username }}</span>
+                            <span class="welcome-message" style="color:yellow;">Welcome {{request.user.username }}</span>
                         {% else %}
                             <a href="#" class="guest-icon">
                                 <i class="fas fa-user-circle"></i>
@@ -287,7 +325,7 @@
             </div>
         </div>
     </nav>
-   
+    
 
     <div class="container-fluid">    
         {% block content %}
@@ -329,20 +367,48 @@
 
 
 <script>
-    $(document).ready(function () {
-    // Open main dropdown on hover (but not submenus)
-    $('.nav-item.dropdown').hover(
-        function () {
-            $(this).children('.dropdown-menu').stop(true, true).delay(200).fadeIn(200);
-        },
-        function () {
-            $(this).children('.dropdown-menu').stop(true, true).delay(200).fadeOut(200);
-        }
-    );
+document.addEventListener('DOMContentLoaded', function () {
+    const dropdowns = document.querySelectorAll('.nav-item.dropdown');
 
-   
+    dropdowns.forEach(function (dropdown) {
+        const toggle = dropdown.querySelector('.nav-link.dropdown-toggle');
+        const menu = dropdown.querySelector('.dropdown-menu');
+
+        toggle.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Toggle "show" on the current dropdown
+            const isOpen = dropdown.classList.contains('show');
+
+            // Close all dropdowns first
+            dropdowns.forEach(d => {
+                d.classList.remove('show');
+                const m = d.querySelector('.dropdown-menu');
+                if (m) m.classList.remove('show');
+            });
+
+            // Toggle current one only if it was not already open
+            if (!isOpen) {
+                dropdown.classList.add('show');
+                if (menu) menu.classList.add('show');
+            }
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.nav-item.dropdown')) {
+            dropdowns.forEach(d => {
+                d.classList.remove('show');
+                const menu = d.querySelector('.dropdown-menu');
+                if (menu) menu.classList.remove('show');
+            });
+        }
+    });
 });
 </script>
+
 
 
 <script>

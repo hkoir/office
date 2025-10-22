@@ -1,0 +1,99 @@
+{% extends 'partner_portal_base.html' %}
+
+{% block content %}
+
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-2"></div>
+            <div class="col-12 col-md-8 mb-4">
+                <div class="card shadow-lg" style="background-color: aliceblue;">
+                    <!-- Card Header -->
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4>Invoice Details - {{ invoice.invoice_number }}</h4>
+                    </div> 
+                    <div class="card-body">                      
+                        
+                        <table class="table table-hover">
+                           
+                            <tr>
+                                <th>Invoice Number</th>
+                                <td>{{ invoice.invoice_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>Sale Order ID</th>
+                                <td>{{ invoice.sale_shipment.sales_order.order_id }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total amount</th>
+                                <td>{{ invoice.amount_due }}</td>
+                            </tr>
+                             
+                            <tr>
+                                <th>AIT</th>
+                                <td>{{ invoice.ait_amount }}&nbsp;||{{ invoice.AIT_rate }}%&nbsp;||{{ invoice.AIT_type }}</td>
+                            </tr>
+                             <tr>
+                                <th>VAT</th>
+                                <td>{{ invoice.vat_amount }}</td>
+                            </tr>
+                            <tr>
+                                <th>Net due</th>
+                                <td>{{ invoice.net_due_amount }}</td>
+                            </tr>
+                            <tr>
+                                <th>Issued Date</th>
+                                <td>{{ invoice.issued_date }}</td>
+                            </tr>
+                        </table>
+
+                    </div>
+                </div>           
+            </div>
+            <div class="col-2"></div>
+
+    </div>
+</div>
+
+
+<h4>Payment History: 
+    {% if invoice.is_fully_paid %}
+    <i class="fas fa-check" style="color:green;font-weight: bold;">payment clear</i>
+    {% else %}
+    <a href="{% url 'customerportal:create_sale_payment' invoice.id %}" class="btn btn-sm btn-primary">Make Payment</a>
+
+    {% endif %}
+</h4>
+
+
+
+{% if payments %}
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Payment ID</th>
+                <th>Amount</th>
+                <th>Payment Date</th>
+                <th>Payment Method</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+                <tr>
+                    <td>{{ payment.payment_id }}</td>
+                    <td>{{ payment.amount }}</td>
+                    <td>{{ payment.payment_date }}</td>
+                    <td>{{ payment.payment_method }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No payments have been made yet.</p>
+{% endif %}
+
+
+
+
+{% endblock %}

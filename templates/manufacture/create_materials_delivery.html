@@ -1,26 +1,55 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
 
 
-
+{% include 'manufacture/quick_access_button.html' %}
 
 
 <div class="container-fluid main-content">
     <div class="row">
-        <div class="col-12 col-md-3">
+        <div class="col-12">
             <div class="card shadow" style="padding:10px;background-color:aliceblue;">
                 <div class="card-body">
                     <h6 class="card-title text-center"><strong>Create Materials delivery order</strong> </h6>
-                    <form method="post" enctype="multipart/form-data" action="" id="add_category">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" name="add_to_basket" class="btn btn-primary">Add to list</button>
-                    </form>
+                     <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        <div class="col-12 col-md-3 col-lg-3">
+                        <div class="mb-3">
+                            {% if field.field.widget.input_type == "checkbox" %}
+                            <div class="form-check">
+                                {{ field }}
+                                <label class="form-check-label" for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                </label>
+                            </div>
+                            {% else %}
+                            {{ field.label_tag }}
+                            {{ field|add_class:"form-control" }}
+                            {% endif %}
+
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        </div>
+                    {% endfor %}
+                    <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">
+                        Add to list
+                    </button>
+                    </div>                   
+                </form>
+                </div>
                  </div>
             </div>           
         </div>
-        <div class="col-12 col-md-9 table-responsive">
+        <div class="col-12 table-responsive">
 
             {% if basket %}
             <table class="table table-hover">
@@ -31,6 +60,7 @@
                             <th>Category</th>
                             <th>Warehouse</th>
                             <th>location</th>
+                             <th>Batch</th>
                             <th style="white-space: nowrap;">Quantity</th>
                             <th style="white-space: nowrap;" >Unit Price</th>                       
                             <th>Change</th>
@@ -43,6 +73,7 @@
                             <td style="white-space: nowrap;">{{ item.category }}</td>                          
                             <td style="white-space: nowrap;">{{ item.warehouse_name }}</td>
                             <td style="white-space: nowrap;">{{ item.location_name}}</td>
+                               <td style="white-space: nowrap;">{{ item.batch_number }}</td>
                             <td style="white-space: nowrap;">{{ item.quantity }}</td>
                             <td style="white-space: nowrap;">{{ item.unit_price }}</td>
                         

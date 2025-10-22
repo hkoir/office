@@ -7,43 +7,50 @@
 
 <div class="container-fluid main-content">
     <div class="row">
-        <div class="col-12 col-md-4">
+        <div class="col-12">
             <div class="card shadow-lg" style="background-color: aliceblue;">
                  <!-- Card Header -->
                  <div class="card-header bg-primary text-white text-center">
                     <h3 class="mb-0"> {% if instance %} Update Batch {% else %} Create Batch {% endif %}</h3>
                 </div>              
-                <form method="POST" enctype="multipart/form-data" class="p-2 m-4">
+               <div class="card-body">
+                <form method="post" enctype="multipart/form-data" >
                     {% csrf_token %}
-                   {% for field in form.visible_fields %}
-                    <div class="mb-3">
-                        {% if field.field.widget.input_type == "checkbox" %}
+                    <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        <div class="col-12 col-md-3 col-lg-3">
+                        <div class="mb-3">
+                            {% if field.field.widget.input_type == "checkbox" %}
                             <div class="form-check">
                                 {{ field }}
-                                {{ field.label_tag }}
+                                <label class="form-check-label" for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                </label>
                             </div>
-                        {% else %}
+                            {% else %}
                             {{ field.label_tag }}
                             {{ field|add_class:"form-control" }}
-                        {% endif %}
+                            {% endif %}
 
-                        {% if field.help_text %}
+                            {% if field.help_text %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
-                        {% endif %}
-
-                        {% for error in field.errors %}
-                            <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                {% endfor %}
-
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary btn-lg"> {% if instance %} Update {% else %} Add {% endif %}</button>
-                    </div>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        </div>
+                    {% endfor %}
+                    <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">
+                        Create batch
+                    </button>
+                    </div>                   
                 </form>
+                </div>
             </div>
         </div>
-        <div class="col-12 col-md-8 table-responsive">
+        <div class="col-12 table-responsive my-4">
+            <h4 class="text-center">Available Batch</h4>
             <table class="table table-hover">
                 <thead class="table-dark">
                     <tr>

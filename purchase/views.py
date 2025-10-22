@@ -56,43 +56,72 @@ from django.db.models import F
 @login_required
 def manage_batch(request, id=None):  
     instance = get_object_or_404(Batch, id=id) if id else None
-    message_text = "updated successfully!" if id else "added successfully!"  
+    is_edit = bool(instance)
+    message_text = "Batch updated successfully!" if is_edit else "Batch created successfully!"
+    next_url = request.GET.get('next') or request.POST.get('next')
+
     form = BatchForm(request.POST or None, request.FILES or None, instance=instance)
 
-    if request.method == 'POST' and form.is_valid():
-        product = form.cleaned_data['product']
-        manufacture_date = form.cleaned_data['manufacture_date']
-        expiry_date = form.cleaned_data['expiry_date']
-        quantity = form.cleaned_data['quantity']
-        unit_price = form.cleaned_data['unit_price']
-        product_type= form.cleaned_data['product_type']  
+    if request.method == 'POST':
+        if form.is_valid():
+            product = form.cleaned_data['product']
+            manufacture_date = form.cleaned_data['manufacture_date']
+            expiry_date = form.cleaned_data['expiry_date']
+            quantity = form.cleaned_data['quantity']
+            purchase_price = form.cleaned_data.get('purchase_price')
 
-        existing_batch = Batch.objects.filter(product=product, manufacture_date=manufacture_date).first()
-        if existing_batch:              
-            existing_batch.quantity += quantity
-            existing_batch.remaining_quantity = F('remaining_quantity') + quantity
-            #existing_batch.unit_price = unit_price  # Decide if price should be updated
-        else:
-            batch = form.save(commit=False)
-            batch.user = request.user          
-            batch.remaining_quantity = quantity
-            batch.save()          
-           
-        messages.success(request, message_text)
-        return redirect('purchase:create_batch')  
+            if not is_edit:
+                # Try to find an existing batch with same attributes
+                existing_batch = Batch.objects.filter(
+                    product=product,
+                    manufacture_date=manufacture_date,
+                    expiry_date=expiry_date,
+                    purchase_price=purchase_price
+                ).first()
 
+                if existing_batch:
+                    # Update existing batch quantities safely
+                    existing_batch.quantity = F('quantity') + quantity
+                    existing_batch.remaining_quantity = F('remaining_quantity') + quantity
+                    existing_batch.save(update_fields=['quantity', 'remaining_quantity'])
+                    existing_batch.refresh_from_db()
+                    messages.info(
+                        request, 
+                        f"Existing batch for {product.name} updated with +{quantity} units. "
+                        f"Total now: {existing_batch.quantity}"
+                    )
+                else:
+                    # Create a new batch
+                    batch = form.save(commit=False)
+                    batch.user = request.user
+                    batch.remaining_quantity = quantity
+                    batch.save()
+                    messages.success(request, "New batch created successfully!")
+            else:
+                # Editing existing batch
+                batch = form.save()
+                messages.success(request, message_text)
+      
+            if next_url:
+                return redirect(next_url)
+            return redirect('purchase:create_batch')
+
+        else:       
+            messages.error(request, "Form invalid — please check the highlighted fields.")
+            print(form.errors)
+
+    # List all batches for context
     datas = Batch.objects.all().order_by('-updated_at')
-    paginator = Paginator(datas, 5)
+    paginator = Paginator(datas, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'purchase/manage_batch.html', {
         'form': form,
         'instance': instance,
-        'datas': datas,
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'next': next_url,  
     })
-
 
 
 @login_required
@@ -922,16 +951,76 @@ def reject_supplier_quotation(request, pk):
 
 
 
+
+@login_required
+def convert_quotation_to_po2(request, quotation_id):
+    quotation = get_object_or_404(SupplierQuotation.objects.prefetch_related('purchase_quotation_items'), pk=quotation_id)
+
+    if request.method == "GET":
+        return render(request, "purchase/confirm_quotation_to_po_conversion.html", {
+            "quotation": quotation,
+        })
+
+    if request.method == "POST":
+        try:
+            po = create_purchase_order_from_quotation(quotation_id, request.user)
+            messages.success(request, f"Purchase Order {po.order_id} created successfully.")
+            return redirect("purchase:add_batch_details", po_id=po.id)
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect(request.META.get("HTTP_REFERER", "purchase:supplier_quotation_list"))
+
+
 @login_required
 def convert_quotation_to_po(request, quotation_id):
-    quotation = get_object_or_404(SupplierQuotation, pk=quotation_id)
-    try:
-        po = create_purchase_order_from_quotation(quotation_id, request.user)
-        messages.success(request, f"Purchase Order {po.order_id} created. Please enter batch details.")
-        return redirect("purchase:add_batch_details", po_id=po.id)
-    except ValueError as e:
-        messages.error(request, str(e))
-        return redirect(request.META.get("HTTP_REFERER", "purchase:supplier_quotation_list"))
+    quotation = get_object_or_404(
+        SupplierQuotation.objects.prefetch_related('purchase_quotation_items'),
+        pk=quotation_id)
+    if request.method == "GET":
+        return render(request, "purchase/confirm_quotation_to_po_conversion.html", {
+            "quotation": quotation,})
+
+    if request.method == "POST":
+        try:
+            po = create_purchase_order_from_quotation(quotation_id, request.user)
+            messages.success(request, f"Purchase Order {po.order_id} created successfully.")
+            return redirect("purchase:select_or_create_batch", po_id=po.id)
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect(request.META.get("HTTP_REFERER", "purchase:supplier_quotation_list"))
+
+
+@login_required
+def select_or_create_batch(request, po_id):
+    po_items = PurchaseOrderItem.objects.filter(purchase_order_id=po_id).select_related('product')
+    if not po_items.exists():
+        messages.info(request, "No items found for this purchase order.")
+        return redirect("purchase:purchase_order_list")
+
+    if request.method == "POST":
+        missing_batches = []
+        for item in po_items:
+            batch_id = request.POST.get(f'batch_{item.id}')
+            if batch_id:
+                batch = Batch.objects.filter(id=batch_id).first()
+                if batch:
+                    item.batch = batch
+                    item.save()
+            else:
+                missing_batches.append(item.product.name)
+
+        if missing_batches:
+            messages.warning(request, f"No batch selected for: {', '.join(missing_batches)}. Please create batch first.")
+            return redirect("purchase:add_batch_details", po_id=po_id)
+
+        messages.success(request, "Batches linked successfully to purchase order.")
+        return redirect("purchase:purchase_order_list")
+
+    batches = Batch.objects.all().select_related('product').order_by('-updated_at')
+    return render(request, "purchase/select_or_create_batch.html", {
+        "po_items": po_items,
+        "batches": batches,
+    })
 
 
 
@@ -982,17 +1071,13 @@ def add_batch_details(request, po_id):
                     purchase_price = purchase_price
                 ).first()
 
-                if existing_batch:
-                    # Update quantity
-                    existing_batch.quantity += quantity
-                    existing_batch.purchase_price = purchase_price  # optional: update price
-                    existing_batch.regular_price = regular_price
-                    existing_batch.discounted_price = discounted_price
+                if existing_batch:                    
+                    existing_batch.quantity += quantity                   
                     existing_batch.save()
+                    batch = existing_batch
                 else:
                     # Create new batch
-                    batch = form.save(commit=False)
-                    # Assuming each po_item has the same supplier as the product in the form
+                    batch = form.save(commit=False)                   
                     po_item = po_items.filter(product=product).first()
                     if po_item:                     
                         batch.supplier = po_item.supplier or po_item.purchase_order.supplier
@@ -1205,7 +1290,7 @@ def qc_inspect_item(request, item_id):
         if form.is_valid():    
             good_quantity = form.cleaned_data['good_quantity']     
             bad_quantity = form.cleaned_data['bad_quantity']   
-            if good_quantity + bad_quantity !=purchase_dispatch_item.dispatch_quantity:
+            if (good_quantity or 0) + (bad_quantity or 0) !=purchase_dispatch_item.dispatch_quantity:
                 messages.warning(request,'dispatch quantity is more than selected quantity')
                 return redirect('purchase:qc_inspect_item',item_id)
             qc_entry = form.save(commit=False)

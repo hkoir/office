@@ -3,40 +3,62 @@
 {% block content %}
 
 
-
+{% include 'operations/quick_access_button.html' %}
 
 
 <div class="container-fluid main-content">
+    <h5 class="text-center">Create Batch for existing items to add into stock if not available
+        <a href="{% url 'purchase:create_batch' %}" class="btn btn-sm btn-outline-primary">Create Batch</a>
+    </h5>
     <div class="row">
-        <div class="col-12 col-md-3">
+        <div class="col-12">
             <div class="card shadow-lg" style="background-color: aliceblue;">
                 <!-- Card Header -->
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0">Add existing items</h4>
                 </div> 
-                <div class="card-body">                   
-                    <form method="post" enctype="multipart/form-data" action="{% url 'operations:add_existing_items' %}" id="add_category">
-                        {% csrf_token %}
-                       {% for field in form.visible_fields %}
+               <div class="card-body">
+                <form method="post" enctype="multipart/form-data" 
+                        action="{% url 'operations:add_existing_items' %}" id="add_category">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        <div class="col-12 col-md-3 col-lg-3">
                         <div class="mb-3">
+                            {% if field.field.widget.input_type == "checkbox" %}
+                            <div class="form-check">
+                                {{ field }}
+                                <label class="form-check-label" for="{{ field.id_for_label }}">
+                                {{ field.label }}
+                                </label>
+                            </div>
+                            {% else %}
                             {{ field.label_tag }}
                             {{ field|add_class:"form-control" }}
+                            {% endif %}
+
                             {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text }}</small>
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
                             {% endif %}
                             {% for error in field.errors %}
-                                <div class="text-danger">{{ error }}</div>
+                            <div class="text-danger small">{{ error }}</div>
                             {% endfor %}
                         </div>
+                        </div>
                     {% endfor %}
-                        <div class="d-grid">
-                        <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">Add to list</button>
                     </div>
-                    </form>
-                 </div>
+
+                    <div class="text-center mt-3">
+                    <button type="submit" name="add_to_basket" class="btn btn-primary btn-lg">
+                        Add to List
+                    </button>
+                    </div>
+                </form>
+                </div>
+
             </div>           
         </div>
-        <div class="col-12 col-md-9 table-responsive">
+        <div class="col-12 table-responsive">
 
             {% if basket %}
             <table class="table table-hover">
@@ -46,7 +68,10 @@
                             <th>Product</th>
                             <th>Category</th>                            
                             <th style="white-space: nowrap;">Quantity</th>
-                            <th style="white-space: nowrap;" >Unit Price</th>                       
+                            <th style="white-space: nowrap;" >Unit Price</th>    
+                            <th>Warehouse</th>  
+                            <th>Warehouse location</th>  
+                            <th>Batch</th>                     
                             <th>Change</th>
                         </tr>
                     </thead>
@@ -58,6 +83,9 @@
                            
                             <td style="white-space: nowrap;">{{ item.quantity }}</td>
                             <td style="white-space: nowrap;">{{ item.unit_price }}</td>
+                            <td>{{ item.warehouse_name }}</td>
+                            <td>{{ item.location_name }}</td>
+                            <td>{{ item.batch_number }}</td>
                         
                             <td style="white-space: nowrap;">
                                 <form method="post" style="display:inline;">
@@ -79,7 +107,7 @@
         
                 <form method="post">
                     {% csrf_token %}
-                    <button type="submit" name="confirm_purchase" class="btn btn-success">Confirm Purchase</button>
+                    <button type="submit" name="confirm_purchase" class="btn btn-success">Confirm adding</button>
                 </form>
             {% else %}
                 <p>No products added to the list yet.</p>

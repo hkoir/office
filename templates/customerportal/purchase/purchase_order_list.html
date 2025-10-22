@@ -43,7 +43,7 @@
                    
                         <th class="text-center p-2">Purchase Order Number</th>                      
                          <th class="text-center p-2">Request Order Number</th>
-                        <th class="text-center p-2">Total amount Due</th> 
+                        <th class="text-center p-2">Net Amount due </th> 
                     
 
                         <th class="text-center p-2">Total amount Paid</th>
@@ -78,7 +78,7 @@
                          
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.order_id }}</td>                            
                             <td class="text-center p-1" style="white-space: nowrap;font-size: 10px;">{{ order.purchase_request_order.order_id }}</td>
-                            <td class="text-center p-2" style="white-space: nowrap;">{{order.total_amount}}</td>
+                            <td class="text-center p-2" style="white-space: nowrap;">{{order.net_due_amount}}</td>
                            
 
 

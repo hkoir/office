@@ -24,14 +24,18 @@ class SaleShipmentForm(forms.ModelForm):
         widget=forms.DateInput(attrs={'type': 'date'}),
         required=False
     )
+
     class Meta:
         model = SaleShipment
-        fields = ['sales_order','carrier', 'tracking_number', 'estimated_delivery']
+        fields = ['sales_order', 'carrier', 'tracking_number', 'estimated_delivery']
 
     def __init__(self, *args, sale_order=None, **kwargs):
-        super(SaleShipmentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
+
         if sale_order:
             self.fields['sales_order'].queryset = SaleOrder.objects.filter(id=sale_order.id)
+            self.fields['sales_order'].initial = sale_order
+            self.fields['sales_order'].disabled = True
         else:
             self.fields['sales_order'].queryset = SaleOrder.objects.all()
 
@@ -72,7 +76,7 @@ class PurchaseDispatchItemForm(forms.ModelForm):
 
 
 
-class SaleDispatchItemForm(forms.ModelForm):
+class SaleDispatchItemForm22(forms.ModelForm):
     DISPATCH_STRATEGY_CHOICES = [
         ('FIFO', 'First In, First Out'),
         ('LIFO', 'Last In, First Out'),
@@ -102,7 +106,7 @@ class SaleDispatchItemForm(forms.ModelForm):
             self.fields['sale_shipment'].queryset = SaleShipment.objects.filter(id=sale_shipment.id)
             self.fields['dispatch_item'].queryset = SaleOrderItem.objects.filter(sale_order__sale_shipment=sale_shipment)
             if 'batch' in self.fields:
-                self.fields['batch'].queryset = Batch.objects.filter(sale_shipment=sale_shipment)
+                self.fields['batch'].queryset = Batch.objects.all()
         else:
             self.fields['sale_shipment'].queryset = SaleShipment.objects.all()
             self.fields['dispatch_item'].queryset = SaleOrderItem.objects.all()
@@ -116,3 +120,58 @@ class SaleDispatchItemForm(forms.ModelForm):
         self.fields['dispatch_item'].widget.attrs.update({
             'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
         })
+
+
+from inventory.models import Warehouse, Location, Inventory
+
+class SaleDispatchItemForm(forms.ModelForm):
+    DISPATCH_STRATEGY_CHOICES = [
+        ('FIFO', 'First In, First Out'),
+        ('LIFO', 'Last In, First Out'),
+    ]
+    dispatch_strategy = forms.ChoiceField(
+        choices=DISPATCH_STRATEGY_CHOICES,
+        required=True,
+        widget=forms.Select(attrs={'style': 'max-width: 200px;'})
+    )
+
+    class Meta:
+        model = SaleDispatchItem
+        exclude = ['dispatch_id', 'user', 'status', 'unit_selling_price']
+        widgets = {
+            'dispatch_date': forms.DateInput(attrs={'type': 'date'}),
+            'delivery_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, sale_shipment=None, dispatch_strategy='FIFO', **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['dispatch_strategy'].initial = dispatch_strategy
+
+        if sale_shipment:
+            self.fields['sale_shipment'].queryset = SaleShipment.objects.filter(id=sale_shipment.id)
+            self.fields['dispatch_item'].queryset = SaleOrderItem.objects.filter(
+                sale_order=sale_shipment.sales_order
+            )
+            if 'batch' in self.fields:
+                self.fields['batch'].queryset = Batch.objects.all()
+        else:
+            self.fields['sale_shipment'].queryset = SaleShipment.objects.all()
+            self.fields['dispatch_item'].queryset = SaleOrderItem.objects.all()
+            if 'batch' in self.fields:
+                self.fields['batch'].queryset = Batch.objects.all()
+
+        # ✅ Use actual models for display names
+        self.fields['warehouse'].queryset = Warehouse.objects.filter(
+            id__in=Inventory.objects.values_list('warehouse', flat=True).distinct()
+        )
+        self.fields['location'].queryset = Location.objects.filter(
+            id__in=Inventory.objects.values_list('location', flat=True).distinct()
+        )
+
+        # Optional UI styling
+        for field_name in ['sale_shipment', 'dispatch_item', 'warehouse', 'location', 'batch']:
+            if field_name in self.fields:
+                self.fields[field_name].widget.attrs.update({
+                    'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
+                })

@@ -5,7 +5,6 @@ from .import views
 
 app_name = 'operations'
 
-
 urlpatterns = [   
 
   path('operations_dashboard/', views.operations_dashboard, name='operations_dashboard'),

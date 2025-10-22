@@ -59,11 +59,21 @@ class MaterialsRequestForm(forms.ModelForm):
   
 
 
-
+from purchase.models import Batch
 class MaterialsDeliveryForm(forms.ModelForm):
     class Meta:
-        model = MaterialsDeliveryItem # Link to the model
-        fields = ['materials_request_order', 'materials_request_item']  # Removed redundant `supplier`
+        model = MaterialsDeliveryItem
+        fields = [
+            'materials_request_order',
+            'materials_request_item',
+            'category',
+            'product',
+            'product_type',
+            'batch',
+            'quantity',
+            'warehouse',
+            'location',
+        ]
 
     materials_request_order = forms.ModelChoiceField(
         queryset=MaterialsRequestOrder.objects.all(),
@@ -73,68 +83,95 @@ class MaterialsDeliveryForm(forms.ModelForm):
 
     materials_request_item = forms.ModelChoiceField(
         queryset=MaterialsRequestItem.objects.all(),
-         label="Materials Request Item",
-        required=False)
+        label="Materials Request Item",
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     category = forms.ModelChoiceField(
         queryset=Category.objects.all(),
         label="Category",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
     product = forms.ModelChoiceField(
         queryset=Product.objects.all(),
         label="Product",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
     product_type = forms.ChoiceField(
         choices=[
             ('raw_materials', 'Raw Materials'),
             ('finished_product', 'Finished Product'),
             ('component', 'Component'),
-            ('BOM', 'BOM')
+            ('BOM', 'BOM'),
         ],
         label="Product Type",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
+    batch = forms.ModelChoiceField(
+        queryset=Batch.objects.all(),
+        label="Batch",
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
     quantity = forms.IntegerField(
         label="Quantity",
         min_value=1,
         widget=forms.NumberInput(attrs={'class': 'form-control'})
     )
+
     warehouse = forms.ModelChoiceField(
-        queryset=Warehouse.objects.all(), 
+        queryset=Warehouse.objects.all(),
         label="Warehouse",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
     location = forms.ModelChoiceField(
-        queryset=Location.objects.all(),  
+        queryset=Location.objects.all(),
         label="Location",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    def __init__(self, *args, request_instance=None, **kwargs):
-        super(MaterialsDeliveryForm, self).__init__(*args, **kwargs)
+    def __init__(self, *args, request_instance=None, item_instance=None, **kwargs):
+        """
+        request_instance -> MaterialsRequestOrder object
+        item_instance -> MaterialsRequestItem object (optional)
+        """
+        super().__init__(*args, **kwargs)
+
+        # Narrow down order queryset
         if request_instance:
             self.fields['materials_request_order'].queryset = MaterialsRequestOrder.objects.filter(id=request_instance.id)
             self.fields['materials_request_item'].queryset = MaterialsRequestItem.objects.filter(material_request_order=request_instance)
-            materials_request_item = MaterialsRequestItem.objects.filter(material_request_order=request_instance).first()
-            
-            if materials_request_item:
-                self.fields['quantity'].initial = materials_request_item.quantity
-                if materials_request_item.product:
-                    product = materials_request_item.product
-                    self.fields['product'].initial = product
 
-        else:
-            self.fields['materials_request_order'].queryset = MaterialsRequestOrder.objects.all()
-            self.fields['materials_request_item'].queryset = MaterialsRequestItem.objects.all()
+        # Populate form with initial values if an item instance is given
+        if item_instance:
+            self.fields['materials_request_item'].initial = item_instance
+            self.fields['quantity'].initial = item_instance.quantity
 
-        self.fields['materials_request_order'].widget.attrs.update({
-            'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
-        })
+            if item_instance.product:
+                product = item_instance.product
+                self.fields['product'].initial = product
+                self.fields['category'].initial = product.category
+                self.fields['product_type'].initial = getattr(product, 'product_type', None)
 
-        self.fields['materials_request_item'].widget.attrs.update({
-            'style': 'max-width: 200px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
-        })
+                # ✅ Only show batches for this product
+                self.fields['batch'].queryset = Batch.objects.filter(product=product)
+                # If the order item already has a batch assigned
+                if getattr(item_instance, 'batch_id', None):
+                    self.fields['batch'].initial = item_instance.batch
+
+        # Add truncation style for dropdowns
+        for field_name in ['materials_request_order', 'materials_request_item']:
+            self.fields[field_name].widget.attrs.update({
+                'style': 'max-width: 250px; word-wrap: break-word; overflow: hidden; text-overflow: ellipsis;'
+            })
+
+
 
 
 class QualityControlForm(forms.ModelForm):
@@ -167,10 +204,13 @@ class QualityControlForm(forms.ModelForm):
         return cleaned_data
 
 
+
+
+
 class FinishedGoodsForm(forms.ModelForm):
     class Meta:
         model = FinishedGoodsReadyFromProduction
-        fields = ['materials_request_order', 'product', 'quantity','status','remarks']
+        fields = ['warehouse', 'location', 'product', 'quantity', 'batch', 'remarks']
         widgets = {           
             'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
@@ -179,11 +219,18 @@ class FinishedGoodsForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        request_order_queryset = kwargs.pop('request_order_queryset', None)
         super().__init__(*args, **kwargs)
-        if request_order_queryset:
-            self.fields['materials_request_order'].queryset = request_order_queryset
 
+
+from django.forms import inlineformset_factory
+
+FinishedGoodsFormSet = inlineformset_factory(
+    MaterialsRequestOrder,
+    FinishedGoodsReadyFromProduction,
+    form=FinishedGoodsForm,
+    extra=1,
+    can_delete=True
+)
 
 
 class MaterialsOrderSearchForm(forms.Form):

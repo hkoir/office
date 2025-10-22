@@ -248,9 +248,11 @@ def process_materials_request(request, order_id):
 
 
 
+from purchase.models import Batch
 @login_required
 def create_materials_delivery(request, request_id):
     request_instance = get_object_or_404(MaterialsRequestOrder, id=request_id)
+    material_request_items = request_instance.material_request_order_for_item.all()
 
     if 'basket' not in request.session:
         request.session['basket'] = []
@@ -261,11 +263,11 @@ def create_materials_delivery(request, request_id):
                 category = form.cleaned_data['category']
                 product_obj = form.cleaned_data['product']
                 quantity = form.cleaned_data['quantity']   
-
                 warehouse = form.cleaned_data['warehouse']
-                location = form.cleaned_data['location']         
-                
+                location = form.cleaned_data['location']    
+                batch = form.cleaned_data['batch'] 
                 item_request = form.cleaned_data['materials_request_item'] 
+
                 item_request_id = item_request.id if item_request else None
                
                 materials_request_order = form.cleaned_data.get('materials_request_order')
@@ -320,10 +322,10 @@ def create_materials_delivery(request, request_id):
                         'unit_price': float(product_obj.unit_price),
                         'warehouse_id': warehouse.id,                        
                         'location_id': location.id,
-
                         'warehouse_name': warehouse.name,                        
-                        'location_name': location.name,
-                    
+                        'location_name': location.name,     
+                        'batch_id': batch.id, 
+                        'batch_number': batch.batch_number,                     
                         'total_amount': total_amount,
                         'materials_request_order_id': materials_request_order_id,
                     })
@@ -360,7 +362,9 @@ def create_materials_delivery(request, request_id):
                 return redirect('manufacture:create_materials_delivery', request_instance.id)
             return redirect(f"{reverse('manufacture:confirm_materials_delivery')}?request_id={request_instance.id}")
 
-    form = MaterialsDeliveryForm(request_instance=request_instance)
+    #form = MaterialsDeliveryForm(request_instance=request_instance,initial={'materials_request_order':request_instance,' materials_request_item':material_request_items})
+    first_item = MaterialsRequestItem.objects.filter(material_request_order=request_instance).first()
+    form = MaterialsDeliveryForm(instance=request_instance, item_instance=first_item,initial={'materials_request_order':request_instance})
     basket = request.session.get('basket', [])
     return render(request, 'manufacture/create_materials_delivery.html', {'form': form, 'basket': basket})
 
@@ -375,163 +379,116 @@ def confirm_materilas_delivery(request):
     if not basket:
         messages.error(request, "Purchase basket is empty. Cannot confirm purchase.")
         return redirect('manufacture:materials_request_order_list')
+
     if request.method == 'POST':
         try:
-            with transaction.atomic(): 
-                total_amount = sum(item['quantity'] * item['unit_price'] for item in basket)              
+            with transaction.atomic():
+                total_amount = sum(item['quantity'] * item['unit_price'] for item in basket)
 
-                location_id = basket[0].get('location_id')  
-                warehouse_id = basket[0].get('warehouse_id') 
-               
+                location_id = basket[0].get('location_id')
+                warehouse_id = basket[0].get('warehouse_id')
+
                 materials_request_order = get_object_or_404(MaterialsRequestOrder, id=request_id)
-                
+                warehouse = get_object_or_404(Warehouse, id=warehouse_id)
+                location = get_object_or_404(Location, id=location_id)
+
                 for item in basket:
                     logger.info(f"Basket item: {item}")
-                    
+
                     product = get_object_or_404(Product, id=item['id'])
                     quantity = item['quantity']
                     order_item = get_object_or_404(MaterialsRequestItem, id=item['item_request_id'])
-                   
-                    warehouse = get_object_or_404(Warehouse, id=warehouse_id) 
-                    location = get_object_or_404(Location, id=location_id) 
 
-                    purchase_item = MaterialsDeliveryItem(
+                    # ✅ Fetch batch from basket or related order item
+                    batch_id = item.get('batch_id') or getattr(order_item, 'batch_id', None)
+                    if not batch_id:
+                        messages.error(request, f"No batch assigned for {product.name}.")
+                        raise ValueError("Batch missing in basket or order item.")
+
+                    batch = get_object_or_404(Batch, id=batch_id)
+
+                    # ✅ Ensure batch has enough quantity
+                    if batch.remaining_quantity < quantity:
+                        messages.error(
+                            request,
+                            f"Not enough quantity in batch {batch.batch_number} for {product.name}. "
+                            f"Available: {batch.remaining_quantity}, Requested: {quantity}"
+                        )
+                        raise ValueError("Insufficient batch stock.")
+
+                    # ✅ Reduce batch quantity
+                    batch.remaining_quantity -= quantity
+                    batch.save()
+
+                    # ✅ Create delivery record
+                    delivery_item = MaterialsDeliveryItem.objects.create(
                         materials_request_order=materials_request_order,
                         product=product,
                         quantity=quantity,
                         warehouse=warehouse,
                         location=location,
+                        batch=batch,
                         total_amount=total_amount,
                         user=request.user,
-                        materials_request_item=order_item, 
+                        materials_request_item=order_item,
                     )
-                    purchase_item.save()
 
+                    # ✅ Prevent duplicate inventory transactions
                     if InventoryTransaction.objects.filter(
                         manufacture_order=materials_request_order,
                         transaction_type='MANUFACTURE_OUT',
                         product=product,
+                        batch=batch,
                     ).exists():
-                        messages.error(request, "This transaction has already been recorded.")
-                        return redirect('manufacture:qc_dashboard')
+                        messages.error(request, "This transaction already exists.")
+                        raise ValueError("Duplicate inventory transaction detected.")
 
+                    # ✅ Create inventory transaction
                     inventory_transaction = InventoryTransaction.objects.create(
                         user=request.user,
                         warehouse=warehouse,
                         location=location,
                         product=product,
+                        batch=batch,
                         transaction_type='MANUFACTURE_OUT',
                         quantity=quantity,
                         manufacture_order=materials_request_order,
                     )
+
+                    # ✅ Update or create inventory record
                     inventory, created = Inventory.objects.get_or_create(
                         warehouse=warehouse,
                         location=location,
                         product=product,
-                        user=request.user,
-                        defaults={
-                            'quantity': 0
-                        }
+                        batch=batch,
+                        defaults={'quantity': 0, 'user': request.user}
                     )
-        
-                    if not created:
-                        inventory.quantity -= quantity
-                        inventory.save()
-                        messages.success(request, "Inventory updated successfully.")
-                    else:                       
-                        messages.success(request, "something went wrong. inventory not updated.")
-                    inventory_transaction.inventory_transaction =inventory
+
+                    inventory.quantity = max(0, inventory.quantity - quantity)
+                    inventory.save()
+
+                    inventory_transaction.inventory_transaction = inventory
                     inventory_transaction.save()
 
+                # ✅ Clear basket and finalize
                 request.session['basket'] = []
                 request.session.modified = True
-                messages.success(request, "Delivery request created successfully!")
+                messages.success(request, "Materials delivery confirmed successfully!")
                 return redirect('manufacture:create_materials_delivery', materials_request_order.id)
 
-        except Exception as e: 
+        except Exception as e:
             logger.error("Error creating delivery: %s", e)
-            messages.error(request, f"An error occurred while creating the delivery items: {str(e)}")
+            messages.error(request, f"An error occurred: {str(e)}")
             return redirect('manufacture:create_materials_delivery', request_id)
+
     return render(request, 'manufacture/confirm_materials_delivery.html', {'basket': basket})
+
 
 
 @login_required
 def materials_delivered_items(request,order_id):
     order_instance = get_object_or_404(MaterialsRequestOrder,id=order_id)
     return render(request,'manufacture/materials_delivery_items.html',{'order_instance':order_instance})
-
-
-
-
-@login_required
-def qc_dashboard(request, material_request_order_id=None):
-    if material_request_order_id:
-        pending_items = FinishedGoodsReadyFromProduction.objects.filter(
-            materials_request_order=material_request_order_id,
-            status__in=['SUBMITTED','DELIVERED']
-        ).select_related('materials_request_order')  
-        materials_request_order = get_object_or_404(MaterialsRequestOrder, id=material_request_order_id)
-    else:
-        pending_items = FinishedGoodsReadyFromProduction.objects.filter(
-            status__in=['SUBMITTED','DELIVERED']
-        ).select_related('materials_request_order')  
-        materials_request_order = None
-
-    if not pending_items:
-        messages.info(request, "No items pending for quality control inspection.")
-
-    return render(request, 'manufacture/qc_dashboard.html', {
-        'pending_items': pending_items,
-        'materials_request_order': materials_request_order
-    })
-
-
-@login_required
-def qc_inspect_item(request, item_id):
-    finish_goods_item = get_object_or_404(FinishedGoodsReadyFromProduction, id=item_id)
-
-    if not finish_goods_item.status == 'SUBMITTED':
-        messages.error(request, "Goods not arrived yet.")
-        return redirect('manufacture:qc_dashboard')
-
-    if request.method == 'POST':
-        form = QualityControlForm(request.POST)
-        if form.is_valid():
-            qc_entry = form.save(commit=False)
-            qc_entry.finish_goods_from_production = finish_goods_item
-            qc_entry.user = request.user
-            qc_entry.inspection_date = timezone.now()
-            qc_entry.save()
-
-            good_quantity = qc_entry.good_quantity
-            if good_quantity > 0:
-                ReceiveFinishedGoods.objects.create(
-                    user=request.user,
-                    quality_control=qc_entry,
-                    product=finish_goods_item.product,                    
-                    quantity=good_quantity,
-                    status='DELIVERED',
-                    remarks=f"Received {good_quantity} after QC inspection.",
-                )
-                finish_goods_item.status = "DELIVERED"
-                finish_goods_item.save()
-              
-                messages.success(
-                    request, f"QC inspection recorded. {good_quantity} items received."
-                )
-            else:
-                messages.warning(request, "No good quantity to receive.")           
-            return redirect('manufacture:qc_dashboard')
-        else:
-            messages.error(request, "Error saving QC inspection.")
-    else:
-        form = QualityControlForm(initial={'total_quantity': finish_goods_item.quantity})
-
-    return render(request, 'manufacture/qc_inspect_item.html', {
-        'form': form,
-        'finish_goods_item': finish_goods_item,
-    })
-
 
 
 
@@ -554,35 +511,77 @@ def materials_order_item(request):
 
 
 
+
+from django.forms import inlineformset_factory
+
 @login_required
 def submit_finished_goods(request, request_id):
     materials_request_order = get_object_or_404(MaterialsRequestOrder, id=request_id)
-    finished_goods = FinishedGoodsReadyFromProduction.objects.all().order_by('-created_at')
+    FinishedGoodsFormSet = inlineformset_factory(
+        MaterialsRequestOrder,
+        FinishedGoodsReadyFromProduction,
+        form=FinishedGoodsForm,
+        extra=1,
+        can_delete=True
+    )
 
     if request.method == 'POST':
-        form = FinishedGoodsForm(request.POST, request_order_queryset=MaterialsRequestOrder.objects.filter(id=request_id))
-        if form.is_valid():
-            product = form.cleaned_data['product']
-            finished_goods = form.save(commit=False)
-            finished_goods.user = request.user  
-            finished_goods.save()
+        formset = FinishedGoodsFormSet(request.POST, instance=materials_request_order)
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for finished_goods in instances:
+                finished_goods.user = request.user
+                finished_goods.materials_request_order = materials_request_order
+                finished_goods.save()
+
+                product = finished_goods.product
+                quantity = finished_goods.quantity
+                batch = finished_goods.batch
+                warehouse = finished_goods.warehouse
+                location = finished_goods.location                
+               
+                inventory, created = Inventory.objects.get_or_create(
+                    warehouse=warehouse,
+                    location=location,
+                    product=product,
+                    defaults={'quantity': 0, 'user': request.user}
+                )
+                inventory.quantity += quantity
+                inventory.save()
+
+                InventoryTransaction.objects.create(
+                    user=request.user,
+                    warehouse=warehouse,
+                    location=location,
+                    product=product,
+                    transaction_type='PRODUCTION_IN',
+                    quantity=quantity,
+                    manufacture_order=materials_request_order,
+                    inventory_transaction=inventory
+                )
+
+                create_notification(
+                    request.user,
+                    message=f'Production department has submitted {quantity} units of {product.name} to stock',
+                    notification_type='PRODUCTION-NOTIFICATION'
+                )
+
+            # Handle deleted forms
+            for form in formset.deleted_forms:
+                if form.instance.pk:
+                    form.instance.delete()
+
             messages.success(request, 'Finished goods submitted successfully!')
-            create_notification(request.user,message=f'Production department has submitted{product} to receive',notification_type='PRODUCTION-NOTIFICATION')
-            return redirect('manufacture:materials_request_order_list')  
+            return redirect('manufacture:materials_request_order_list')
+        else:
+            print(formset.errors)
     else:
-        form = FinishedGoodsForm(request_order_queryset=MaterialsRequestOrder.objects.filter(id=request_id))
+        formset = FinishedGoodsFormSet(instance=materials_request_order)
 
-    paginator = Paginator(finished_goods,10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
     return render(request, 'manufacture/submit_finished_goods.html', {
-        'form': form,
+        'formset': formset,
         'materials_request_order': materials_request_order,
-        'finished_goods':finished_goods,
-        'page_obj':page_obj
     })
-
 
 
 
@@ -630,31 +629,162 @@ def update_purchase_order_status(request, order_id):
 
 
 
+
 @login_required
-def direct_submit_finished_goods(request):   
-    finished_goods = FinishedGoodsReadyFromProduction.objects.all().order_by('-created_at')
+def direct_submit_finished_goods(request):
+    FinishedGoodsFormSet = inlineformset_factory(
+        MaterialsRequestOrder,
+        FinishedGoodsReadyFromProduction,
+        form=FinishedGoodsForm,
+        extra=1,
+        can_delete=True
+    )
 
     if request.method == 'POST':
-        form = FinishedGoodsForm(request.POST)
-        if form.is_valid():
-            product = form.cleaned_data['product']
-            finished_goods = form.save(commit=False)
-            finished_goods.user = request.user   
-            finished_goods.status = 'SUBMITTED'
-            finished_goods.save()
-            messages.success(request, 'Finished goods submitted successfully!')
-            create_notification(request.user,message=f'Production department has submitted{product} to receive',notification_type='PRODUCTION-NOTIFICATION')
-            return redirect('manufacture:direct_submit-finished-goods')  
-    else:
-        form = FinishedGoodsForm()
+        temp_order = MaterialsRequestOrder.objects.create(
+            status='CREATED',
+            user=request.user,
+            total_amount=0,
+            remarks='Auto-generated for direct finished goods submission'
+        )
 
-    form = FinishedGoodsForm()
-    paginator = Paginator(finished_goods,10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
+        formset = FinishedGoodsFormSet(request.POST, instance=temp_order)
+
+        if formset.is_valid():
+            total_amount = 0
+            with transaction.atomic():
+                instances = formset.save(commit=False)
+                for finished_goods in instances:
+                    finished_goods.user = request.user
+                    finished_goods.materials_request_order = temp_order
+                    finished_goods.save()
+
+                    product = finished_goods.product
+                    quantity = finished_goods.quantity
+                    batch = finished_goods.batch
+                    warehouse = finished_goods.warehouse
+                    location = finished_goods.location
+
+                    line_total_amount = quantity * (batch.purchase_price if batch and batch.purchase_price else 0)
+                    total_amount += line_total_amount                  
+                   
+                    inventory, created = Inventory.objects.get_or_create(
+                        warehouse=warehouse,
+                        location=location,
+                        product=product,
+                        defaults={'quantity': 0, 'user': request.user}
+                    )
+                    inventory.quantity += quantity
+                    inventory.save()
+
+                    # Record transaction
+                    InventoryTransaction.objects.create(
+                        user=request.user,
+                        warehouse=warehouse,
+                        location=location,
+                        product=product,
+                        transaction_type='PRODUCTION_IN',
+                        quantity=quantity,
+                        manufacture_order=temp_order,
+                        inventory_transaction=inventory
+                    )
+
+                    create_notification(
+                        request.user,
+                        message=f'Production department has submitted {quantity} units of {product.name} to stock',
+                        notification_type='PRODUCTION-NOTIFICATION'
+                    )
+            
+                for form in formset.deleted_forms:
+                    if form.instance.pk:
+                        form.instance.delete()
+
+            messages.success(request, 'Finished goods submitted successfully!')
+            return redirect('manufacture:materials_request_order_list')
+        else:
+            print(formset.errors)
+            temp_order.delete()  # cleanup invalid order
+    else:
+        temp_order = MaterialsRequestOrder(user=request.user)
+        formset = FinishedGoodsFormSet(instance=temp_order)
+
     return render(request, 'manufacture/direct_submit_finished_goods.html', {
-        'form': form,
-        'finished_goods':finished_goods,
-        'page_obj':page_obj
+        'formset': formset,
+        'materials_request_order': temp_order,
     })
+
+
+@login_required
+def qc_dashboard(request, material_request_order_id=None):
+    if material_request_order_id:
+        pending_items = FinishedGoodsReadyFromProduction.objects.filter(
+            materials_request_order=material_request_order_id,
+            status__in=['SUBMITTED','DELIVERED']
+        ).select_related('materials_request_order')  
+        materials_request_order = get_object_or_404(MaterialsRequestOrder, id=material_request_order_id)
+    else:
+        pending_items = FinishedGoodsReadyFromProduction.objects.filter(
+            status__in=['SUBMITTED','DELIVERED']
+        ).select_related('materials_request_order')  
+        materials_request_order = None
+
+    if not pending_items:
+        messages.info(request, "No items pending for quality control inspection.")
+
+    return render(request, 'manufacture/qc_dashboard.html', {
+        'pending_items': pending_items,
+        'materials_request_order': materials_request_order
+    })
+
+
+@login_required
+def qc_inspect_item(request, item_id):
+    finish_goods_item = get_object_or_404(FinishedGoodsReadyFromProduction, id=item_id)
+    batch=finish_goods_item.batch
+   
+
+    if not finish_goods_item.status == 'SUBMITTED':
+        messages.error(request, "Goods not arrived yet.")
+        return redirect('manufacture:qc_dashboard')
+
+    if request.method == 'POST':
+        form = QualityControlForm(request.POST)
+        if form.is_valid():
+            qc_entry = form.save(commit=False)
+            qc_entry.finish_goods_from_production = finish_goods_item
+            qc_entry.user = request.user
+            qc_entry.inspection_date = timezone.now()
+            qc_entry.batch = batch,
+            qc_entry.save()
+
+            good_quantity = qc_entry.good_quantity
+            if good_quantity > 0:
+                ReceiveFinishedGoods.objects.create(
+                    user=request.user,
+                    quality_control=qc_entry,
+                    product=finish_goods_item.product,                    
+                    quantity=good_quantity,
+                    batch=batch,
+                    status='DELIVERED',
+                    remarks=f"Received {good_quantity} after QC inspection.",
+                )
+                finish_goods_item.status = "DELIVERED"
+                finish_goods_item.save()
+              
+                messages.success(
+                    request, f"QC inspection recorded. {good_quantity} items received."
+                )
+            else:
+                messages.warning(request, "No good quantity to receive.")           
+            return redirect('manufacture:qc_dashboard')
+        else:
+            messages.error(request, "Error saving QC inspection.")
+    else:
+        form = QualityControlForm(initial={'total_quantity': finish_goods_item.quantity})
+
+    return render(request, 'manufacture/qc_inspect_item.html', {
+        'form': form,
+        'finish_goods_item': finish_goods_item,
+    })
+
+

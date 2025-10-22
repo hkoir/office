@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="card shadow-lg border-0 rounded-4">
+    <div class="card-header bg-primary text-white rounded-top-4">
+      <h5>Confirm Quotation Conversion to Sale request order</h5>
+    </div>
+    <div class="card-body">
+      <p><strong>Quotation #:</strong> {{ quotation.quotation_number }}</p>
+      <p><strong>Customer:</strong> {{ request.user.username }}</p>
+      <p><strong>Status:</strong> {{ quotation.get_status_display }}</p>
+      <hr>
+
+      <h6>Items</h6>
+      <table class="table table-bordered table-sm">
+        <thead class="table-light">
+          <tr>
+            <th>Product</th>
+            <th>Spec</th>
+            <th>Delivery date</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>VAT rate</th>
+            <th>VAT status</th>                                          
+            <th>Line Total</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in quotation_items %}
+          <tr>
+            <td>{{ item.product.name }}</td>
+            <td>{{ item.specification }}</td>
+            <td>{{ item.quoted_delivery_date }}</td>
+            <td>{{ item.quantity }}</td>
+            <td>{{ item.unit_price }}</td>
+            <td>{{ item.VAT_rate}}&nbsp;%</td>
+            <td>{{ item.VAT_type }}</td>                        
+            <td>{{ item.total_price|floatformat:'2' }}</td>
+            <td>{{ item.notes }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <hr>
+      <div class="text-end">
+        <p><strong>Subtotal:</strong> {{ quotation.subtotal}} {{ quotation.currency }}</p>
+        <p><strong>VAT:</strong> {{ vat_amount }} {{ quotation.currency }}</p>
+        <p><strong>AIT:</strong> {{ ait_amount }} {{ quotation.currency }}&nbsp;|{{quotation.AIT_rate}}&nbsp;%&nbsp;|{{quotation.AIT_type}}</p>
+        <h5><strong>Net Due:</strong> {{ net_due_amount }} {{ quotation.currency }}</h5>
+      </div>
+
+      <form method="POST">
+        {% csrf_token %}
+        <div class="d-flex justify-content-end mt-4">
+          <a href="{% url 'sales:customer_quotation_detail' quotation.pk %}" class="btn btn-secondary me-2">Cancel</a>
+          <button type="submit" class="btn btn-success">
+            Confirm & Create Sale Request
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+
+Error while creating Sale Request: column "AIT_rate" of relation "sales_salerequestorder" does not exist LINE 1: ... "department", "user_id", "order_date", "status", "AIT_rate"... ^

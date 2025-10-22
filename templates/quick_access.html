@@ -1,0 +1,110 @@
+<!-- ======= Quick Access Buttons ======= -->
+<div class="container my-4">
+  <div class="text-center mb-3">
+    <h5 class="fw-bold text-uppercase text-primary">
+      <i class="fas fa-bolt me-2"></i>Quick Access Portal
+    </h5>
+  </div>
+
+
+  
+
+  <!-- USER ACCOUNT -->
+  <div class="mb-3">
+    <h4 class="text-success text-center mb-2">
+      <i class="fas fa-user-circle me-1"></i> User Account
+    </h4>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      {% if user.is_authenticated %}
+        <a href="#" class="btn btn-outline-info portal-btn">
+          <i class="fas fa-user"></i> Your Account
+        </a>
+        <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-danger portal-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </form>
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-info portal-btn">
+          <i class="fas fa-key"></i> Change Password
+        </a>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary portal-btn">
+          <i class="fas fa-sign-in-alt"></i> Login
+        </a>
+        <a href="{% url 'accounts:register_corporate_user_only' %}" class="btn btn-outline-success portal-btn">
+          <i class="fas fa-user-plus"></i> Corporate Register
+        </a>
+        <a href="{% url 'accounts:pwdreset' %}" class="btn btn-outline-danger portal-btn">
+          <i class="fas fa-lock"></i> Forgot Password
+        </a>
+      {% endif %}
+    </div>
+  </div>
+  
+
+  <!-- CUSTOMER PORTAL -->
+  <div class="mb-3">
+    <h4 class="text-primary text-center mb-2">
+      <i class="fas fa-user-cog me-1"></i> Customer Portal
+    </h4>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      <a href="{% url 'customerportal:customer_quotation_list' %}" class="btn btn-outline-primary portal-btn">
+        <i class="fas fa-file-invoice me-1"></i> All Quotations
+      </a>
+      <a href="{% url 'customerportal:sale_order_list' %}" class="btn btn-outline-success portal-btn">
+        <i class="fas fa-shopping-cart me-1"></i> Sales Orders
+      </a>
+      <a href="{% url 'customerportal:sale_invoice_list' %}" class="btn btn-outline-info portal-btn">
+        <i class="fas fa-receipt me-1"></i> Invoices
+      </a>
+      <a href="{% url 'customerportal:return_request_list' %}" class="btn btn-outline-danger portal-btn">
+        <i class="fas fa-undo me-1"></i> Return Requests
+      </a>
+      <a href="{% url 'customerportal:ticket_list' %}" class="btn btn-outline-secondary portal-btn">
+        <i class="fas fa-ticket-alt me-1"></i> Ticket List
+      </a>
+      <a href="{% url 'customerportal:create_ticket' %}" class="btn btn-outline-warning portal-btn">
+        <i class="fas fa-plus-circle me-1"></i> Create Ticket
+      </a>
+    </div>
+  </div>
+
+  <!-- SUPPLIER PORTAL -->
+  <div class="mb-3">
+    <h4 class="text-primary text-center mb-2">
+      <i class="fas fa-truck-loading me-1"></i> Supplier Portal
+    </h4>
+    <div class="d-flex flex-wrap gap-2 justify-content-center">
+      <a href="{% url 'customerportal:purchase_order_list' %}" class="btn btn-outline-primary portal-btn">
+        <i class="fas fa-boxes me-1"></i> Purchase Orders
+      </a>
+      <a href="{% url 'customerportal:rfq_list' %}" class="btn btn-outline-success portal-btn">
+        <i class="fas fa-handshake me-1"></i> RFQ Quotations
+      </a>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ======= Custom Button Style ======= -->
+<style>
+.portal-btn {
+  border-radius: 30px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+}
+.portal-btn:hover {
+  transform: translateY(-2px);
+  color: #fff !important;
+}
+.btn-outline-primary:hover { background-color: #0d6efd; border-color: #0d6efd; }
+.btn-outline-success:hover { background-color: #198754; border-color: #198754; }
+.btn-outline-info:hover { background-color: #0dcaf0; border-color: #0dcaf0; }
+.btn-outline-danger:hover { background-color: #dc3545; border-color: #dc3545; }
+.btn-outline-warning:hover { background-color: #ffc107; border-color: #ffc107; color: #212529 !important; }
+.btn-outline-secondary:hover { background-color: #6c757d; border-color: #6c757d; }
+</style>

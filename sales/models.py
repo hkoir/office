@@ -10,43 +10,154 @@ from django.db.models import Q
 from accounts.models import CustomUser
 from django.utils import timezone
 
+
+from decimal import Decimal, ROUND_HALF_UP
+from django.db import models
+from django.utils import timezone
+
+
 class CustomerQuotation(models.Model):
-    customer = models.ForeignKey("customer.Customer", on_delete=models.CASCADE)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='customer_quotation_user')
+    customer = models.ForeignKey("customer.Customer", on_delete=models.CASCADE,related_name='sales_quotation_customers',null=True,blank=True)
     quotation_number = models.CharField(max_length=30, unique=True, blank=True)
     date = models.DateField(default=timezone.now)
     valid_until = models.DateField(null=True, blank=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
+
     STATUS_CHOICES = [
         ("draft", "Draft"),
         ("sent", "Sent"),
-        ("accepted", "Accepted"),
+        ("approved", "Approved"),
         ("rejected", "Rejected"),
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="draft")
+
+    # ===== TAX SETTINGS =====
+    AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Overall AIT (%)")
+    AIT_type = models.CharField(
+        max_length=50,
+        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
+        null=True, blank=True, default='exclusive'
+    )
+
+    # ===== AMOUNTS =====
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # Before VAT/AIT
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    ait_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # Subtotal + VAT
+    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+
     notes = models.TextField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+
+    def calculate_totals(self):    
+   
+        subtotal = Decimal('0.00')
+        vat_total = Decimal('0.00')
+
+        for item in self.sale_quotation_items.all():
+            qty = Decimal(item.quantity or 0)
+            price = Decimal(item.unit_price or 0)
+            line_total = qty * price
+
+            vat_rate = Decimal(item.VAT_rate or 0) / 100
+            vat_type = (item.VAT_type or 'exclusive').lower()
+
+            if vat_type == 'inclusive' and vat_rate > 0:
+                item_vat = (line_total - (line_total / (1 + vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                item_base = line_total - item_vat
+            else:
+                item_vat = (line_total * vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+                item_base = line_total
+
+            # Save item-level VAT and total for clarity
+            item.vat_amount = item_vat
+            item.total_price = (item_base + item_vat).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            item.save(update_fields=['vat_amount', 'total_price'])
+
+            subtotal += item_base
+            vat_total += item_vat
+
+        self.subtotal = subtotal.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.vat_amount = vat_total.quantize(Decimal("0.01"), ROUND_HALF_UP)
+        self.total_amount = (self.subtotal + self.vat_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+
+        # --- AIT Calculation (applied on overall subtotal) ---
+        ait_rate = Decimal(self.AIT_rate or 0) / 100
+        ait_type = (self.AIT_type or 'exclusive').lower()
+
+        if ait_rate > 0:
+            if ait_type == 'inclusive':
+                self.ait_amount = (self.subtotal - (self.subtotal / (1 + ait_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            else:
+                self.ait_amount = (self.subtotal * ait_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        else:
+            self.ait_amount = Decimal('0.00')
+
+        # --- Final payable ---
+        if ait_type == 'inclusive':
+            # AIT already included in subtotal
+            self.net_due_amount = (self.total_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
+        else:
+            # Deduct AIT from total
+            self.net_due_amount = (self.total_amount - self.ait_amount).quantize(Decimal("0.01"), ROUND_HALF_UP)
 
     def save(self, *args, **kwargs):
         if not self.quotation_number:
             count = CustomerQuotation.objects.count() + 1
-            self.quotation_number = f"CQ-{timezone.now().strftime('%Y%m%d')}-{count:04d}"
+            self.quotation_number = f"SQ-{timezone.now().strftime('%Y%m%d')}-{count:04d}"
         super().save(*args, **kwargs)
 
+        # Always calculate totals after saving
+        self.calculate_totals()
+        super().save(update_fields=['subtotal', 'vat_amount', 'ait_amount', 'total_amount', 'net_due_amount'])
+
     def __str__(self):
-        return f"{self.quotation_number} - {self.customer}"
+        return f"Quotation {self.quotation_number} - {self.customer}"
 
 
 class CustomerQuotationItem(models.Model):
-    quotation = models.ForeignKey(CustomerQuotation, related_name="sales_quotation_items", on_delete=models.CASCADE)
+    VAT_TYPE_CHOICES = [
+        ('inclusive', 'Inclusive'),
+        ('exclusive', 'Exclusive'),
+    ]
+
+    quotation = models.ForeignKey(CustomerQuotation, related_name="sale_quotation_items", on_delete=models.CASCADE)
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    vat_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
-    vat_status = models.DecimalField(max_digits=5, decimal_places=2,choices={'inclusive':'inclusive','exclusive':'inclusive'},null=True,blank=True)
-    ait_status = models.DecimalField(max_digits=5, decimal_places=2,choices={'inclusive':'inclusive','exclusive':'inclusive'},null=True,blank=True)
-    total_price = models.DecimalField(max_digits=15, decimal_places=2, blank=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2)
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+    specification = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+
+    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    VAT_type = models.CharField(max_length=20, choices=VAT_TYPE_CHOICES, default='exclusive')
+
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
-        self.total_price = self.quantity * self.unit_price
+        qty = Decimal(self.quantity or 0)
+        unit_price = Decimal(self.unit_price or 0)
+        line_total = qty * unit_price
+        vat_rate = Decimal(self.VAT_rate or 0) / 100
+
+        if self.VAT_type == 'inclusive' and vat_rate > 0:
+            vat_amt = (line_total - (line_total / (1 + vat_rate))).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            base_amount = line_total - vat_amt
+        else:
+            vat_amt = (line_total * vat_rate).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            base_amount = line_total
+
+        self.vat_amount = vat_amt
+        self.total_price = (base_amount + vat_amt).quantize(Decimal("0.01"), ROUND_HALF_UP)
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.product} ({self.quantity})"
+
 
 
 
@@ -69,7 +180,24 @@ class SaleRequestOrder(models.Model):
         ('CANCELLED', 'Cancelled'),
         ]
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='PENDING',null=True,blank=True)  
+   
+
+    AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Overall AIT (%)")
+    AIT_type = models.CharField(
+        max_length=50,
+        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
+        null=True, blank=True, default='exclusive'
+    )
+
+    # ===== AMOUNTS =====
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0)  # Before VAT/AIT
     total_amount = models.DecimalField(max_digits=15, decimal_places=2)
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    ait_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)   
+    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")   
+   
     customer = models.ForeignKey(Customer, related_name='request_customer_sale', on_delete=models.CASCADE,null=True, blank=True)
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -117,6 +245,10 @@ class SaleRequestOrder(models.Model):
 from purchase.models import Batch
 
 class SaleRequestItem(models.Model):
+    VAT_TYPE_CHOICES = [
+        ('inclusive', 'Inclusive'),
+        ('exclusive', 'Exclusive'),
+    ]
     request_id = models.CharField(max_length=20,null=True,blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     sale_request_order=models.ForeignKey(SaleRequestOrder,related_name='sale_request_order',on_delete=models.CASCADE,null=True, blank=True)
@@ -124,6 +256,17 @@ class SaleRequestItem(models.Model):
     quantity = models.PositiveIntegerField(null=True, blank=True)   
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_sale_request_item',null=True, blank=True)
     unit_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+    specification = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    VAT_type = models.CharField(max_length=20, choices=VAT_TYPE_CHOICES, default='exclusive')
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, default=0)  
+   
     priority = models.CharField(max_length=20, choices=[('LOW', 'Low'), ('MEDIUM', 'Medium'), ('HIGH', 'High')],null=True, blank=True)
     STATUS_CHOICES = [
         ('PENDING', 'PENDING'),
@@ -153,7 +296,22 @@ class SaleOrder(models.Model):
     customer = models.ForeignKey(Customer, related_name='customer_sale', on_delete=models.CASCADE,null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     order_date = models.DateTimeField(auto_now_add=True)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)
+    
+    AIT_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="Overall AIT (%)")
+    AIT_type = models.CharField(
+        max_length=50,
+        choices=[('inclusive', 'Inclusive'), ('exclusive', 'Exclusive')],
+        null=True, blank=True, default='exclusive'
+    )
+
+    # ===== AMOUNTS =====
+    subtotal = models.DecimalField(max_digits=15, decimal_places=2, default=0,null=True, blank=True)  # Before VAT/AIT
+    total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    ait_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)   
+    net_due_amount = models.DecimalField(max_digits=15, decimal_places=2, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")   
     STATUS_CHOICES = [
         ('IN_PROCESS', 'In Process'),
         ('READY_FOR_DISPATCH', 'Ready for Dispatch'),
@@ -225,17 +383,31 @@ from decimal import Decimal
 from django.db.models import F, Sum
 
 class SaleOrderItem(models.Model):
+    VAT_TYPE_CHOICES = [
+        ('inclusive', 'Inclusive'),
+        ('exclusive', 'Exclusive'),
+    ]
     warehouse = models.ForeignKey('inventory.warehouse',on_delete=models.CASCADE,null=True, blank=True)
     location = models.ForeignKey('inventory.location',on_delete=models.CASCADE,null=True, blank=True)
     sale_id = models.CharField(max_length=150, unique=True, null=True, blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     sale_order = models.ForeignKey(SaleOrder, related_name='sale_order', on_delete=models.CASCADE)
     sale_request_item = models.ForeignKey(SaleRequestItem, related_name='sale_request_item', on_delete=models.CASCADE,null=True,blank=True)
-    unit_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_sale_order_item',null=True, blank=True)
     product = models.ForeignKey(Product, related_name='product_item', on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(null=True, blank=True)   
-    total_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
+    total_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  
+    unit_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    unit_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
+    quoted_delivery_date = models.DateField(blank=True, null=True)
+    currency = models.CharField(max_length=10, default="BDT")
+    specification = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    VAT_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    VAT_type = models.CharField(max_length=20, choices=VAT_TYPE_CHOICES, default='exclusive')
+    vat_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+  
     STATUS_CHOICES = [
         ('PENDING', 'PENDING'),
         ('INSPECTED', 'INSPECTED'),

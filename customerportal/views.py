@@ -1,43 +1,65 @@
-from django.shortcuts import render,redirect,get_object_or_404
+# Standard library
+import logging
+import uuid
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+# Django imports
+from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.contrib import messages
-from myproject.utils import create_notification
-from django.utils import timezone
-from datetime import datetime, timedelta
-from collections import defaultdict
-from django.utils.timezone import localtime
 from django.urls import reverse
-from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-from myproject.utils import update_sale_order,update_sale_shipment_status,update_sale_request_order
-
 from django.db import transaction
-from repairreturn.models import ReturnOrRefund
-from repairreturn.forms import ReturnOrRefundForm,RepairReturnCustomerFeedbackForm
-from recruitment.models import Job,Candidate,TakeExam,Exam
-from recruitment.forms import SearchApplicationForm,TakeExamForm
-from tasks.forms import CustomerUpdateTicketForm,TicketForm
-from tasks.models import TeamMember,PerformanceEvaluation,TaskMessageReadStatus,Ticket,Task
-from.forms import QualityControlFormByCustomer,CandidateForm
-from sales.models import SaleOrder,SaleOrderItem,SaleQualityControl
-from.forms import FilterForm,TicketCustomerFeedbackForm
-from core.forms import CommonFilterForm
-from logistics.models import SaleDispatchItem,SaleShipment
-from recruitment.models import  Candidate
-from clients.models import SubscriptionPlan
-from recruitment.models import Job 
-
-from supplier.models import Supplier
-from purchase.models import SupplierQuotation,SupplierQuotationItem,RFQ,RFQItem,PurchaseOrderItem
-from purchase.forms import SupplierQuotationForm,SupplierQuotationItemFormSet
-
-import logging
+from django.db.models import Q, Sum
 from django.utils import timezone
-import uuid
-logger = logging.getLogger(__name__)
-from sales.models import CustomerQuotation
+from django.utils.timezone import localtime
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from logistics.forms import PurchaseShipmentForm,PurchaseDispatchItemForm
+
+# Project utils
+from myproject.utils import (
+    create_notification,
+    update_sale_order,
+    update_sale_shipment_status,
+    update_sale_request_order,
+)
+
+# Forms
+from .forms import QualityControlFormByCustomer, CandidateForm, FilterForm, TicketCustomerFeedbackForm
+from core.forms import CommonFilterForm
+from recruitment.forms import SearchApplicationForm, TakeExamForm
+from tasks.forms import CustomerUpdateTicketForm, TicketForm
+from purchase.forms import SupplierQuotationForm, SupplierQuotationItemFormSet, PurchaseOrderSearchForm
+from logistics.forms import PurchaseShipmentForm, PurchaseDispatchItemForm
+from finance.forms import PurchaseInvoiceForm, PurchaseInvoiceAttachmentForm, SalePaymentForm
+from repairreturn.forms import ReturnOrRefundForm, RepairReturnCustomerFeedbackForm
+
+# Models
+from repairreturn.models import ReturnOrRefund
+from recruitment.models import Job, Candidate, TakeExam, Exam
+from tasks.models import TeamMember, PerformanceEvaluation, TaskMessageReadStatus, Ticket, Task
+from sales.models import SaleOrder, SaleOrderItem, SaleQualityControl, CustomerQuotation
+from logistics.models import SaleDispatchItem, SaleShipment, PurchaseDispatchItem
+from clients.models import SubscriptionPlan
+from supplier.models import Supplier
+from purchase.models import (
+    SupplierQuotation,
+    SupplierQuotationItem,
+    RFQ,
+    RFQItem,
+    PurchaseOrder,
+    PurchaseOrderItem,
+    QualityControl,
+)
+from shipment.models import PurchaseShipment
+from finance.models import PurchaseInvoice, SaleInvoice
+from accounting.models import FiscalYear, Account, JournalEntry, JournalEntryLine
+
+from finance.utils import create_purchase_invoice_from_po, convert_quotation_to_invoice
+logger = logging.getLogger(__name__)
+
+
+
 
 def partner_landing_page(request):
     return render(request,'customerportal/partner_landing_page.html')
@@ -58,7 +80,7 @@ def job_landing_page(request):
 
 
 
-################ Supplier quotation #######################################################
+################ Supplier/Purchase section #######################################################
 
 @login_required
 def rfq_list(request):
@@ -69,22 +91,12 @@ def rfq_list(request):
     return render(request, "customerportal/rfq/rfq_list.html", {"rfqs": rfqs})
 
 
-
-@login_required
-def rfq_detail2(request, pk):
-    rfq = get_object_or_404(RFQ, pk=pk)    
-    supplier = Supplier.objects.get(user=request.user)
-    has_quotation = rfq.rfq_quotation.filter(supplier=supplier).exists()
-
-    return render(request, "customerportal/rfq/rfq_detail.html", {"rfq": rfq,'has_quotation':has_quotation})
-
-
 @login_required
 def rfq_detail(request, pk):
     rfq = get_object_or_404(RFQ, pk=pk)
 
     try:
-        supplier = Supplier.objects.get(user=request.user)
+        supplier = Supplier.objects.filter(user=request.user).first()
         quotation = rfq.rfq_quotation.filter(supplier=supplier).first()
         has_quotation = quotation is not None
     except Supplier.DoesNotExist:
@@ -180,6 +192,9 @@ def supplier_quotation_list(request):
     quotations = SupplierQuotation.objects.all().order_by('-date')
     return render(request, "customerportal/quotations/supplier_quotation_list.html", {"quotations": quotations})
 
+
+
+
 @login_required
 def send_supplier_quotation(request, pk):
     quotation = get_object_or_404(SupplierQuotation, pk=pk)
@@ -190,57 +205,6 @@ def send_supplier_quotation(request, pk):
     else:
         messages.warning(request, f"Quotation {quotation.quotation_number} is not in draft status.")
     return redirect("customerportal:supplier_quotation_detail", pk=pk)
-
-
-
-
-
-############### Customer quotation #############################################
-
-
-def customer_quotation_detail(request, pk):
-    quotation = get_object_or_404(CustomerQuotation, pk=pk)
-    return render(request, 'customerportal/quotations/customer_quotation_detail.html', {
-        'quotation': quotation
-    })
-
-
-@login_required
-def customer_quotation_list(request):
-    user = request.user
-    customer = Customer.objects.filter(user=user).first()
-    quotations = CustomerQuotation.objects.filter(customer=customer).order_by('-date')
-    return render(request, "customerportal/quotations/customer_quotation_list.html", {"quotations": quotations})
-
-
-from customer.models import Customer
-@login_required
-def change_customer_quotation_status(request, pk, status):    
-    quotation = get_object_or_404(CustomerQuotation, pk=pk)
-    valid_statuses = [choice[0] for choice in CustomerQuotation.STATUS_CHOICES]
-
-    if status not in valid_statuses:
-        messages.error(request, f"Invalid status '{status}'.")
-        return redirect("customerportal:customer_quotation_detail", pk=pk)
-    
-    user = request.user
-    customer = Customer.objects.filter(user=user).first()
-
-    if not customer or quotation.customer != customer:
-        raise PermissionDenied("You are not authorized to view or change this quotation.")
-
-    # Status permission checks
-    if status == "sent" and not user.groups.filter(name="sales_staff").exists():
-        raise PermissionDenied("You are not authorized to send quotations.")
-    if status in ["accepted", "rejected"] and not user.is_authenticated:
-        raise PermissionDenied("Only a sales manager can accept or reject quotations.")
-
-    quotation.status = status
-    quotation.save()
-    messages.success(request, f"Quotation {quotation.quotation_number} status updated to {status.capitalize()}.")
-    return redirect("customerportal:customer_quotation_detail", pk=pk)
-
-
 
 
 
@@ -279,11 +243,9 @@ def create_purchase_dispatch_item(request, dispatch_id):
     purchase_shipment = get_object_or_404(PurchaseShipment, id=dispatch_id)
     purchase_order = purchase_shipment.purchase_order
     purchase_order_items = purchase_order.purchase_order_item.all()
-
     if 'basket' not in request.session:
         request.session['basket'] = []
-    basket = request.session.get('basket', [])
-        
+
     form = PurchaseDispatchItemForm(request.POST or None, purchase_shipment=purchase_shipment)
 
     if request.method == 'POST':
@@ -416,8 +378,337 @@ def confirm_purchase_dispatch_item(request):
 
 
 
+@login_required
+def purchase_order_list(request):
+    purchase_order = None
+    purchase_orders = PurchaseOrder.objects.filter(approver_approval_status__isnull=False).order_by("-created_at")
 
-###############################################################################################
+    form = CommonFilterForm(request.GET or None)
+    if form.is_valid():
+        purchase_order = form.cleaned_data['purchase_order_id']
+        if purchase_order:
+            purchase_orders = purchase_orders.filter(order_id=purchase_order)
+    
+   
+    paginator = Paginator(purchase_orders, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'customerportal/purchase/purchase_order_list.html', {
+        'purchase_orders': purchase_orders,           
+        'user': request.user,
+        'form': form,
+        'page_obj': page_obj,
+        'purchase_order': purchase_order,
+       
+    })
+
+@login_required
+def purchase_order_items(request,order_id):
+    order_instance = get_object_or_404(PurchaseOrder,id=order_id)
+    return render(request,'customerportal/purchase/purchase_order_items.html',{'order_instance':order_instance})
+
+
+
+@login_required
+def dispatch_item_list(request, purchase_order_id):
+    purchase_order = get_object_or_404(PurchaseOrder, id=purchase_order_id)
+    dispatch_items = PurchaseDispatchItem.objects.filter(dispatch_item__purchase_order=purchase_order)
+
+    product_wise_totals = defaultdict(lambda: {
+        'order_quantity': 0,
+        'dispatch_quantity': 0,
+        'good_quantity': 0,
+        'bad_quantity': 0
+    })
+
+    shipments = {}
+    qc_quantities = {} 
+
+    for dispatch_item in dispatch_items:
+        shipment = dispatch_item.purchase_shipment
+        product_name = dispatch_item.dispatch_item.product.name
+        if shipment not in shipments:
+            shipments[shipment] = []
+        shipments[shipment].append(dispatch_item)
+
+        product_wise_totals[product_name]['order_quantity'] += dispatch_item.dispatch_item.quantity or 0
+        product_wise_totals[product_name]['dispatch_quantity'] += dispatch_item.dispatch_quantity or 0
+
+        qc_entry = QualityControl.objects.filter(purchase_dispatch_item=dispatch_item).first()
+        if qc_entry:
+            good_quantity = qc_entry.good_quantity or 0
+            bad_quantity = qc_entry.bad_quantity or 0
+
+            product_wise_totals[product_name]['good_quantity'] += good_quantity
+            product_wise_totals[product_name]['bad_quantity'] += bad_quantity
+
+            qc_quantities[dispatch_item.id] = {
+                'good_quantity': good_quantity,
+                'bad_quantity': bad_quantity,
+                'created_at': qc_entry.created_at
+            }
+        else:
+            product_wise_totals[product_name]['good_quantity'] += 0
+            product_wise_totals[product_name]['bad_quantity'] += 0
+
+    context = {
+        'purchase_order': purchase_order,
+        'shipments': shipments,
+        'product_wise_totals': dict(product_wise_totals),
+        'qc_quantities': qc_quantities,    }
+
+    return render(request, 'customerportal/purchase/dispatch_item_list.html', context)
+
+
+@login_required
+@transaction.atomic
+def update_dispatch_status(request, dispatch_item_id):
+    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+    purchase_order = dispatch_item.dispatch_item.purchase_order
+    purchase_request_order = purchase_order.purchase_request_order
+    shipment = dispatch_item.purchase_shipment
+
+    if request.method == 'POST':
+        # Prevent updating if already completed
+        if dispatch_item.status in ['OBI', 'DELIVERED', 'COMPLETED']:
+            messages.info(request, 'This item has already been updated.')
+            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        new_status = request.POST.get('new_status')
+        old_status = dispatch_item.status
+        dispatch_item.status = new_status
+        dispatch_item.save()
+
+        create_notification(
+            request.user,
+            message=f"Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}",
+            notification_type='SHIPMENT-NOTIFICATION'
+        )
+
+        # If dispatch item is completed, no further updates needed
+        if new_status == 'COMPLETED':
+            messages.warning(request, 'No further update is needed for this item.')
+            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+
+        # Update shipment status based on its items
+        total_items = shipment.shipment_dispatch_item.count()
+        reached_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
+
+        if total_items > 0 and reached_count == total_items:
+            # All items reached -> update shipment, PO, and request order
+            shipment.status = 'REACHED'
+            purchase_order.status = 'REACHED'
+            if purchase_request_order:
+                purchase_request_order.status = 'REACHED'
+
+            # Save all objects once
+            if purchase_request_order:
+                purchase_request_order.save()
+            purchase_order.save()
+            shipment.save()
+
+            # Notify for all items
+            for item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
+                create_notification(
+                    request.user,
+                    message=f"Item {item.dispatch_item.product} has just reached",
+                    notification_type='SHIPMENT-NOTIFICATION'
+                )
+
+            messages.success(request, f"Shipment {shipment.id} and related orders marked as REACHED.")
+
+    return redirect('customerportal:dispatch_item_list', purchase_order_id=purchase_order.id)
+
+
+
+
+def cancel_dispatch_item(request, dispatch_item_id):
+    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
+
+    if request.method == "POST":
+        dispatch_item.status = 'CANCELLED'
+        dispatch_item.save()
+        messages.success(request, "Dispatch item successfully cancelled.")
+
+        return redirect('logistics:dispatch_item_list', purchase_order_id=dispatch_item.dispatch_item.purchase_order.id)
+    return render(request, 'logistics/purchase/cancel_order_item.html', {'dispatch_item': dispatch_item})
+
+
+
+
+@login_required
+def create_purchase_invoice(request, order_id):
+    purchase_shipment = get_object_or_404(PurchaseShipment, id=order_id) 
+
+    if purchase_shipment.shipment_invoices.count() > 0:
+        if purchase_shipment.shipment_invoices.filter(status__in=['SUBMITTED', 'PARTIALLY_PAYMENT', 'FULLY_PAYMENT']).count() == purchase_shipment.shipment_invoices.count():
+            messages.error(request, "All invoices for this shipment have already been submitted or paid.")
+            return redirect('customerportal:purchase_order_list')
+    else:
+         pass     
+
+    try:       
+        if purchase_shipment.status != 'DELIVERED':
+            messages.error(request, "Cannot create an invoice: Shipment status is not 'Delivered yet'.")
+            return redirect('purchase:purchase_order_list') 
+    except PurchaseShipment.DoesNotExist:
+        messages.error(request, "Cannot create an invoice: No shipment found for this order.")
+        return redirect('customerportal:purchase_order_list') 
+
+    initial_data = {
+        'purchase_shipment': purchase_shipment,
+        'amount_due': purchase_shipment.purchase_order.total_amount
+    }
+
+    if request.method == 'POST':
+        form = PurchaseInvoiceForm(request.POST)
+        if form.is_valid():
+            invoice = form.save(commit=False)
+            invoice.user = request.user
+            invoice.status ='SUBMITTED'
+            invoice.save()
+            messages.success(request, "Invoice created and submitted successfully.")
+            return redirect('customerportal:purchase_order_list')  
+        else:
+            messages.error(request, "Error creating invoice.")
+    else:
+        form = PurchaseInvoiceForm(initial=initial_data)
+    return render(request, 'customerportal/purchase/create_invoice.html', {'form': form})
+
+
+
+@login_required
+def create_purchase_invoice_from_quotation(request, quotation_id):
+    quotation = get_object_or_404(SupplierQuotation, id=quotation_id)
+    shipment = quotation.supplier_quotations.first().purchase_shipment.first()
+    purchase_orders = quotation.supplier_quotations.all()
+    first_po = purchase_orders.first()
+    if not first_po:
+        messages.error(request, "No Purchase Order linked to this quotation.")
+        return redirect("customerportal:supplier_quotation_detail", pk=quotation.id)
+
+    first_shipment = first_po.purchase_shipment.first()
+    if not first_shipment:
+        messages.error(request, "No Purchase Shipment linked to this Purchase Order.")
+        return redirect("customerportal:purchase_order_list", pk=first_po.id)
+    invoice = convert_quotation_to_invoice(quotation, user=request.user)   
+    invoice.purchase_shipment = first_shipment
+    invoice.save() 
+    messages.success(request, f"Invoice {invoice.invoice_number} created from quotation {quotation.quotation_number}.")
+    return redirect("customerportal:purchase_order_list")
+
+
+
+@login_required
+def create_purchase_invoice_from_purchase_order(request, po_id):
+    po = get_object_or_404(PurchaseOrder, id=po_id)
+
+    shipment = po.purchase_shipment.first() 
+
+    # Calculate financial summary
+    po_items = po.purchase_order_item.all()
+    subtotal = sum((item.unit_price or 0) * (item.quantity or 0) for item in po_items)
+    vat = getattr(po, "vat_amount", 0) or 0
+    ait = getattr(po, "ait_amount", 0) or 0  
+    total_vat_amount = po.vat_amount
+    total_ait_amount = po.ait_amount
+    total_amount = po.total_amount
+    net_due_amount =po.net_due_amount
+    AIT_rate = po.AIT_rate
+    AIT_type = po.AIT_type
+
+    if request.method == "POST":
+        # User confirmed creation
+        try:
+            invoice = create_purchase_invoice_from_po(po_id, request.user, shipment=shipment)
+            messages.success(request, f"Purchase Invoice {invoice.invoice_number} created successfully.")
+            return redirect("customerportal:purchase_order_list")
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f"Error creating invoice: {e}")
+        return redirect("customerportal:purchase_order_list")
+
+    # Render preview before confirming
+    context = {
+        "po": po,
+        "po_items": po_items,
+        "total_amount": total_amount,
+        'net_due_amount':net_due_amount,
+        "vat_amount": total_vat_amount,
+        "ait_amount": total_ait_amount,
+        "AIT_rate":AIT_rate,
+        "AIT_type":AIT_type,
+        
+    }
+    return render(request, "customerportal/purchase/confirm_financial_summary.html", context)
+
+
+@login_required
+def add_purchase_invoice_attachment(request, invoice_id):
+    invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)    
+    if request.method == 'POST':
+        form = PurchaseInvoiceAttachmentForm(request.POST, request.FILES)
+        if form.is_valid():
+            attachment = form.save(commit=False)
+            attachment.purchase_invoice = invoice  
+            attachment.user=request.user
+            attachment.save()
+            return redirect('customerportal:purchase_order_list')
+    else:
+        form = PurchaseInvoiceAttachmentForm()
+
+    return render(request, 'customerportal/purchase/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
+
+
+
+
+############### Customer/sales section #############################################
+
+
+def customer_quotation_detail(request, pk):
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    return render(request, 'customerportal/quotations/customer_quotation_detail.html', {
+        'quotation': quotation
+    })
+
+
+@login_required
+def customer_quotation_list(request):
+    user = request.user
+    customer = Customer.objects.filter(user=user).first()
+    quotations = CustomerQuotation.objects.filter(customer=customer,status__in =['sent','approved']).order_by('-date')
+    return render(request, "customerportal/quotations/customer_quotation_list.html", {"quotations": quotations})
+
+
+from customer.models import Customer
+@login_required
+def change_customer_quotation_status(request, pk, status):    
+    quotation = get_object_or_404(CustomerQuotation, pk=pk)
+    valid_statuses = [choice[0] for choice in CustomerQuotation.STATUS_CHOICES]
+
+    if status not in valid_statuses:
+        messages.error(request, f"Invalid status '{status}'.")
+        return redirect("customerportal:customer_quotation_detail", pk=pk)
+    
+    user = request.user
+    customer = Customer.objects.filter(user=user).first()
+
+    if not customer or not quotation.customers.filter(id=customer.id).exists():
+        raise PermissionDenied("You are not authorized to view or change this quotation.")
+
+    # Status permission checks
+    # if status == "sent" and not user.groups.filter(name="sales_staff").exists():
+    #     raise PermissionDenied("You are not authorized to send quotations.")
+    # if status in ["accepted", "rejected"] and not user.is_authenticated:
+    #     raise PermissionDenied("Only a sales manager can accept or reject quotations.")
+
+    quotation.status = status
+    quotation.save()
+    messages.success(request, f"Quotation {quotation.quotation_number} status updated to {status.capitalize()}.")
+    return redirect("customerportal:customer_quotation_detail", pk=pk)
+
 
 @login_required
 def sale_order_list(request):
@@ -563,44 +854,54 @@ def sale_dispatch_item_list(request, sale_order_id):
 
 
 @login_required
+@transaction.atomic
 def update_sale_dispatch_status(request, dispatch_item_id):
-    dispatch_item = get_object_or_404(SaleDispatchItem, id=dispatch_item_id)          
-    
+    dispatch_item = get_object_or_404(SaleDispatchItem, id=dispatch_item_id)
+    shipment = dispatch_item.sale_shipment
+    sale_order = shipment.sales_order if shipment else None
+
     if request.method == 'POST':
-        if dispatch_item.status in ['OBI','DELIVERED']:
-            messages.info(request,'item has already been updated')
-            return redirect('customerportal:update_sale_dispatch_status',dispatch_item_id)
-        
         new_status = request.POST.get('new_status')
+        if dispatch_item.status in ['OBI', 'DELIVERED']:
+            messages.info(request, 'Item has already been updated.')
+            return redirect('customerportal:update_sale_dispatch_status', dispatch_item_id=dispatch_item.id)
+
         old_status = dispatch_item.status
         dispatch_item.status = new_status
         dispatch_item.save()
-        create_notification(request.user, message=f'Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}',notification_type='SHIPMENT-NOTIFICATION')     
 
-    shipment = dispatch_item.sale_shipment
-    shipment.update_shipment_status()
-    try:
-        shipment = SaleShipment.objects.get(id=shipment.id)
+        create_notification(
+            request.user,
+            message=f'Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}',
+            notification_type='SHIPMENT-NOTIFICATION'
+        )
 
-        total_dispatch_items = shipment.sale_shipment_dispatch.count()
-        reached_items_count = shipment.sale_shipment_dispatch.filter(status__in=['REACHED', 'OBI']).count()
+        # --- Update shipment status ---
+        if shipment:
+            # Refresh all dispatch items
+            shipment_items = shipment.saledispatchitem_set.all()
+            if all(i.status in ['REACHED', 'OBI', 'DELIVERED'] for i in shipment_items):
+                shipment.status = 'DELIVERED'
+                shipment.save()
 
-        all_items_reached = reached_items_count == total_dispatch_items
+                # Update sale order if all items delivered
+                if sale_order:
+                    sale_order.status = 'DELIVERED'
+                    sale_order.save()
 
-        if all_items_reached:
-            shipment.status = 'REACHED'
-            shipment.sales_order.status = 'REACHED'
-            shipment.save()            
+                # Notify for each delivered item
+                for item in shipment_items.filter(status__in=['REACHED', 'OBI', 'DELIVERED']):
+                    create_notification(
+                        request.user,
+                        message=f'Item {item.dispatch_item.product} has just reached/delivered',
+                        notification_type='SHIPMENT-NOTIFICATION'
+                    )
 
-            print(f"Shipment {shipment.id} marked as REACHED.")
+            elif any(i.status in ['REACHED', 'OBI', 'DELIVERED'] for i in shipment_items):
+                shipment.status = 'PARTIALLY_DELIVERED'
+                shipment.save()
 
-            for dispatch_item in shipment.sale_shipment_dispatch.filter(status__in=['REACHED', 'OBI']):
-                create_notification(request.user, message=f'Item { dispatch_item.dispatch_item.product} has just reached',notification_type='SHIPMENT-NOTIFICATION')
-
-    except SaleShipment.DoesNotExist:
-        print(f"Shipment {shipment.id} not found.")   
-    return redirect('customerportal:sale_dispatch_item_list', sale_order_id=shipment.sales_order.id)
-
+    return redirect('customerportal:sale_dispatch_item_list', sale_order_id=sale_order.id if sale_order else None)
 
 
 
@@ -623,450 +924,229 @@ def customer_qc_dashboard(request, sale_order_id=None):
     return render(request, 'customerportal/customer_qc_dashboard.html', {'pending_items': pending_items, 'sale_order': sale_order})
 
 
-
-
-@login_required
-def customer_qc_inspect_item(request, item_id):
-    sale_dispatch_item = get_object_or_404(SaleDispatchItem, id=item_id)   
-    sale_order = sale_dispatch_item.dispatch_item.sale_order
-    sale_request_order = sale_order.sale_request_order
-    sale_shipment = sale_dispatch_item.sale_shipment   
-    sale_order_item = sale_dispatch_item.dispatch_item
-    sale_request_item = sale_order_item.sale_request_item
-   
-
-    if not sale_shipment:
-        messages.error(request, "No shipment found for this order item.")
-        return redirect('customerportal:customer_qc_dashboard')  
-    if not sale_dispatch_item.status in ['REACHED','OBI']:
-        messages.error(request, "Goods not arrived yet found for this order item.")
-        return redirect('customerportal:customer_qc_dashboard')  
-    
-    if sale_shipment.status != 'REACHED':
-                messages.info(request, "Cannot inspect due to delivery has not been done yet.")
-                return redirect('customerportal:customer_qc_dashboard')
-
-    if request.method == 'POST':
-        try:
-            qc_entry = SaleQualityControl.objects.get(sale_dispatch_item=sale_dispatch_item)  # Assuming sale_dispatch_item is unique
-            form = QualityControlFormByCustomer(request.POST, instance=qc_entry) # Bind to existing instance
-        except QualityControl.DoesNotExist:           
-            form = QualityControlFormByCustomer(request.POST)
-       
-        if form.is_valid():           
-            qc_entry = form.save(commit=False)
-            qc_entry.sale_dispatch_item = sale_dispatch_item
-            qc_entry.user = request.user 
-            qc_entry.quality_check_by = 'BY-CUSTOMER' 
-            qc_entry.inspection_date_by_customer = timezone.now()
-            qc_entry.save()
-
-            sale_dispatch_item.status = 'DELIVERED' # status changed from READY-FOR-DISPATCH >> DISPATCHED >> REACHED >> DELIVERED
-            sale_dispatch_item.save()               
-           
-            sale_order_item.status ='DELIVERED'
-            sale_order_item.save()
-
-            sale_request_item.status ='DELIVERED'
-            sale_request_item.save()
-
-            update_sale_order(sale_order.id)      
-            update_sale_shipment_status(sale_shipment.id)
-            update_sale_request_order(sale_request_order.id)      
-            sale_shipment.update_shipment_status()   
-                 
-            messages.success(request, "Quality control inspection recorded successfully.")
-            return redirect('customerportal:customer_qc_dashboard')
-        else:
-            messages.error(request, "Error saving QC inspection.")
-    else:
-        form = QualityControlFormByCustomer(initial={'total_quantity': sale_dispatch_item.dispatch_quantity})    
-    return render(request, 'customerportal/customer_qc_inspect_item.html', {'form': form, 'sale_dispatch_item': sale_dispatch_item})
-
-######################### Supplier ###################################################
-from purchase.models import PurchaseOrder
-from purchase.forms import PurchaseOrderSearchForm
-from purchase.models import QualityControl
-from django.db.models import Sum
-from logistics.models import PurchaseDispatchItem
-from shipment.models import PurchaseShipment
-
-@login_required
-def purchase_order_list(request):
-    purchase_order = None
-    purchase_orders = PurchaseOrder.objects.filter(approver_approval_status__isnull=False).order_by("-created_at")
-
-    form = CommonFilterForm(request.GET or None)
-    if form.is_valid():
-        purchase_order = form.cleaned_data['purchase_order_id']
-        if purchase_order:
-            purchase_orders = purchase_orders.filter(order_id=purchase_order)
-    
-   
-    paginator = Paginator(purchase_orders, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    return render(request, 'customerportal/purchase/purchase_order_list.html', {
-        'purchase_orders': purchase_orders,           
-        'user': request.user,
-        'form': form,
-        'page_obj': page_obj,
-        'purchase_order': purchase_order,
-       
-    })
-
-@login_required
-def purchase_order_items(request,order_id):
-    order_instance = get_object_or_404(PurchaseOrder,id=order_id)
-    return render(request,'customerportal/purchase/purchase_order_items.html',{'order_instance':order_instance})
-
-
-
-@login_required
-def dispatch_item_list(request, purchase_order_id):
-    purchase_order = get_object_or_404(PurchaseOrder, id=purchase_order_id)
-    dispatch_items = PurchaseDispatchItem.objects.filter(dispatch_item__purchase_order=purchase_order)
-
-    product_wise_totals = defaultdict(lambda: {
-        'order_quantity': 0,
-        'dispatch_quantity': 0,
-        'good_quantity': 0,
-        'bad_quantity': 0
-    })
-
-    shipments = {}
-    qc_quantities = {} 
-
-    for dispatch_item in dispatch_items:
-        shipment = dispatch_item.purchase_shipment
-        product_name = dispatch_item.dispatch_item.product.name
-        if shipment not in shipments:
-            shipments[shipment] = []
-        shipments[shipment].append(dispatch_item)
-
-        product_wise_totals[product_name]['order_quantity'] += dispatch_item.dispatch_item.quantity or 0
-        product_wise_totals[product_name]['dispatch_quantity'] += dispatch_item.dispatch_quantity or 0
-
-        qc_entry = QualityControl.objects.filter(purchase_dispatch_item=dispatch_item).first()
-        if qc_entry:
-            good_quantity = qc_entry.good_quantity or 0
-            bad_quantity = qc_entry.bad_quantity or 0
-
-            product_wise_totals[product_name]['good_quantity'] += good_quantity
-            product_wise_totals[product_name]['bad_quantity'] += bad_quantity
-
-            qc_quantities[dispatch_item.id] = {
-                'good_quantity': good_quantity,
-                'bad_quantity': bad_quantity,
-                'created_at': qc_entry.created_at
-            }
-        else:
-            product_wise_totals[product_name]['good_quantity'] += 0
-            product_wise_totals[product_name]['bad_quantity'] += 0
-
-    context = {
-        'purchase_order': purchase_order,
-        'shipments': shipments,
-        'product_wise_totals': dict(product_wise_totals),
-        'qc_quantities': qc_quantities,    }
-
-    return render(request, 'customerportal/purchase/dispatch_item_list.html', context)
-
-
-
-@login_required
-def update_dispatch_status2(request, dispatch_item_id):
-    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
-    if request.method == 'POST':
-        new_status = request.POST.get('new_status')
-        old_status = dispatch_item.status
-        dispatch_item.status = new_status
-        dispatch_item.save()  
-        create_notification(request.user, message=f'Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}',notification_type='SHIPMENT-NOTIFICATION')     
-
-    shipment = dispatch_item.purchase_shipment
-    shipment.update_shipment_status()
-
-    try:
-        shipment = PurchaseShipment.objects.get(id=shipment.id)
-
-        total_dispatch_items = shipment.shipment_dispatch_item.count()
-        reached_items_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
-
-        all_items_reached = reached_items_count == total_dispatch_items
-
-        if all_items_reached:
-            shipment.status = 'REACHED'
-            shipment.purchase_order.status = 'REACHED'
-            shipment.save()
-
-            for dispatch_item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
-                create_notification(request.user, message=f'Item {dispatch_item.dispatch_item.product} has just reached',notification_type='SHIPMENT-NOTIFICATION')
-
-    except PurchaseShipment.DoesNotExist:
-        print(f"Shipment {shipment.id} not found.")
-
-
-    return redirect('customerportal:dispatch_item_list', purchase_order_id=shipment.purchase_order.id)
-
-
-@login_required
-def update_dispatch_status33(request, dispatch_item_id):
-    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
-    purchase_order = dispatch_item.dispatch_item.purchase_order
-    purchase_request_order = purchase_order.purchase_request_order
-
-    if request.method == 'POST':
-        if dispatch_item.status in ['OBI','REACHED']:
-            messages.info(request,'item has already been updated')
-            return redirect('customerportal:update_dispatch_status',dispatch_item_id)
-        
-        new_status = request.POST.get('new_status')
-        old_status = dispatch_item.status
-        dispatch_item.status = new_status
-        if new_status == 'COMPLETED':
-            messages.warning(request,'No further updated is needed for this item')
-            return redirect('customerportal:update_dispatch_status',dispatch_item_id)
-        
-        dispatch_item.save()  
-        create_notification(request.user, message=f'Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}',notification_type='SHIPMENT-NOTIFICATION')     
-
-    shipment = dispatch_item.purchase_shipment
-    shipment.update_shipment_status()
-
-    try:
-        shipment = PurchaseShipment.objects.get(id=shipment.id)
-        total_dispatch_items = shipment.shipment_dispatch_item.count()
-        reached_items_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
-        all_items_reached = reached_items_count == total_dispatch_items
-
-        if all_items_reached:
-            shipment.status = 'REACHED'
-            shipment.purchase_order.status = 'REACHED'
-            shipment.purchase_order.purchase_request_order.status = 'REACHED'
-            purchase_order.status = 'REACHED'
-            purchase_request_order.status = 'REACHED'
-            purchase_order.save()
-            purchase_request_order.save()
-            shipment.save()
-            shipment.purchase_order.save()
-
-            logger.info(f"Shipment {shipment.id} marked as REACHED.")
-
-            for dispatch_item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
-                create_notification(request.user, message=f'Item {dispatch_item.dispatch_item.product} has just reached',notification_type='SHIPMENT-NOTIFICATION')
-
-    except PurchaseShipment.DoesNotExist:
-        logger.error(f"Shipment {shipment.id} not found.")
-
-
-    return redirect('customerportal:dispatch_item_list', purchase_order_id=shipment.purchase_order.id)
-
+#Error during inspection: 'SaleShipment' object has no attribute 'sale_dispatch_items'
 
 @login_required
 @transaction.atomic
-def update_dispatch_status(request, dispatch_item_id):
-    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
-    purchase_order = dispatch_item.dispatch_item.purchase_order
-    purchase_request_order = purchase_order.purchase_request_order
-    shipment = dispatch_item.purchase_shipment
+def customer_qc_inspect_item(request, item_id):
+    # --- Fetch related objects ---
+    sale_dispatch_item = get_object_or_404(SaleDispatchItem, id=item_id)
+    sale_order_item = sale_dispatch_item.dispatch_item
+    sale_order = sale_order_item.sale_order
+    sale_request_item = sale_order_item.sale_request_item
+    sale_request_order = sale_order.sale_request_order
+    sale_shipment = sale_dispatch_item.sale_shipment
+
+    # --- Validate shipment existence ---
+    if not sale_shipment:
+        messages.error(request, "No shipment found for this order item.")
+        return redirect('customerportal:customer_qc_dashboard')
+
+    # --- Treat REACHED or OBI as delivered ---
+    if sale_dispatch_item.status not in ['REACHED', 'OBI', 'DELIVERED']:
+        messages.error(request, "Goods have not arrived yet for this item.")
+        return redirect('customerportal:customer_qc_dashboard')
+
+    if sale_shipment.status not in ['REACHED', 'OBI', 'DELIVERED']:
+        messages.info(request, "Cannot inspect: delivery has not been completed yet.")
+        return redirect('customerportal:customer_qc_dashboard')
+
+    # --- Handle form submission ---
+    if request.method == 'POST':
+        try:
+            # Get existing QC entry or create new
+            try:
+                qc_entry = SaleQualityControl.objects.get(sale_dispatch_item=sale_dispatch_item)
+                form = QualityControlFormByCustomer(request.POST, instance=qc_entry)
+            except SaleQualityControl.DoesNotExist:
+                form = QualityControlFormByCustomer(request.POST)
+
+            if form.is_valid():
+                qc_entry = form.save(commit=False)
+                qc_entry.sale_dispatch_item = sale_dispatch_item
+                qc_entry.user = request.user
+                qc_entry.quality_check_by = 'BY-CUSTOMER'
+                qc_entry.inspection_date_by_customer = timezone.now()
+                qc_entry.save()
+
+                # --- Update statuses sequentially ---
+                # Treat REACHED / OBI as delivered
+                sale_dispatch_item.status = 'DELIVERED'
+                sale_dispatch_item.save()
+
+                sale_order_item.status = 'DELIVERED'
+                sale_order_item.save()
+
+                if sale_request_item:
+                    sale_request_item.status = 'DELIVERED'
+                    sale_request_item.save()
+
+                # Update parent orders
+                update_sale_order(sale_order.id)
+                if sale_request_order:
+                    update_sale_request_order(sale_request_order.id)
+
+                # Update shipment status
+                all_items = sale_shipment.sale_shipment_dispatch.all()
+                if all(i.status in ['DELIVERED', 'REACHED', 'OBI'] for i in all_items):
+                    sale_shipment.status = 'DELIVERED'
+                else:
+                    sale_shipment.status = 'PARTIALLY_DELIVERED'
+                sale_shipment.save()
+
+                messages.success(request, "Quality control inspection recorded and statuses updated successfully.")
+                return redirect('customerportal:customer_qc_dashboard')
+            else:
+                messages.error(request, "Error saving QC inspection.")
+        except Exception as e:
+            transaction.set_rollback(True)
+            messages.error(request, f"Error during inspection: {e}")
+            return redirect('customerportal:customer_qc_dashboard')
+
+    # --- GET: display QC form ---
+    else:
+        form = QualityControlFormByCustomer(initial={'total_quantity': sale_dispatch_item.dispatch_quantity})
+
+    context = {
+        'form': form,
+        'sale_dispatch_item': sale_dispatch_item,
+    }
+
+    return render(request, 'customerportal/customer_qc_inspect_item.html', context)
+
+
+
+@login_required
+def sale_invoice_list(request):  
+    invoice_number = None
+    invoice_list = SaleInvoice.objects.all().order_by('-created_at')
+    invoices = invoice_list.annotate(total_paid=Sum('sale_payment_invoice__amount'))
+    form = CommonFilterForm(request.GET or None)
+    if form.is_valid():
+        invoice_number = form.cleaned_data['sale_invoice_id']
+        if invoice_number:
+            invoices = invoices.filter(invoice_number = invoice_number)
+
+    paginator = Paginator(invoices, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    form=CommonFilterForm()
+
+    return render(request, 'customerportal/sales/invoice_list.html',
+     {
+      'invoices': invoices,
+      'page_obj':page_obj,
+      'form':form,
+      'invoice_number':invoice_number
+
+    })
+
+   
+@login_required
+def sale_invoice_detail(request, invoice_id):
+    invoice = get_object_or_404(SaleInvoice, id=invoice_id)
+    payments = invoice.sale_payment_invoice.all()  
+
+    return render(request, 'customerportal/sales/invoice_details.html', {
+        'invoice': invoice,
+        'payments': payments,
+    })
+
+
+
+
+@login_required
+def create_sale_payment(request, invoice_id):
+    invoice = get_object_or_404(SaleInvoice, id=invoice_id)
+    remaining_balance = invoice.remaining_balance
+
+    if remaining_balance <= 0:
+        messages.error(request, "All payments for this invoice have already been made.")
+        return redirect('customerportal:sale_order_list')
 
     if request.method == 'POST':
-        # Prevent updating if already completed
-        if dispatch_item.status in ['OBI', 'DELIVERED', 'COMPLETED']:
-            messages.info(request, 'This item has already been updated.')
-            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+        form = SalePaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.sale_invoice = invoice
+            payment.user = request.user
 
-        new_status = request.POST.get('new_status')
-        old_status = dispatch_item.status
-        dispatch_item.status = new_status
-        dispatch_item.save()
+            # Validate payment amount
+            if payment.amount > remaining_balance:
+                messages.error(
+                    request,
+                    f"Payment cannot exceed the remaining balance of {remaining_balance}."
+                )
+                return redirect('customerportal:create_sale_payment', invoice_id=invoice.id)
 
-        create_notification(
-            request.user,
-            message=f"Product: {dispatch_item.dispatch_item.product} status updated from {old_status} to {new_status}",
-            notification_type='SHIPMENT-NOTIFICATION'
-        )
+            # Determine payment status
+            payment.status = "FULLY_PAID" if payment.amount == remaining_balance else "PARTIALLY_PAID"
+            payment.save()
 
-        # If dispatch item is completed, no further updates needed
-        if new_status == 'COMPLETED':
-            messages.warning(request, 'No further update is needed for this item.')
-            return redirect('customerportal:update_dispatch_status', dispatch_item_id=dispatch_item.id)
+            # ---------------------------
+            # Journal Entry for Sale Payment
+            # ---------------------------
+            fiscal_year = FiscalYear.get_active()
+            journal_entry = JournalEntry.objects.create(
+                date=timezone.now().date(),
+                fiscal_year=fiscal_year,
+                description=f"Payment received for Invoice {invoice.invoice_number}",
+                reference=f"Sale invoice-{invoice.id}",
+                created_by=request.user,
+            )
 
-        # Update shipment status based on its items
-        total_items = shipment.shipment_dispatch_item.count()
-        reached_count = shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']).count()
+            # Accounts
+            ar_account = Account.objects.get(code="1140")    # Accounts Receivable
+            cash_account = Account.objects.get(code="1110")  # Cash/Bank
+            ait_account = Account.objects.get(code="2132")   # AIT Payable (withholding tax)
 
-        if total_items > 0 and reached_count == total_items:
-            # All items reached -> update shipment, PO, and request order
-            shipment.status = 'REACHED'
-            purchase_order.status = 'REACHED'
-            if purchase_request_order:
-                purchase_request_order.status = 'REACHED'
+            # Amounts
+            payment_amount = payment.amount
+            ait_amount = invoice.ait_amount or 0
+            net_cash = payment_amount - ait_amount
 
-            # Save all objects once
-            if purchase_request_order:
-                purchase_request_order.save()
-            purchase_order.save()
-            shipment.save()
+            # 1. Debit Cash/Bank
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=cash_account,
+                debit=net_cash,
+                credit=0
+            )
 
-            # Notify for all items
-            for item in shipment.shipment_dispatch_item.filter(status__in=['REACHED', 'OBI']):
-                create_notification(
-                    request.user,
-                    message=f"Item {item.dispatch_item.product} has just reached",
-                    notification_type='SHIPMENT-NOTIFICATION'
+            # 2. Debit AIT Payable if any
+            if ait_amount > 0:
+                JournalEntryLine.objects.create(
+                    entry=journal_entry,
+                    account=ait_account,
+                    debit=ait_amount,
+                    credit=0
                 )
 
-            messages.success(request, f"Shipment {shipment.id} and related orders marked as REACHED.")
+            # 3. Credit Accounts Receivable
+            JournalEntryLine.objects.create(
+                entry=journal_entry,
+                account=ar_account,
+                debit=0,
+                credit=payment_amount
+            )
 
-    return redirect('customerportal:dispatch_item_list', purchase_order_id=purchase_order.id)
-
-
-
-
-def cancel_dispatch_item(request, dispatch_item_id):
-    dispatch_item = get_object_or_404(PurchaseDispatchItem, id=dispatch_item_id)
-
-    if request.method == "POST":
-        dispatch_item.status = 'CANCELLED'
-        dispatch_item.save()
-        messages.success(request, "Dispatch item successfully cancelled.")
-
-        return redirect('logistics:dispatch_item_list', purchase_order_id=dispatch_item.dispatch_item.purchase_order.id)
-    return render(request, 'logistics/purchase/cancel_order_item.html', {'dispatch_item': dispatch_item})
-
-
-
-from finance.models import PurchaseInvoice
-from finance.forms import PurchaseInvoiceForm,PurchaseInvoiceAttachmentForm
-
-@login_required
-def create_purchase_invoice(request, order_id):
-    purchase_shipment = get_object_or_404(PurchaseShipment, id=order_id) 
-
-    if purchase_shipment.shipment_invoices.count() > 0:
-        if purchase_shipment.shipment_invoices.filter(status__in=['SUBMITTED', 'PARTIALLY_PAYMENT', 'FULLY_PAYMENT']).count() == purchase_shipment.shipment_invoices.count():
-            messages.error(request, "All invoices for this shipment have already been submitted or paid.")
-            return redirect('customerportal:purchase_order_list')
-    else:
-         pass     
-
-    try:       
-        if purchase_shipment.status != 'DELIVERED':
-            messages.error(request, "Cannot create an invoice: Shipment status is not 'Delivered yet'.")
-            return redirect('purchase:purchase_order_list') 
-    except PurchaseShipment.DoesNotExist:
-        messages.error(request, "Cannot create an invoice: No shipment found for this order.")
-        return redirect('customerportal:purchase_order_list') 
-
-    initial_data = {
-        'purchase_shipment': purchase_shipment,
-        'amount_due': purchase_shipment.purchase_order.total_amount
-    }
-
-    if request.method == 'POST':
-        form = PurchaseInvoiceForm(request.POST)
-        if form.is_valid():
-            invoice = form.save(commit=False)
-            invoice.user = request.user
-            invoice.status ='SUBMITTED'
+            # Update Invoice Status
+            invoice.status = "FULLY_PAID" if invoice.remaining_balance == 0 else "PARTIALLY_PAID"
             invoice.save()
-            messages.success(request, "Invoice created and submitted successfully.")
-            return redirect('customerportal:purchase_order_list')  
-        else:
-            messages.error(request, "Error creating invoice.")
+
+            messages.success(request, "Payment recorded successfully with journal entry.")
+            return redirect('customerportal:sale_invoice_list')
     else:
-        form = PurchaseInvoiceForm(initial=initial_data)
-    return render(request, 'customerportal/purchase/create_invoice.html', {'form': form})
+        # Pre-fill form with remaining balance
+        form = SalePaymentForm(initial={'amount': remaining_balance,'sale_invoice':invoice})
 
+    return render(request, 'customerportal/sales/create_payment.html', {
+        'form': form,
+        'invoice': invoice,
+        'remaining_balance': remaining_balance
+    })
 
-from finance.utils import create_purchase_invoice_from_po
-@login_required
-def create_purchase_invoice_from_purchase_order(request, po_id):
-    po = get_object_or_404(PurchaseOrder, id=po_id)
-
-    # Calculate financial summary
-    po_items = po.purchase_order_item.all()
-    subtotal = sum((item.unit_price or 0) * (item.quantity or 0) for item in po_items)
-    vat = getattr(po, "vat_amount", 0) or 0
-    ait = getattr(po, "ait_amount", 0) or 0  
-    total_vat_amount = po.vat_amount
-    total_ait_amount = po.ait_amount
-    total_amount = po.total_amount
-    net_due_amount =po.net_due_amount
-    AIT_rate = po.AIT_rate
-    AIT_type = po.AIT_type
-
-    if request.method == "POST":
-        # User confirmed creation
-        try:
-            invoice = create_purchase_invoice_from_po(po_id, request.user)
-            messages.success(request, f"Purchase Invoice {invoice.invoice_number} created successfully.")
-            return redirect("customerportal:purchase_order_list")
-        except ValueError as e:
-            messages.error(request, str(e))
-        except Exception as e:
-            messages.error(request, f"Error creating invoice: {e}")
-        return redirect("customerportal:purchase_order_list")
-
-    # Render preview before confirming
-    context = {
-        "po": po,
-        "po_items": po_items,
-        "total_amount": total_amount,
-        'net_due_amount':net_due_amount,
-        "vat_amount": total_vat_amount,
-        "ait_amount": total_ait_amount,
-        "AIT_rate":AIT_rate,
-        "AIT_type":AIT_type,
-        
-    }
-    return render(request, "customerportal/purchase/confirm_financial_summary.html", context)
-
-
-from purchase.models import SupplierQuotation
-from finance.utils import convert_quotation_to_invoice
-
-@login_required
-def create_purchase_invoice_from_quotation(request, quotation_id):
-    quotation = get_object_or_404(SupplierQuotation, id=quotation_id)
-    shipment = quotation.supplier_quotations.first().purchase_shipment.first()
-    purchase_orders = quotation.supplier_quotations.all()
-    first_po = purchase_orders.first()
-    if not first_po:
-        messages.error(request, "No Purchase Order linked to this quotation.")
-        return redirect("customerportal:supplier_quotation_detail", pk=quotation.id)
-
-    first_shipment = first_po.purchase_shipment.first()
-    if not first_shipment:
-        messages.error(request, "No Purchase Shipment linked to this Purchase Order.")
-        return redirect("customerportal:purchase_order_list", pk=first_po.id)
-    invoice = convert_quotation_to_invoice(quotation, user=request.user)   
-    invoice.purchase_shipment = first_shipment
-    invoice.save() 
-    messages.success(request, f"Invoice {invoice.invoice_number} created from quotation {quotation.quotation_number}.")
-    return redirect("customerportal:purchase_order_list")
-
-
-
-
-@login_required
-def add_purchase_invoice_attachment(request, invoice_id):
-    invoice = get_object_or_404(PurchaseInvoice, id=invoice_id)    
-    if request.method == 'POST':
-        form = PurchaseInvoiceAttachmentForm(request.POST, request.FILES)
-        if form.is_valid():
-            attachment = form.save(commit=False)
-            attachment.purchase_invoice = invoice  
-            attachment.user=request.user
-            attachment.save()
-            return redirect('customerportal:purchase_order_list')
-    else:
-        form = PurchaseInvoiceAttachmentForm()
-
-    return render(request, 'customerportal/purchase/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
 
