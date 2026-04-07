@@ -71,6 +71,16 @@ class QualityControlCompletionForm(forms.Form):
         label="Select Location",
         required=True
     )  
+    product_type = forms.ChoiceField(
+        choices=[
+            ('raw_materials', 'Raw Materials'),
+            ('finished_product', 'Finished Product'),
+            ('component', 'Component'),
+            ('BOM', 'BOM')
+        ],
+        label="Product Type",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     # batch= forms.ModelChoiceField(
     #     queryset=Batch.objects.all(),  # Initially empty, will be dynamically loaded
     #     label="Select Batch",

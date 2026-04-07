@@ -25,7 +25,7 @@
             <i class="fas fa-sign-out-alt"></i> Logout
           </button>
         </form>
-        <a href="{% url 'accounts:password_change' %}" class="btn btn-outline-info portal-btn">
+        <a href="{% url 'accounts:send_change_password_otp' %}" class="btn btn-outline-info portal-btn">
           <i class="fas fa-key"></i> Change Password
         </a>
       {% else %}
@@ -35,13 +35,13 @@
         <a href="{% url 'accounts:register_corporate_user_only' %}" class="btn btn-outline-success portal-btn">
           <i class="fas fa-user-plus"></i> Corporate Register
         </a>
-        <a href="{% url 'accounts:pwdreset' %}" class="btn btn-outline-danger portal-btn">
+        <a href="{% url 'accounts:send_password_reset_otp' %}" class="btn btn-outline-danger portal-btn">
           <i class="fas fa-lock"></i> Forgot Password
         </a>
       {% endif %}
     </div>
   </div>
-  
+
 
   <!-- CUSTOMER PORTAL -->
   <div class="mb-3">

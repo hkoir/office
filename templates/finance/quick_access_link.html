@@ -1,0 +1,58 @@
+<div class="mb-4 d-flex flex-wrap gap-2 justify-content-center">
+
+    <!-- Product & Category Setup -->
+    <a href="{% url 'product:create_category' %}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-tags"></i> Create Category
+    </a>
+
+    <a href="{% url 'product:create_product' %}" class="btn btn-secondary btn-sm">
+        <i class="fas fa-cube"></i> Create Product
+    </a>
+
+    <!-- Inventory & Batch -->
+    <a href="{% url 'purchase:create_batch' %}" class="btn btn-dark btn-sm">
+        <i class="fas fa-boxes-stacked"></i> Create Batch
+    </a>
+
+    <!-- Direct Sales -->
+    <a href="{% url 'finance:create_direct_invoice' %}" class="btn btn-success btn-sm">
+        <i class="fas fa-file-invoice-dollar"></i> Direct Sales(Stock Outbound)
+    </a>
+
+    <a href="{% url 'finance:direct_invoice_list' %}" class="btn btn-outline-success btn-sm">
+        <i class="fas fa-receipt"></i> Sales List
+    </a>
+
+    <!-- Direct Purchase -->
+    <a href="{% url 'finance:create_direct_purchase_invoice' %}" class="btn btn-warning btn-sm text-dark">
+        <i class="fas fa-file-invoice"></i> Direct Purchase Procurement
+    </a>
+
+    <a href="{% url 'finance:direct_purchase_invoice_list' %}" class="btn btn-outline-warning btn-sm text-dark">
+        <i class="fas fa-list-alt"></i> Purchase Order List
+    </a>
+
+    <!-- Manufacturing -->
+    <a href="{% url 'manufacture:direct_submit_finished_goods' %}" class="btn btn-info btn-sm text-white">
+        <i class="fas fa-industry"></i> Factory's Finished Goods submit
+    </a>
+
+    <!-- Inventory Reports -->
+    <a href="{% url 'inventory:quick_inventory_report' %}" class="btn btn-dark btn-sm">
+        <i class="fas fa-warehouse"></i> Inventory Report
+    </a>
+
+    <a href="{% url 'inventory:quick_inventory_transaction_report' %}" class="btn btn-outline-dark btn-sm">
+        <i class="fas fa-exchange-alt"></i> Inventory Transactions
+    </a>
+
+    <!-- Factory & Financial Reports -->
+    <a href="{% url 'reporting:simple_factory_report' %}" class="btn btn-primary btn-sm">
+        <i class="fas fa-chart-line"></i> Factory Report
+    </a>
+
+    <a href="{% url 'reporting:Calculate_sales_profit' %}" class="btn btn-outline-primary btn-sm">
+        <i class="fas fa-coins"></i> Revenue Report
+    </a>
+
+</div>

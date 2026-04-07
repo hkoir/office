@@ -20,6 +20,18 @@ class ExistingOrderForm(forms.Form):
         label="Product",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+
+    product_type = forms.ChoiceField(
+    choices=[
+        ('raw_materials', 'Raw Materials'),
+        ('finished_product', 'Finished Product'),
+        ('component', 'Component'),
+        ('BOM', 'BOM')
+    ],
+    required=True,  # or False if optional
+    label="Product Type"
+)
+
     quantity = forms.IntegerField(
         label="Quantity",
         min_value=1,
@@ -60,6 +72,16 @@ class OperationsRequestForm(forms.ModelForm):
         label="Product",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    product_type = forms.ChoiceField(
+    choices=[
+        ('raw_materials', 'Raw Materials'),
+        ('finished_product', 'Finished Product'),
+        ('component', 'Component'),
+        ('BOM', 'BOM')
+    ],
+    required=True,  # or False if optional
+    label="Product Type"
+)
    
     quantity = forms.IntegerField(
         label="Quantity",
@@ -72,7 +94,7 @@ class OperationsRequestForm(forms.ModelForm):
 class OperationsDeliveryForm(forms.ModelForm):
     class Meta:
         model = OperationsDeliveryItem 
-        fields = ['product','batch','quantity','operations_request_order', 'operations_request_item','warehouse','location']  
+        fields = ['operations_request_order','operations_request_item','category','product','batch','quantity','warehouse','location']  
 
     operations_request_order = forms.ModelChoiceField(
         queryset=OperationsRequestOrder.objects.all(),
@@ -90,6 +112,16 @@ class OperationsDeliveryForm(forms.ModelForm):
         label="Product",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
+    product_type = forms.ChoiceField(
+    choices=[
+        ('raw_materials', 'Raw Materials'),
+        ('finished_product', 'Finished Product'),
+        ('component', 'Component'),
+        ('BOM', 'BOM')
+    ],
+    required=True,  # or False if optional
+    label="Product Type"
+)
 
     batch = forms.ModelChoiceField(
         queryset=Batch.objects.all(),

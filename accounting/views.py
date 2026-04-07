@@ -1,3 +1,4 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import transaction
 from .models import FiscalYear, Account, JournalEntry
@@ -49,25 +50,26 @@ def journalentry_list(request):
 
 
 
-
 @transaction.atomic
 def journalentry_create(request):
     if request.method == 'POST':
         form = JournalEntryForm(request.POST)
-        if form.is_valid():
-            entry = form.save(commit=False)
-            formset = JournalEntryLineFormSet(request.POST, instance=entry)
+        formset = JournalEntryLineFormSet(request.POST)
 
-            if formset.is_valid():
+        if form.is_valid() and formset.is_valid():
+            entry = form.save(commit=False)        
+            lines = formset.save(commit=False)
+            total_debit = sum(l.debit or 0 for l in lines)
+            total_credit = sum(l.credit or 0 for l in lines)
+
+            if total_debit != total_credit:
+                form.add_error(None, "Debits and Credits must balance.")
+            else:
                 entry.save()
-                formset.save()
-                if not entry.is_balanced():
-                    transaction.set_rollback(True)
-                    form.add_error(None, "Debits and Credits must balance.")
-                else:
-                    return redirect('accounting:journalentry_list')
-        else:
-            formset = JournalEntryLineFormSet(request.POST)
+                for line in lines:
+                    line.entry = entry
+                    line.save()
+                return redirect('accounting:journalentry_list')
     else:
         form = JournalEntryForm()
         formset = JournalEntryLineFormSet()

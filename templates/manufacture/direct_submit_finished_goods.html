@@ -25,6 +25,11 @@
     
   </div>
 </div>
+
+
+
+{% include 'finance/quick_access_link.html' %}
+
 <div class="container-fluid">
      <h5 class="text-center">Create Batch to add items into stock if not available
         <a href="{% url 'purchase:create_batch' %}?next={{ request.path }}" 
@@ -40,6 +45,12 @@
         {{ formset.management_form }}
 
         <div class="table-responsive">
+            {% if formset.non_form_errors %}            
+            <div class="alert alert-danger">
+                {{ formset.non_form_errors }}
+            </div>
+            {% endif %}
+
             <table class="table table-bordered table-striped">
                 <thead class="table-dark">
                     <tr>

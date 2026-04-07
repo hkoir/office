@@ -7,12 +7,12 @@
 <style>
 
 #doughnutChart{
-    width:100%;   
+    width:100% !important;   
 }
 
 
 #barChart{
-    width:100%;    
+    width:100% !important;    
 }
 </style>
 
@@ -68,26 +68,43 @@
 
         {% if page_obj %}
 
-        <h4 class="text-center" style="color:blue;font-weight: bold;"></h4>
-        <h4 class="text-center" style="color: rgb(231, 51, 11);font-weight: bold;">
-           <span style="color: rgb(6, 37, 216);font-weight: bold;">Product: {{ product_name }}</span> :Total Stock Value: {{ grand_total_stock_value|add_commas }}&nbsp;&nbsp;
-        <span style="font-size: 14px;">
-        <a href="{% url 'inventory:inventory_executive_sum' %}" class="btn btn-sm btn-primary">Grand Stock value</a>
-        <a href="{% url 'inventory:inventory_list' %}" class="btn btn-sm btn-primary">Product by warehouse</a>
-      
-        
-        </span>
-    </h4>
+
+  <div class="container mb-3">
+    <div class="row align-items-center">
+        <!-- Title -->
+        <div class="col-12 text-center mb-2">
+            <h4 class="fw-bold text-primary">Inventory Summary</h4>
+        </div>
+
+        <!-- Product info and total stock value -->
+        <div class="col-12 text-center mb-2">
+            <h5 class="fw-bold text-danger">
+                <span class="text-primary">Product: {{ product_name }}</span> 
+		: Total Stock Value:{{ grand_total_stock_value|add_commas }}
+            </h5>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="col-12 text-center">
+            <a href="{% url 'inventory:inventory_executive_sum' %}" class="btn btn-sm btn-primary mb-1">Grand Stock Value</a>
+            <a href="{% url 'inventory:inventory_list' %}" class="btn btn-sm btn-primary mb-1">Product by Warehouse</a>
+        </div>
+    </div>
+  </div>
+
+
    
 
-        <div class="col-12 table-responsive" style="margin-bottom: 20px;">
+        <div class="col-12" style="margin-bottom: 20px;">
             <div class="container-fluid">
                 <div class="row">
-                    <div class="col-9 bg-light">
+                    <div class=" col-12 col-md-8 bg-light">
+			<div class=" table-responsive" style="height:400px;">
                         <canvas id="barChart" ></canvas>
+			</div>
                         <div id="warehouseNames"></div>
                     </div>
-                    <div class="col-3 bg-light">
+                    <div class="col-12 col-md-4 bg-light table-responsive">
                         <canvas id="doughnutChart"></canvas>
                     </div>
 
@@ -140,6 +157,10 @@
 
                                     <th>Total Manufacture in</th>
                                     <th>Total Manufacture out</th>
+
+                                    <th>Total direct sold out</th>
+                                    <th>Total direct purchase in</th>
+
                                     <th>Total Existing</th>                                  
                                     <th>Total operations out</th>
 
@@ -163,6 +184,9 @@
                                     <td>{{ product.total_purchase|default:"0" }}</td>
                                     <td>{{ product.total_sold|default:"0" }}</td>
                                     <td>{{ product.total_available|default:"0" }}</td>
+
+                                    <td>{{ product.total_direct_sale_out|default:"0" }}</td>
+                                    <td>{{ product.total_direct_purchase_in|default:"0" }}</td>
 
                                     <td>{{ product.total_manufacture_in|default:"0" }}</td>
                                     <td>{{ product.total_manufacture_out|default:"0" }}</td>
@@ -275,6 +299,9 @@
         });
     });
 </script>
+
+
+
 <script>
     // Parse the JSON data passed from the view
     const chartData = JSON.parse('{{ warehouse_json|escapejs }}');
@@ -288,6 +315,8 @@
 
     const totalManufactureIn = [];
     const totalManufactureOut = [];
+
+
     const totalExistingIn = [];
     const totalOperationsOut = [];    
  
@@ -308,15 +337,15 @@
         reorderLevel.push(chartData.reorder_level[index] || 0);
 
         totalManufactureIn.push(chartData.total_manufacture_in[index] || 0);
-        totalManufactureOut.push(chartData.total_manufacture_out[index] || 0);
+        totalManufactureOut.push(chartData.total_manufacture_out[index] || 0);  
+
         totalExistingIn.push(chartData.total_existing_in[index] || 0);
-        totalOperationsOut.push(chartData.total_operations_out[index] || 0);      
-                
+        totalOperationsOut.push(chartData.total_operations_out[index] || 0);    
         totalTransferIn.push(chartData.total_transfer_in[index] || 0);
         totalTransferOut.push(chartData.total_transfer_out[index] || 0);
+
         totalReplacementOut.push(chartData.total_replacement_out[index] || 0);
         totalReplacementIn.push(chartData.total_replacement_in[index] || 0);
-
         totalScrappedOut.push(chartData.total_scrapped_out[index] || 0);
         totalScrappedIn.push(chartData.total_scrapped_in[index] || 0);
        
@@ -328,28 +357,30 @@
         'rgba(76, 175, 80, 0.5)',  // Green
         'rgba(255, 87, 34, .8)',  // Deep Orange
         'rgba(255, 0, 0, 0.8)', // red
-
         'rgba(255, 193, 7, 0.5)',  // Amber
+
+
         'rgba(156, 39, 176, 0.5)', // Purple
         'rgba(0, 188, 212, 0.5)',  // Teal
         'rgba(255, 87, 34, 0.5)',  // Deep Orange
-
         'rgba(0, 150, 136, 0.5)',  // Sea Green
+
         'rgba(255, 152, 0, 0.5)',  // Orange
         'rgba(0, 188, 212, 0.5)',  // Teal
         'rgba(233, 30, 99, 0.5)',  // Pink
-
         'rgba(255, 50, 6, 0.5)',  // Sea Green
+
         'rgba(255, 87, 34, 0.8)',  // Deep Orange
         'rgba(0, 150, 136, 0.8)',  // Sea Green
-
         'rgba(255, 152, 0, 0.5)',  // Orange
+        'rgba(233, 30, 99, 0.5)',  // Pink
     ];
 
      
      
     // Calculate the max y-axis value
-    const maxYValue = Math.max(
+  const maxYValue = Math.ceil(
+    Math.max(
         ...totalPurchase,
         ...totalSold,
         ...totalAvailable,
@@ -358,7 +389,9 @@
         ...totalTransferOut,
         ...totalReplacementOut,
         ...totalStock,
-    ) * 1.1;
+    ) * 1.1
+  );
+
 
     // Bar chart
     const ctxBar = document.getElementById('barChart').getContext('2d');
@@ -425,6 +458,7 @@
                     borderColor: colors[6],        // Dark Orange
                     borderWidth: 1
                 },
+
                 
                 {
                     label: 'Total Manufacture in',
@@ -492,7 +526,8 @@
 
         },
         options: {
-        responsive: false,
+        responsive: true,
+	maintainAspectRatio: false,
         scales: {
                 y: {
                     beginAtZero: true,

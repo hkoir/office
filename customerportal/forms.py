@@ -3,6 +3,34 @@ from django import forms
 from .models import  TicketCustomerFeedback
 
 
+from .models import EmailSubscription,JobApplication
+
+class EmailSubscriptionForm(forms.ModelForm):
+    class Meta:
+        model = EmailSubscription
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email Address', 'required': True}),
+        }
+
+
+
+
+
+class JobApplicationForm(forms.ModelForm):
+    class Meta:
+        model = JobApplication
+        fields = ['full_name', 'email', 'phone', 'job_position', 'cv', 'cover_letter']
+        widgets = {
+            'full_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Full Name', 'required': True}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email', 'required': True}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone'}),
+            'job_position': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Job Position (optional)'}),
+            'cover_letter': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Cover Letter (optional)'}),
+        }
+
 
 
 class TicketCustomerFeedbackForm(forms.ModelForm):

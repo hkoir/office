@@ -48,7 +48,16 @@ class ExistingOrderItems(models.Model):
     existing_order = models.ForeignKey(ExistingOrder, 
         on_delete=models.CASCADE, null=True, blank=True,related_name='operations_existing_order_items')
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='operations_order_items_user')
+    category = models.ForeignKey('product.Product',on_delete=models.CASCADE,related_name='existing_category_request',null=True,blank=True)
     product = models.ForeignKey(Product,related_name='operations_order_product', on_delete=models.CASCADE) 
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,null=True,blank=True,related_name='batch_existing_item')
     order_date = models.DateField(null=True, blank=True)
     ORDER_STATUS_CHOICES = [
@@ -124,6 +133,21 @@ class OperationsRequestOrder(models.Model):
             self.order_id= f"OPROID-{uuid.uuid4().hex[:8].upper()}"
         super().save(*args, **kwargs)
 
+    def is_fully_delivered(self):
+        total_items = self.operations_request_items.count()
+        if total_items == 0:
+            return False
+        
+        delivered_item_ids = OperationsDeliveryItem.objects.filter(
+            operations_request_order=self
+        ).values_list('operations_request_item_id', flat=True).distinct()
+        
+        delivered_count = self.operations_request_items.filter(
+            id__in=delivered_item_ids
+        ).count()
+
+        return delivered_count == total_items
+
     def __str__(self):
         return f'{self.order_id}'
 
@@ -133,7 +157,16 @@ class OperationsRequestItem(models.Model):
     item_id = models.CharField(max_length=20, unique=True)   
     operations_request_order = models.ForeignKey(OperationsRequestOrder, related_name='operations_request_items', on_delete=models.CASCADE, null=True, blank=True)
     purpose = models.CharField(max_length=150)
+    category = models.ForeignKey('product.Product',on_delete=models.CASCADE,related_name='operations_category_request',null=True,blank=True)
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name='operations_product_request',null=True,blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,null=True,blank=True,related_name='batch_operation_request_item')
     quantity = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)
@@ -169,7 +202,16 @@ class OperationsDeliveryItem(models.Model):
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)
    
     item_type = models.CharField(max_length=10, choices=[('PRODUCT', 'Product'), ('COMPONENT', 'Component')])
+    category = models.ForeignKey('product.Category', related_name='operations_categories_delivery', on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product, related_name='operations_product_item_delivery', on_delete=models.CASCADE, null=True, blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,null=True,blank=True,related_name='batch_operation_delivery_item')
     quantity = models.PositiveIntegerField(null=True, blank=True)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)

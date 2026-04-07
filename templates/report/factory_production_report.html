@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h2 class="text-center mb-4">🏭 Factory Production Report</h2>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover table-sm align-middle text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Warehouse</th>
+                    <th>Product</th>
+                    <th>Product Type</th>
+                    <th>Raw Material In</th>
+                    <th>Raw Material Consumed</th>
+                    <th>Finished Goods Produced</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in report %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ row.warehouse|default:"-" }}</td>
+                    <td>{{ row.product|default:"-" }}</td>
+                    <td>{{ row.product_type|title|default:"-" }}</td>
+                    <td>{{ row.raw_material_in|default:0 }}</td>
+                    <td>{{ row.raw_material_consumed|default:0 }}</td>
+                    <td>{{ row.finished_goods_produced|default:0 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">No transactions found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

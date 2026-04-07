@@ -352,6 +352,7 @@ class Employee(models.Model):
     employee_NID = models.ImageField(upload_to='employee_nid/', null=True, blank=True,help_text='pls upload single image file')     
     
     joining_date = models.DateField(null=True,blank=True)
+    signature = models.ImageField(upload_to='employee_signatures/', null=True, blank=True)
     resignation_date = models.DateField(null=True, blank=True, default=timezone.now, help_text="Format: YYYY-MM-DD")
                    
     created_at=models.DateField(auto_now_add=True)

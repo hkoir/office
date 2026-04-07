@@ -394,9 +394,11 @@ def warehouse_report(request):
                     transaction_lookup.get((product_id, 'REPLACEMENT_IN'), 0) +
                     transaction_lookup.get((product_id, 'TRANSFER_IN'), 0) +
                     transaction_lookup.get((product_id, 'INBOUND'), 0) +
+                     transaction_lookup.get((product_id, 'DIRECT_PURCHASE_IN'), 0) +
                     transaction_lookup.get((product_id, 'MANUFACTURE_IN'), 0) -
                     transaction_lookup.get((product_id, 'REPLACEMENT_OUT'), 0) -
                     transaction_lookup.get((product_id, 'TRANSFER_OUT'), 0) -
+                     transaction_lookup.get((product_id, 'DIRECT_SALE_OUT'), 0) -
                     transaction_lookup.get((product_id, 'OUTBOUND'), 0) -
                     transaction_lookup.get((product_id, 'OPERATIONS_OUT'), 0) -
                     transaction_lookup.get((product_id, 'MANUFACTURE_OUT'), 0)
@@ -406,6 +408,8 @@ def warehouse_report(request):
                 'total_replacement_out': transaction_lookup.get((product_id, 'REPLACEMENT_OUT'), 0),
                 'total_transfer_in': transaction_lookup.get((product_id, 'TRANSFER_IN'), 0),
                 'total_transfer_out': transaction_lookup.get((product_id, 'TRANSFER_OUT'), 0),
+                'total_direct_purchase_in': transaction_lookup.get((product_id, 'DIRECT_PURCHASE_IN'), 0),
+                'total_direct_sale_out': transaction_lookup.get((product_id, 'DIRECT_SALE_OUT'), 0),
                 'total_purchased': transaction_lookup.get((product_id, 'INBOUND'), 0),
                 'total_sold': transaction_lookup.get((product_id, 'OUTBOUND'), 0),
                 'total_operation_used': transaction_lookup.get((product_id, 'OPERATIONS_OUT'), 0),
@@ -548,18 +552,21 @@ def generate_sale_challan(request, order_id):
         p.drawString(140, height - 90, f".......................................................................................")
                
         # Logo
-        logo_path = 'D:/SCM/dscm/media/logo.png'  
-        
-        logo_width = 60 
-        logo_height = 60  
-        p.drawImage(logo_path, 50, height - 110, width=logo_width, height=logo_height)
+        employee = Employee.objects.filter(user = request.user).first()
+        logo_path = None
+
+        if employee and employee.company and employee.company.logo:
+            logo_path = os.path.join(settings.MEDIA_ROOT, str(employee.company.logo))
+            logo_width = 60 
+            logo_height = 60  
+            p.drawImage(logo_path, 50, height - 110, width=logo_width, height=logo_height)
 
         # Customer Info
         p.setFont("Helvetica", 12)
         p.drawString(50, height - 150, f"Order Date: {sale_order.order_date}")
         p.drawString(50, height - 170, f"Customer: {sale_order.customer.name}")
         p.drawString(260, height - 170, f"Phone: {sale_order.customer.phone}")
-        p.drawString(50, height - 190, f"Address: {sale_order.customer.website}")
+        p.drawString(50, height - 190, f"website: {sale_order.customer.website}")
 
         # Table Headers
         p.setFont("Helvetica-Bold", 12)
@@ -849,14 +856,27 @@ from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from django.db.models.functions import Coalesce
 
 
-def Calculate_sales_profit(request):    
-   
+
+def Calculate_sales_profit(request):
+    INBOUND_TYPES = [
+        'INBOUND',
+        'MANUFACTURE_IN',   
+        'DIRECT_PURCHASE_IN',
+        'EXISTING_ITEM_IN'
+    ]
+
+    OUTBOUND_TYPES = [
+        'OUTBOUND',     
+        'DIRECT_SALE_OUT',
+        'MANUFACTURE_OUT'
+    ]
+
     purchases = InventoryTransaction.objects.filter(
-        transaction_type='INBOUND',
+        transaction_type__in=INBOUND_TYPES,
         quantity__gt=0
     ).annotate(
         purchase_line_total=ExpressionWrapper(
-            F('quantity') * F('batch__unit_price'),
+            F('quantity') * Coalesce(F('batch__purchase_price'), 0),
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
     ).values('product__name').annotate(
@@ -866,12 +886,13 @@ def Calculate_sales_profit(request):
     total_purchase_cost = sum([item['purchase_item_total'] for item in purchases]) or Decimal('0.00')
 
 
+    # 🔹 Cost of Sold Products (use purchase_price for cost)
     sales_product_cost = InventoryTransaction.objects.filter(
-        transaction_type='OUTBOUND',
+        transaction_type__in=OUTBOUND_TYPES,
         quantity__gt=0
     ).annotate(
         sale_product_line_total=ExpressionWrapper(
-            F('quantity') * F('batch__unit_price'),  
+            F('quantity') * Coalesce(F('batch__purchase_price'), 0),  # ✅ Cost per unit
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
     ).values('product__name').annotate(
@@ -881,12 +902,13 @@ def Calculate_sales_profit(request):
     total_sold_product_cost = sum([item['sale_item_cost_total'] for item in sales_product_cost]) or Decimal('0.00')
 
 
+    # 🔹 Revenue (use discounted_price for selling price)
     sales_revenue = InventoryTransaction.objects.filter(
-        transaction_type='OUTBOUND',
+        transaction_type__in=OUTBOUND_TYPES,
         quantity__gt=0
     ).annotate(
         sale_revenue_line_total=ExpressionWrapper(
-            F('quantity') * Coalesce(F('sale_unit_cost'), F('batch__sale_price')),  # prioritize unit_selling_price
+            F('quantity') * Coalesce(F('batch__discounted_price'), 0),
             output_field=DecimalField(max_digits=20, decimal_places=2)
         )
     ).values('product__name').annotate(
@@ -895,9 +917,9 @@ def Calculate_sales_profit(request):
 
     total_revenue = sum([item['sale_revenue_item_total'] for item in sales_revenue]) or Decimal('0.00')
 
+
+    # 🔹 Profit = Revenue − Cost
     total_profit = total_revenue - total_sold_product_cost
-
-
 
     chart_data = {
         'total_purchased': float(total_purchase_cost),
@@ -906,32 +928,46 @@ def Calculate_sales_profit(request):
         'total_profit': float(total_profit),
     }
 
-  
-  
     return render(request, 'report/calculate_profit.html', {
         'chart_data': json.dumps(chart_data),
-       'total_purchased': float(total_purchase_cost),
+        'total_purchased': float(total_purchase_cost),
         'total_revenue': float(total_revenue),
         'total_cost': float(total_sold_product_cost),
         'total_profit': float(total_profit),
-
     })
+
 
 
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Value as V
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 
+
+
+
 def calculate_product_wise_revenue(request):
+
+    INBOUND_TYPES = [
+    'INBOUND',
+    'MANUFACTURE_IN',   
+    'DIRECT_PURCHASE_IN',
+    'EXISTING_ITEM_IN'
+    ]
+
+    OUTBOUND_TYPES = [
+        'OUTBOUND',     
+        'DIRECT_SALE_OUT',
+        'MANUFACTURE_OUT'
+    ]
         # Step 1: Aggregate purchases by product
     purchases = InventoryTransaction.objects.filter(
-        transaction_type='INBOUND',
+        transaction_type__in=INBOUND_TYPES,
         quantity__gt=0
     ).values('product_id', 'product__name').annotate(
         total_purchased_qty=Sum('quantity'),
         total_purchase_cost=Sum(
             ExpressionWrapper(
-                F('quantity') * F('batch__unit_price'),
+                F('quantity') * F('batch__purchase_price'),
                 output_field=DecimalField(max_digits=20, decimal_places=2)
             )
         )
@@ -939,19 +975,19 @@ def calculate_product_wise_revenue(request):
 
     # Step 2: Aggregate sales by product
     sales = InventoryTransaction.objects.filter(
-        transaction_type='OUTBOUND',
+        transaction_type__in=OUTBOUND_TYPES,
         quantity__gt=0
     ).values('product_id', 'product__name').annotate(
         total_sold_qty=Sum('quantity'),
         total_revenue=Sum(
             ExpressionWrapper(
-                F('quantity') * Coalesce(F('sale_unit_cost'), F('batch__sale_price')),
+                F('quantity') * Coalesce(F('batch__discounted_price'), F('sale_unit_cost')),
                 output_field=DecimalField(max_digits=20, decimal_places=2)
             )
         ),
         total_cost_of_sold=Sum(
             ExpressionWrapper(
-                F('quantity') * F('batch__unit_price'),
+                F('quantity') * F('batch__purchase_price'),
                 output_field=DecimalField(max_digits=20, decimal_places=2)
             )
         )
@@ -1006,3 +1042,129 @@ def calculate_product_wise_revenue(request):
 
     return render(request,'report/product_wise_details_revenue.html',{'product_report': product_report,'grand_total_profit':grand_total_profit})
 
+
+
+from django.db.models import Sum, F, Case, When, IntegerField
+from django.db.models.functions import Coalesce
+
+
+
+
+def factory_production_report(request):
+    queryset = InventoryTransaction.objects.filter(
+        transaction_type__in=['INBOUND', 'MANUFACTURE_OUT', 'MANUFACTURE_IN']
+    )
+
+    report = []
+    warehouse_product_pairs = queryset.values(
+        'warehouse__name', 'product__name', 'product_type'
+    ).distinct()
+
+    for pair in warehouse_product_pairs:
+        warehouse = pair['warehouse__name']
+        product = pair['product__name']
+        product_type = pair['product_type']
+        raw_material_in = queryset.filter(
+            warehouse__name=warehouse,
+            product__name=product,
+            product_type='raw_materials',
+            transaction_type='INBOUND'
+        ).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+
+        raw_material_consumed = queryset.filter(
+            warehouse__name=warehouse,
+            product__name=product,
+            product_type='raw_materials',
+            transaction_type='MANUFACTURE_OUT'
+        ).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+
+        finished_goods_produced = queryset.filter(
+            warehouse__name=warehouse,
+            product__name=product,
+            product_type='finished_product',
+            transaction_type='MANUFACTURE_IN'
+        ).aggregate(total=Coalesce(Sum('quantity'), 0))['total']
+
+        report.append({
+            'warehouse': warehouse,
+            'product': product,
+            'product_type': product_type,
+            'raw_material_in': raw_material_in,
+            'raw_material_consumed': raw_material_consumed,
+            'finished_goods_produced': finished_goods_produced
+        })
+
+    return render(request, 'report/factory_production_report.html', {
+        'report': report
+    })
+
+
+
+from django.db.models import Sum
+from django.db.models.functions import Coalesce
+from django.core.paginator import Paginator
+
+
+
+
+def simple_factory_report(request):
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')  
+    queryset = InventoryTransaction.objects.filter(
+        transaction_type__in=['MANUFACTURE_OUT', 'MANUFACTURE_IN']
+    )
+
+    if start_date:
+        queryset = queryset.filter(transaction_date__date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(transaction_date__date__lte=end_date)
+
+    consumed_qs = queryset.filter(transaction_type='MANUFACTURE_OUT').values(
+        'warehouse__name', 'product__name', 'product_type','created_at'
+    ).annotate(
+        total_consumed=Coalesce(Sum('quantity'), 0)
+    ).order_by('warehouse__name', 'product__name')
+
+    consumed_report = []
+    for item in consumed_qs:
+        consumed_report.append({
+            'warehouse': item['warehouse__name'],
+            'product': item['product__name'],
+            'product_type': item['product_type'],
+            'consumed': item['total_consumed'],
+            'date': item['created_at'],
+        })
+
+    produced_qs = queryset.filter(transaction_type='MANUFACTURE_IN').values(
+        'warehouse__name', 'product__name', 'product_type','created_at'
+    ).annotate(
+        total_produced=Coalesce(Sum('quantity'), 0)
+    ).order_by('warehouse__name', 'product__name')
+
+    produced_report = []
+    for item in produced_qs:
+        produced_report.append({
+            'warehouse': item['warehouse__name'],
+            'product': item['product__name'],
+            'product_type': item['product_type'],
+            'produced': item['total_produced'],
+            'date': item['created_at'],
+        })
+
+    consumed_paginator = Paginator(consumed_report, 20)
+    produced_paginator = Paginator(produced_report, 20)
+
+    consumed_page_number = request.GET.get('consumed_page')
+    produced_page_number = request.GET.get('produced_page')
+
+    consumed_page = consumed_paginator.get_page(consumed_page_number)
+    produced_page = produced_paginator.get_page(produced_page_number)
+
+    context = {
+        'start_date': start_date,
+        'end_date': end_date,
+        'consumed_page': consumed_page,
+        'produced_page': produced_page,
+    }
+
+    return render(request, 'report/simple_factory_report.html', context)

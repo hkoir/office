@@ -53,6 +53,7 @@
                         <th class="text-center p-2">Create materials Order</th>   
                                           
                         <th class="text-center p-2">Submit Finish goods</th>
+			 <th>Submitted finished goods</th>
                     </tr>
                 </thead>
                 <tbody>                
@@ -130,6 +131,7 @@
                             {% endif %}
                         {% endwith %}
                     </td>
+		 <td><a href="{% url 'manufacture:submitted_finished_goods_detail' order.id %}">Submitted goods</a></td>
                     
                     
                 </tr>

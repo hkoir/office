@@ -77,7 +77,16 @@ class MaterialsRequestItem(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     item_id = models.CharField(max_length=20, unique=True)   
     material_request_order = models.ForeignKey(MaterialsRequestOrder, related_name='material_request_order_for_item', on_delete=models.CASCADE, null=True, blank=True)
+    category=models.ForeignKey('product.Category',on_delete=models.CASCADE,null=True, blank=True)
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product_request',null=True,blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_manufacture',null=True,blank=True)
     quantity = models.PositiveIntegerField()
     total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)
@@ -111,9 +120,17 @@ class MaterialsDeliveryItem(models.Model):
     item_id = models.CharField(max_length=20)
     warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE,null=True, blank=True)
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)
-   
+    category=models.ForeignKey('product.Category',on_delete=models.CASCADE,null=True, blank=True)
     item_type = models.CharField(max_length=10, choices=[('PRODUCT', 'Product'), ('COMPONENT', 'Component')])
     product = models.ForeignKey(Product, related_name='product_item_for_delivery', on_delete=models.CASCADE, null=True, blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quantity = models.PositiveIntegerField(null=True, blank=True)
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_manufacture_delivery',null=True,blank=True)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2,null=True, blank=True)
@@ -148,8 +165,17 @@ class FinishedGoodsReadyFromProduction(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     goods_id = models.CharField(max_length=20)
     materials_request_order = models.ForeignKey(MaterialsRequestOrder, on_delete=models.CASCADE,null=True,blank=True)
-    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_finished_goods',null=True,blank=True)
+    category=models.ForeignKey('product.Category',on_delete=models.CASCADE,null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+    batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_finished_goods',null=True,blank=True)
     warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE,null=True, blank=True)
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)
     quantity = models.PositiveIntegerField()
@@ -179,6 +205,14 @@ class ManufactureQualityControl(models.Model):
          on_delete=models.CASCADE,related_name='goods_quality')
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True, blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     good_quantity = models.PositiveIntegerField(null=True, blank=True)
@@ -207,6 +241,14 @@ class ReceiveFinishedGoods(models.Model):
     quality_control=models.ForeignKey(ManufactureQualityControl,on_delete=models.CASCADE,related_name='quality_received')
     receiving_id = models.CharField(max_length=20)      
     product = models.ForeignKey(Product, on_delete=models.CASCADE)  
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE, null=True, blank=True)
     warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE, related_name='received_finish_goods',null=True, blank=True)
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True)

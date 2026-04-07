@@ -712,7 +712,7 @@ def process_purchase_request(request, order_id):
 
 
 
-###########################################################################################@login_required
+##############################################################################@login_required
 
 @login_required
 def create_rfq(request, request_order_id):

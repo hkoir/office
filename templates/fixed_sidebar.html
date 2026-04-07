@@ -1,0 +1,309 @@
+
+
+
+
+ <aside class="sidebar">
+
+            <a href="{% url 'core:dashboard' %}">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Office Management</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">               
+                <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Supplies and Stationary</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_category' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create office supplies Category</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_product' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create office supplies product</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_batch' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create product Batch</a></li>
+                 <li><a class="dropdown-item" href="{% url 'officemanagement:create_stationary_purchase_order' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create office supplies Purchase</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:purchase_request_list' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Purchase request Status</a></li> 
+                                      
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_stationary_usage_request' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Usage Request</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:usage_request_list' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Usage request Status</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:inventory_report' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Inventory report</a></li>
+
+                <li class="my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Expense and Advance</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_expense_advance' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Apply for advance</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:expense_advance_list' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Expense advance status</a></li>
+               
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_expense_submission' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create expense submission</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:expense_submission_list' %}"><i class="fas fa-tasks text-info"></i>&nbsp;expense submission List status</a></li>
+              
+                <li><a class="dropdown-item" href="{% url 'officemanagement:advance_reconcilation_report' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Advance Reconcilation Report</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:top_expense_categories' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Top expense categories</a></li>
+
+
+                <li class="my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Meeting management</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_meeting_room' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create meeting room</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:meeting_room_list' %}"><i class="fas fa-eye text-info"></i>&nbsp;Meeting room View</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_meeting_order' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Meeting order</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_attendee' %}"><i class="fas fa-users text-info"></i>&nbsp;Add attendees</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:meeting_room_report' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Meeting Room Report</a></li>
+
+                <li class="my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">IT Support Tickets</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_IT_support' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create IT Support Ticket</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:IT_support_list' %}"><i class="fas fa-tasks text-info"></i>&nbsp;IT support Ticket List</a></li>
+
+                <li class="my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Visitor Management</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_visitor_group' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Group Visitor</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_visitor_member' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Add Visitor member</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:search_visitor' %}"><i class="fas fa-search text-info"></i>&nbsp;Search Visitor</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:visitor_reports' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Visitor Report</a></li>
+
+            
+                <li class="my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Documentations</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:create_office_document' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Upload Document</a></li>
+                <li><a class="dropdown-item" href="{% url 'officemanagement:office_document_list' %}"><i class="fas fa-tasks text-info"></i>&nbsp;Documents List</a></li>
+            
+
+            </div>
+
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-users"></i> Purchase</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+               <li><a class="dropdown-item" href="{% url 'purchase:create_purchase_request_order' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Purchase Request </a></li>
+                <li><a class="dropdown-item" href="{% url 'purchase:purchase_request_order_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Purchase request order list </a></li> 
+                <li><a class="dropdown-item" href="{% url 'purchase:rfq_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;RFQ List </a></li>
+                <li><a class="dropdown-item" href="{% url 'purchase:supplier_quotation_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Supplier Quotation </a></li>
+                <li><a class="dropdown-item" href="{% url 'purchase:purchase_order_list' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Purchase Order list </a></li> 
+                <li><a class="dropdown-item" href="{% url 'inventory:inventory_dashboard' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Inventory dashboard </a></li>                         
+                <li><a class="dropdown-item" href="{% url 'purchase:qc_dashboard' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;QC dashboard</a></li>                        
+                <li><a class="dropdown-item" href="{% url 'purchase:create_batch' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Batch</a></li>   
+                <li><a class="dropdown-item" href="{% url 'sales:create_customer_quotation' %}" style="text-decoration: none;"><i class="fas fa-users"></i>&nbsp;Create Sales Quotation</a></li>   
+                                                
+            </div>
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Transport</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">          
+                <li><a class="dropdown-item" href="{% url 'transport:transport_dashboard' %}"><i class="fas fa-truck"></i>&nbsp;Menu Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:create_transport' %}"></i><i class="fas fa-truck"></i>&nbsp;Create Vehicle</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:available_transports' %}"></i><i class="fas fa-eye"></i>&nbsp;Transport View</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:create_transport_request' %}"></i><i class="fas fa-plus-circle"></i>&nbsp;Transport request</a></li>
+
+                <li><a class="dropdown-item" href="{% url 'transport:penalty_history' %}"><i class="fas fa-list"></i>&nbsp;Penalty history</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:booking_history' %}"><i class="fas fa-list"></i>&nbsp;Booking history</a></li>
+             
+                <li><a class="dropdown-item" href="{% url 'transport:create_fuel_refill' %}"><i class="fas fa-eye"></i>&nbsp;manage fuel refill</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:create_vehicle_fault' %}"><i class="fas fa-cogs"></i>&nbsp;Manage vehicle fault</a></li>
+
+                <li><a class="dropdown-item" href="{% url 'transport:create_fuel_pump_database' %}"><i class="fas fa-dollar-sign"></i>&nbsp;Create Fuel pump</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:fuel_by_pump' %}"><i class="fas fa-cogs"></i>&nbsp;View fuel by pump</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:datewise_fuel_withdraw' %}"><i class="fas fa-eye fas fa-cogs"></i>&nbsp;Datewise fuel</a></li>
+        
+                <li><a class="dropdown-item" href="{% url 'transport:create_vehicle_payment' %}"><i class="fas fa-dollar-sign"></i>&nbsp;Manage Vehicle rent payment</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:create_fuel_pump_payment' %}"><i class="fas fa-eye fas fa-chart-line"></i>&nbsp;Manage Pump payment</a></li>
+          
+                <li><a class="dropdown-item" href="{% url 'transport:vehicle_overtime_calc' %}"><i class="fas fa-eye fas fa-chart-line"></i>&nbsp;Overtime Calc</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:vehicle_grand_summary' %}"><i class="fas fa-chart-line"></i>&nbsp;Vehicle bill sum</a></li>
+                <li><a class="dropdown-item" href="{% url 'transport:management_summary_report' %}"><i class="fas fa-chart-area"></i>&nbsp;Executive sum</a></li>
+                                
+            </div>
+
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-users"></i> Task Management</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">            
+                <li><a class="dropdown-item" href="{% url 'customerportal:partner_landing_page' %}"><i class="fas fa-users text-info"></i>&nbsp;Partner Portal</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:tasks_dashboard' %}"><i class="fas fa-users text-info"></i>&nbsp;Dashboard</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:create_team' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create team</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:add_member' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Add Member</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:create_task' %}"><i class="fas fa-plus-square text-info"></i>&nbsp;Create task</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:tasks_list' %}"><i class="fas fa-tasks text-info"></i>&nbsp;Task list</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:aggregated_report_sheet' %}"><i class="fas fa-file text-info"></i>&nbsp;Aggregated Performance Data</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:performance_evaluation_view' %}"><i class="fas fa-file text-info"></i>&nbsp;Details Performance Data</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:team_performance_chart' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Team Performance</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:employee_performance_chart' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Employee Performance</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:year_month_performance_chart' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Monthly Performance</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:year_quarter_performance_chart' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Quarterly Performance</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:yearly_performance_trend' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Yearly Performance</a></li>
+                <li><a class="dropdown-item" href="{% url 'tasks:group_performance_chart' %}"><i class="fas fa-chart-line text-info"></i>&nbsp;Group Performance</a></li>  
+                 <li><a class="dropdown-item" href="{% url 'tasks:increment_promotion' %}"><i class="fas fa-users text-info"></i>&nbsp;Appraisal</a></li>
+                     
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Recruitment</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+
+            <div class="submenu">
+               <li><a class="dropdown-item" href="{% url 'recruitment:recruitment_dashboard' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Menu Dashboard</a></li>  
+
+                <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Automate CV screening criteria</span></a></li>
+              
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_score_card' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create Score card</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_experience' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create experience</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_language' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create language</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_language_skill' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create Language skill</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_education' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create edu marks</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_edu_institution' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create edu institution marks</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_edu_subject' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create edu subject marks</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_certification' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create certification marks</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_skill' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create skill marks</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_age' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create age marks</a></li>
+
+                     
+                <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Job Request and approval process</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_job_category' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create job category</a></li>                              
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_job' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create job request</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:job_request_list' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Job Request List</a></li>
+               <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Recruitment Preparation</span></a></li>
+                                        
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_question_paper' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create BQ question paper</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_bq_question' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create BQ question</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:bq_question_paper_list' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;BQ exam List</a></li>
+                               
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_exam' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create MCQ question paper</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_questions' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create MCQ question</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:exam_list' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;MCQ Exam List</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_panel' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create interview Panel</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_panel_member' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Add panel member</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_interview' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create Interview</a></li>
+            
+                <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Recruitment Status and Processing</span></a></li>
+                                                                                                
+                <li><a class="dropdown-item" href="{% url 'recruitment:job_list' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Job List</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:job_list_candidate_view' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Job candidate view</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:job_list_interview_panel_view' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Job interview panel view</a></li>                           
+                            
+                <li><a class="dropdown-item" href="{% url 'recruitment:cv_screening' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;CV Screening</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:exam_screening' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp; Exam screening</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:interview_screening' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp; Interview screening</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:selected_candidate' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp; Selected candidates</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:all_job_candidate_status' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"> </i>&nbsp;All jobs candidates</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:grand_summary' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i> &nbsp;Grand summary</a></li>
+
+              <li class="text-center my-2"><a style="font-size: 20px;" href=""><span style="color:aqua">Documentation</span></a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_common_documents' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create common Documents</a></li>
+                <li><a class="dropdown-item" href="{% url 'recruitment:create_candidate_documents' %}"><i class="fas fa-users"></i><i class="fas fa-pencil-alt"></i>&nbsp;Create candidate documents</a></li>
+                            
+            </div>
+
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-users"></i> HR</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;New Employee</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-id-badge text-info"></i>&nbsp;Employee List</a>
+            </div>
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> SCM</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+	    <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+ <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+            <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+             <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+                <span><i class="fas fa-truck"></i> Expansion</span>
+                <i class="fas fa-chevron-right arrow"></i>
+            </button>
+            <div class="submenu">
+                <a class="dropdown-item" href="#"><i class="fas fa-plus-square text-info"></i>&nbsp;Create Batch</a>
+                <a class="dropdown-item" href="#"><i class="fas fa-truck-loading text-info"></i>&nbsp;Supplier</a>
+            </div>
+
+
+        </aside>

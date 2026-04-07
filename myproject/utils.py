@@ -257,14 +257,24 @@ def calculate_stock_value(product, warehouse):
         transaction_type='SCRAPPED_IN', 
     ).aggregate(total=Sum('quantity'))['total'] or 0
 
+    total_direct_purchase_in = InventoryTransaction.objects.filter(
+        product=product,
+        warehouse=warehouse,
+        transaction_type='DIRECT_PURCHASE_IN', 
+    ).aggregate(total=Sum('quantity'))['total'] or 0
 
+    total_direct_sale_out = InventoryTransaction.objects.filter(
+        product=product,
+        warehouse=warehouse,
+        transaction_type='DIRECT_SALE_OUT', 
+    ).aggregate(total=Sum('quantity'))['total'] or 0
 
 
     total_available = (
-        total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in
-        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out)
+        total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in + total_direct_purchase_in
+        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out + total_direct_sale_out )
     )   
-    total_stock = total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in
+    total_stock = total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_direct_purchase_in
     
     if total_available < 0:
         logger.warning(f"Negative stock detected for {product.name} in {warehouse.name}.")
@@ -283,6 +293,8 @@ def calculate_stock_value(product, warehouse):
         'total_transfer_out': total_transfer_out,
         'total_scrapped_in': total_scrapped_in,
         'total_scrapped_out': total_scrapped_out,
+        'total_direct_purchase_in': total_direct_purchase_in,
+        'total_direct_sale_out': total_direct_sale_out,
         'total_available': total_available,
         'total_stock':total_stock
     }
@@ -368,16 +380,25 @@ def calculate_stock_value2(product, warehouse=None):
         **filters
     ).aggregate(total=Sum('quantity'))['total'] or 0
 
-      
+    total_direct_purchase_in = InventoryTransaction.objects.filter(
+        transaction_type='DIRECT_PURCHASE_IN',
+        **filters
+    ).aggregate(total=Sum('quantity'))['total'] or 0
+    
+    total_direct_sale_out = InventoryTransaction.objects.filter(
+        transaction_type='DIRECT_SALE_OUT',
+        **filters
+    ).aggregate(total=Sum('quantity'))['total'] or 0
 
+   
   
 
     total_available = (
-        total_purchase + total_manufacture_in + total_transfer_in + total_existing_in + total_scrapped_in
-        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out)
+        total_purchase + total_manufacture_in + total_transfer_in + total_existing_in + total_scrapped_in + total_direct_purchase_in 
+        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out + total_direct_sale_out)
     )
 
-    total_stock = total_purchase + total_manufacture_in + total_transfer_in + total_existing_in
+    total_stock = total_purchase + total_manufacture_in + total_transfer_in + total_existing_in + total_direct_purchase_in 
     
     if total_available < 0:
         logger.warning(
@@ -399,9 +420,14 @@ def calculate_stock_value2(product, warehouse=None):
         'total_transfer_out': total_transfer_out,
         'total_scrapped_in': total_scrapped_in,
         'total_scrapped_out': total_scrapped_out,
+        'total_direct_purchase_in': total_direct_purchase_in,
+        'total_direct_sale_out': total_direct_sale_out,
         'total_available': total_available,
         'total_stock': total_stock
     }
+
+
+
 
 def calculate_batch_stock_value(product, warehouse, valuation_method="FIFO"):
     total_purchase = InventoryTransaction.objects.filter(
@@ -484,23 +510,32 @@ def calculate_batch_stock_value(product, warehouse, valuation_method="FIFO"):
         transaction_type='SCRAPPED_IN', 
     ).aggregate(total=Sum('quantity'))['total'] or 0
 
+    total_direct_purchase_in = InventoryTransaction.objects.filter(
+        transaction_type='DIRECT_PURCHASE_IN',
+        product=product,
+        warehouse=warehouse,
+    ).aggregate(total=Sum('quantity'))['total'] or 0
+    total_direct_sale_out = InventoryTransaction.objects.filter(
+        transaction_type='DIRECT_SALE_OUT',
+        product=product,
+        warehouse=warehouse,
+    ).aggregate(total=Sum('quantity'))['total'] or 0
 
-
+ 
 
     total_available = (
-        total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in
-        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out)
+        total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in + total_direct_purchase_in
+        - (total_sold + total_transfer_out + total_replacement_out + total_operations_out + total_manufacture_out + total_scrapped_out + total_direct_sale_out)
     )   
-    total_stock =  total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in
+    total_stock =  total_purchase + total_manufacture_in + total_transfer_in + total_Existing_in + total_scrapped_in + total_direct_purchase_in
 
     order_by = "created_at" if valuation_method == "FIFO" else "-created_at"
     latest_transaction = InventoryTransaction.objects.filter(
         product=product,
-        warehouse=warehouse,
-        transaction_type='INBOUND'
+        warehouse=warehouse,       
     ).select_related("batch").order_by(order_by).first()
 
-    unit_cost = latest_transaction.batch.unit_price if latest_transaction and latest_transaction.batch  is not None else 0
+    unit_cost = latest_transaction.batch.purchase_price if latest_transaction and latest_transaction.batch  is not None else 0
     stock_value = total_available * unit_cost          
 
     return {
@@ -516,10 +551,13 @@ def calculate_batch_stock_value(product, warehouse, valuation_method="FIFO"):
         'total_transfer_out': total_transfer_out,
         'total_scrapped_in': total_scrapped_in,
         'total_scrapped_out': total_scrapped_out,
+        'total_direct_purchase_in': total_direct_purchase_in,
+        'total_direct_sale_out': total_direct_sale_out,
         'total_available': total_available,
         'total_stock': total_stock,
         'stock_value': stock_value
     }
+
 
 
 

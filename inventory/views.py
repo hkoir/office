@@ -149,6 +149,7 @@ def complete_quality_control(request, qc_id):
     purchase_request_order = purchase_order.purchase_request_order
     purchase_order_item = purchase_dispatch_item.dispatch_item
     batch_fetch = purchase_order_item.batch
+    product_type = purchase_order_item.product_type
   
  
 
@@ -169,6 +170,7 @@ def complete_quality_control(request, qc_id):
                         warehouse=warehouse,
                         location=location,
                         product=quality_control.product,
+                        product_type= product_type,
                         batch = batch_fetch,
                         transaction_type='INBOUND',
                         quantity=good_quantity,
@@ -277,6 +279,7 @@ def complete_manufacture_quality_control(request, qc_id):
                         location=location,
                         product=quality_control.product,
                         transaction_type='MANUFACTURE_IN',
+                        product_type = 'finished_product',
                         quantity=good_quantity,
                         manufacture_order=materials_request_order,
                         batch=batch
@@ -649,6 +652,9 @@ def inventory_list(request):
                     'total_scrapped_out': stock_data['total_scrapped_out'],
                     'total_scrapped_in': stock_data['total_scrapped_in'],     
 
+                    'total_direct_sale_out': stock_data['total_direct_sale_out'],
+                    'total_direct_purchase_in': stock_data['total_direct_purchase_in'],  
+
                     'total_stock': stock_data['total_stock'],
                     'total_available': stock_data['total_available'],           
                     'stock_value': stock_data['stock_value'], 
@@ -673,6 +679,8 @@ def inventory_list(request):
                 'total_replacement_in': [float(item['total_replacement_in']) for item in data],
                 'total_scrapped_out': [float(item['total_scrapped_out']) for item in data],
                 'total_scrapped_in': [float(item['total_scrapped_in']) for item in data],
+                'total_direct_sale_out': [float(item['total_direct_sale_out']) for item in data],
+                'total_direct_sale_in': [float(item['total_direct_purchase_in']) for item in data],
 
                 'total_stock': [float(item['total_stock']) for item in data],
                 'total_available': [float(item['total_available']) for item in data],
@@ -716,7 +724,7 @@ def inventory_list(request):
 
 from myproject.utils import calculate_batch_stock_value
 
-def inventory_aggregate_list(request):
+def inventory_aggregate_list2(request):
     grand_total_stock_value = 0
     days = None
     start_date = None
@@ -763,20 +771,20 @@ def inventory_aggregate_list(request):
 
             order_by = "created_at" if valuation_method == "LIFO" else "-created_at"
             latest_transaction = InventoryTransaction.objects.filter(
-                    product=product,                    
-                    transaction_type='INBOUND'
-                ).order_by(order_by).first()
+                    product=product,                  
+                    ).order_by(order_by).first()
+                    
 
             unit_cost = (
-                latest_transaction.batch.unit_price 
-                if latest_transaction and latest_transaction.batch and latest_transaction.batch.unit_price is not None 
+                latest_transaction.batch.discounted_price
+                if latest_transaction and latest_transaction.batch and latest_transaction.batch.discounted_price is not None 
                 else None
             )
 
 
             stock_data = calculate_stock_value2(product)
             total_available = stock_data['total_available']
-            total_stock_value = total_available * float(unit_cost)
+            total_stock_value = total_available * float(unit_cost or 0)
             grand_total_stock_value += total_stock_value
           
 
@@ -796,6 +804,8 @@ def inventory_aggregate_list(request):
                 'total_scrapped_out': stock_data['total_scrapped_out'],
                 'total_replacement_out': stock_data['total_replacement_out'],
                 'total_replacement_in': stock_data['total_replacement_in'],
+                'total_direct_sale_out': stock_data['total_direct_sale_out'],
+                'total_direct_purchase_in': stock_data['total_direct_purchase_in'],
 
                 'total_available': total_available,
                 'total_stock': stock_data['total_stock'],
@@ -821,6 +831,9 @@ def inventory_aggregate_list(request):
             'total_replacement_out': [item['total_replacement_out'] for item in aggregated_data],
             'total_replacement_in': [item['total_replacement_in'] for item in aggregated_data],
 
+            'total_direct_sale_out': [item['total_direct_sale_out'] for item in aggregated_data],
+            'total_direct_purchase_in': [item['total_direct_purchase_in'] for item in aggregated_data],
+
             'total_stock': [item['total_stock'] for item in aggregated_data],
             'total_available': [item['total_available'] for item in aggregated_data],
             'total_stock_value': [item['total_stock_value'] for item in aggregated_data],
@@ -844,6 +857,137 @@ def inventory_aggregate_list(request):
         'product_name': product_name,
     }
     return render(request, 'inventory/inventory_aggregate_list.html', context)
+
+
+
+
+@login_required
+def inventory_aggregate_list(request):
+    grand_total_stock_value = 0
+    days = None
+    start_date = None
+    end_date = None
+    aggregated_data = []
+    chart_data = {}
+    product_name = None
+
+    form = SummaryReportChartForm(request.GET or None)
+    valuation_method = request.GET.get("valuation_method", "LIFO")
+
+    if form.is_valid():
+        start_date = form.cleaned_data.get('start_date')
+        end_date = form.cleaned_data.get('end_date')
+        days = form.cleaned_data.get('days')
+        product_name = form.cleaned_data.get('product_name')
+
+        if product_name:
+            products = Product.objects.filter(id=product_name.id)
+        else:
+            products = Product.objects.all()
+
+        date_filter = {}
+        if start_date and end_date:
+            date_filter['created_at__range'] = (start_date, end_date)
+        elif days:
+            end_date = timezone.now()
+            start_date = end_date - timedelta(days=days)
+            date_filter['created_at__range'] = (start_date, end_date)
+
+        for product in products:
+            stock_data = calculate_stock_value2(product)
+            total_available = stock_data['total_available']
+
+            last_in_transaction = (
+                InventoryTransaction.objects.filter(
+                    product=product,
+                    transaction_type__in=[
+                        'INBOUND', 'MANUFACTURE_IN', 'TRANSFER_IN',
+                        'EXISTING_ITEM_IN', 'SCRAPPED_IN', 'DIRECT_PURCHASE_IN'
+                    ],
+                    
+                )
+                .order_by('-created_at')
+                .first()
+            )
+
+            unit_cost = (
+                last_in_transaction.batch.purchase_price
+                if last_in_transaction and last_in_transaction.batch and last_in_transaction.batch.purchase_price is not None
+                else 0
+            )
+         
+            total_stock_value = total_available * float(unit_cost)
+            grand_total_stock_value += total_stock_value
+
+            aggregated_data.append({
+                'product': product.name,
+                'reorder_level': product.reorder_level,
+                'total_purchase': stock_data['total_purchase'],
+                'total_sold': stock_data['total_sold'],
+                'total_manufacture_in': stock_data['total_manufacture_in'],
+                'total_manufacture_out': stock_data['total_manufacture_out'],
+                'total_existing_in': stock_data['total_existing_in'],
+                'total_operations_out': stock_data['total_operations_out'],
+                'total_transfer_in': stock_data['total_transfer_in'],
+                'total_transfer_out': stock_data['total_transfer_out'],
+                'total_scrapped_in': stock_data['total_scrapped_in'],
+                'total_scrapped_out': stock_data['total_scrapped_out'],
+                'total_replacement_out': stock_data['total_replacement_out'],
+                'total_replacement_in': stock_data['total_replacement_in'],
+                'total_direct_sale_out': stock_data['total_direct_sale_out'],
+                'total_direct_purchase_in': stock_data['total_direct_purchase_in'],
+                'total_available': total_available,
+                'total_stock': stock_data['total_stock'],
+                'unit_cost': unit_cost,
+                'total_stock_value': total_stock_value,
+            })
+
+    if aggregated_data:
+        chart_data = {
+            'labels': [item['product'] for item in aggregated_data],
+            'reorder_level': [item['reorder_level'] for item in aggregated_data],
+            'total_purchase': [item['total_purchase'] for item in aggregated_data],
+            'total_sold': [item['total_sold'] for item in aggregated_data],
+            'total_manufacture_in': [item['total_manufacture_in'] for item in aggregated_data],
+            'total_manufacture_out': [item['total_manufacture_out'] for item in aggregated_data],
+            'total_existing_in': [item['total_existing_in'] for item in aggregated_data],
+            'total_operations_out': [item['total_operations_out'] for item in aggregated_data],
+            'total_transfer_in': [item['total_transfer_in'] for item in aggregated_data],
+            'total_transfer_out': [item['total_transfer_out'] for item in aggregated_data],
+            'total_replacement_out': [item['total_replacement_out'] for item in aggregated_data],
+            'total_replacement_in': [item['total_replacement_in'] for item in aggregated_data],
+            'total_scrapped_in': [item['total_scrapped_in'] for item in aggregated_data],
+            'total_scrapped_out': [item['total_scrapped_out'] for item in aggregated_data],
+            'total_direct_sale_out': [item['total_direct_sale_out'] for item in aggregated_data],
+            'total_direct_purchase_in': [item['total_direct_purchase_in'] for item in aggregated_data],
+            'total_available': [item['total_available'] for item in aggregated_data],
+            'total_stock': [item['total_stock'] for item in aggregated_data],
+        }
+
+
+    warehouse_json = json.dumps(chart_data)
+
+    paginator = Paginator(aggregated_data, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    form = SummaryReportChartForm()
+
+    context = {
+        'page_obj': page_obj,
+        'warehouse_json': warehouse_json,
+        'grand_total_stock_value': grand_total_stock_value,
+        'form': form,
+        'days': days,
+        'start_date': start_date,
+        'end_date': end_date,
+        'product_name': product_name,
+    }
+
+    return render(request, 'inventory/inventory_aggregate_list.html', context)
+
+
+
+
 
 
 def inventory_executive_sum(request):
@@ -1016,3 +1160,66 @@ def delete_warehouse_reorder_level(request, id):
 
     messages.warning(request, "Invalid delete request!")
     return redirect('inventory:create_warehouse_reorder_level')  
+
+
+
+
+#####################################################################################
+
+
+from django.utils.dateparse import parse_date
+def quick_inventory_report(request):
+    queryset = (
+        Inventory.objects.values(
+            "product__name",
+            "warehouse__name",
+            "location__name",
+            "shelf__code"
+        )
+        .annotate(total_quantity=Sum("quantity"))
+        .order_by("product__name", "warehouse__name")
+    )
+
+    return render(request, "inventory/quick_report/inventory_report.html", {"inventory_summary": queryset})
+
+
+
+from django.utils.dateparse import parse_date
+def quick_inventory_transaction_report(request):
+    start_date = request.GET.get("start_date")
+    end_date = request.GET.get("end_date")
+    warehouse = request.GET.get("warehouse")
+    product = request.GET.get("product")
+    transaction_type = request.GET.get("transaction_type")
+
+    queryset = InventoryTransaction.objects.all().order_by("-id")
+
+    if start_date:
+        queryset = queryset.filter(created_at__date__gte=parse_date(start_date))
+    if end_date:
+        queryset = queryset.filter(created_at__date__lte=parse_date(end_date))
+    if warehouse:
+        queryset = queryset.filter(warehouse__id=warehouse)
+    if product:
+        queryset = queryset.filter(product__id=product)
+    if transaction_type:
+        queryset = queryset.filter(transaction_type=transaction_type)
+
+    warehouses = Inventory.objects.values("warehouse__id", "warehouse__name").distinct()
+    products = Inventory.objects.values("product__id", "product__name").distinct()
+  
+    transaction_choices = InventoryTransaction._meta.get_field("transaction_type").choices
+
+    return render(
+        request,
+        "inventory/quick_report/inventory_transaction_report.html",
+        {
+            "transactions": queryset,
+            "warehouses": warehouses,
+            "products": products,
+            "transaction_choices": transaction_choices,
+        }
+    )
+
+
+

@@ -29,7 +29,7 @@ class CustomerQuotationForm(forms.ModelForm):
 class CustomerQuotationItemForm(forms.ModelForm):
     class Meta:
         model = CustomerQuotationItem
-        fields = ["product", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
+        fields = ["category","product","batch", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
 
         widgets={
             'specification':forms.Textarea(attrs={
@@ -251,7 +251,7 @@ class QualityControlForm(forms.ModelForm):
 
     class Meta:
         model = SaleQualityControl
-        fields = ['total_quantity', 'good_quantity', 'bad_quantity', 'inspection_date', 'comments']
+        fields = ['product_type','total_quantity', 'good_quantity', 'bad_quantity', 'inspection_date', 'comments']
 
 
     def __init__(self, *args, initial_warehouse=None, initial_location=None, **kwargs):

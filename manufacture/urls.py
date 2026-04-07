@@ -25,8 +25,9 @@ urlpatterns = [
   path('materials_delivered_items/<int:order_id>/', views.materials_delivered_items, name='materials_delivered_items'),
 
   path('submit-finished-goods/<int:request_id>/', views.submit_finished_goods, name='submit_finished_goods'),
-   path('direct_submit-finished-goods/', views.direct_submit_finished_goods, name='direct_submit_finished_goods'),
-  
+  path('direct_submit-finished-goods/', views.direct_submit_finished_goods, name='direct_submit_finished_goods'),
+  path('submitted-finished-goods/<int:order_id>/', views.submitted_finished_goods_detail, name='submitted_finished_goods_detail'),  
+
   path('qc_dashboard/', views.qc_dashboard, name='qc_dashboard'),
   path('qc_dashboard/<int:purchase_order_id>/', views.qc_dashboard, name='qc_dashboard_with_order'), 
   path('qc_inspect_item/<int:item_id>/', views.qc_inspect_item, name='qc_inspect_item'),

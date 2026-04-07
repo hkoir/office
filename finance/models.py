@@ -254,3 +254,183 @@ class SalePaymentAttachment(models.Model):
     file = models.ImageField(upload_to='sale_payment/')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+
+
+
+
+
+################################# Direct Sale ###############################
+
+from django.db import models
+from django.contrib.auth import get_user_model
+from django.utils import timezone
+from django.utils import timezone
+
+
+class DirectInvoice(models.Model):
+    DOCUMENT_CHOICES = [
+        ('invoice', 'Invoice'),
+        ('quotation', 'Quotation'),
+        ('factory_out', 'Factory out'),
+    ]
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="direct_invoices")
+    invoice_number = models.CharField(max_length=40, unique=True)
+    document_type = models.CharField(max_length=30,choices=DOCUMENT_CHOICES,null=True,blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    due_date = models.DateTimeField(null=True, blank=True)
+    customer_name = models.ForeignKey("customer.Customer",on_delete=models.CASCADE,related_name="direct_invoice_customer",null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    advance_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0,null=True,blank=True) 
+    discount_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    final_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    notes = models.TextField(blank=True)
+    terms_and_conditions = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Write custom terms & conditions for this invoice"
+    )
+    STATUS_CHOICES = [
+        ('DRAFT', 'Draft'),
+        ('CONFIRMED', 'Confirmed'),
+        ('CANCELLED', 'Cancelled'),
+        ('UPDATED', 'Updated'),
+        ('PAID', 'Paid'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+
+    def save(self, *args, **kwargs):
+        if not self.invoice_number:
+            today = timezone.now().date()
+            date_str = today.strftime("%Y%m%d")
+            last_invoice = DirectInvoice.objects.filter(created_at__date=today).order_by('id').last()
+            seq = 1
+            if last_invoice:
+                last_number = last_invoice.invoice_number.split("-")[-1]
+                try:
+                    seq = int(last_number) + 1
+                except ValueError:
+                    seq = 1
+            self.invoice_number = f"INV-{date_str}-{seq:04d}"  # e.g., INV-20251027-0001
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} for {self.customer_name}"
+
+
+class DirectInvoiceItem(models.Model):
+    invoice = models.ForeignKey(DirectInvoice, on_delete=models.CASCADE, related_name="items")
+    category = models.ForeignKey('product.Category',on_delete=models.CASCADE,related_name="direct_invoice_categories",
+               null=True,blank=True)
+    product= models.ForeignKey('product.Product',on_delete=models.CASCADE,related_name="direct_invoice_items",null=True,blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+    USAGE_PURPOSE_CHOICES = [
+        ('sale', 'Sold to Customer'),
+        ('factory', 'Consumed in Factory'),
+    ]
+    usage_purpose = models.CharField(
+        max_length=20,
+        choices=USAGE_PURPOSE_CHOICES,
+        null=True,
+        blank=True,
+        help_text="Defines if this line item is sold or consumed in factory."
+    )
+    batch= models.ForeignKey('purchase.Batch',on_delete=models.CASCADE,related_name="direct_invoice_batches",null=True,blank=True)
+    warehouse = models.ForeignKey('inventory.Warehouse',on_delete=models.CASCADE,null=True,blank=True)
+    location = models.ForeignKey('inventory.Location',on_delete=models.CASCADE,null=True,blank=True)
+    description = models.CharField(max_length=255,null=True,blank=True)
+    quantity = models.PositiveIntegerField()
+    confirmed_quantity = models.FloatField(default=0)
+    unit_price = models.DecimalField(max_digits=30, decimal_places=2)
+    total_price = models.DecimalField(max_digits=30, decimal_places=2, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.total_price = self.quantity * self.unit_price
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.description} x {self.quantity}"
+    
+
+################################# Direct Purchase ###############################
+
+class DirectPurchaseInvoice(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="direct_purchase_invoices")
+    invoice_number = models.CharField(max_length=40, unique=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    due_date = models.DateTimeField(null=True, blank=True)
+    supplier_name = models.ForeignKey("supplier.Supplier",on_delete=models.CASCADE,related_name="direct_invoice_supplier",null=True, blank=True)
+    total_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    advance_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0,null=True,blank=True) 
+    discount_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    final_amount = models.DecimalField(max_digits=30, decimal_places=2, default=0)
+    notes = models.TextField(blank=True)
+    terms_and_conditions = models.TextField(
+        blank=True, 
+        null=True, 
+        help_text="Write custom terms & conditions for this invoice"
+    )
+    STATUS_CHOICES = [
+        ('DRAFT', 'Draft'),
+        ('CONFIRMED', 'Confirmed'),
+        ('CANCELLED', 'Cancelled'),
+        ('UPDATED', 'Updated'),
+        ('PAID', 'Paid'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='DRAFT')
+
+    def save(self, *args, **kwargs):
+        if not self.invoice_number:
+            today = timezone.now().date()
+            date_str = today.strftime("%Y%m%d")
+            last_invoice = DirectInvoice.objects.filter(created_at__date=today).order_by('id').last()
+            seq = 1
+            if last_invoice:
+                last_number = last_invoice.invoice_number.split("-")[-1]
+                try:
+                    seq = int(last_number) + 1
+                except ValueError:
+                    seq = 1
+            self.invoice_number = f"INV-{date_str}-{seq:04d}"  # e.g., INV-20251027-0001
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} for {self.supplier_name}"
+
+
+class DirectPurchaseInvoiceItem(models.Model):
+    invoice = models.ForeignKey(DirectPurchaseInvoice, on_delete=models.CASCADE, related_name="direct_purchase_items")
+    category = models.ForeignKey('product.Category',on_delete=models.CASCADE,related_name="direct_purchase_invoice_categories",
+               null=True,blank=True)
+    product= models.ForeignKey('product.Product',on_delete=models.CASCADE,related_name="direct_purchase_invoice_items",null=True,blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+    batch= models.ForeignKey('purchase.Batch',on_delete=models.CASCADE,related_name="direct_purchase_invoice_batches",null=True,blank=True)
+    warehouse = models.ForeignKey('inventory.Warehouse',on_delete=models.CASCADE,null=True,blank=True)
+    location = models.ForeignKey('inventory.Location',on_delete=models.CASCADE,null=True,blank=True)
+    description = models.CharField(max_length=255,null=True,blank=True)
+    quantity = models.PositiveIntegerField()
+    confirmed_quantity = models.FloatField(default=0)
+    unit_price = models.DecimalField(max_digits=30, decimal_places=2)
+    total_price = models.DecimalField(max_digits=30, decimal_places=2, blank=True)
+
+    def save(self, *args, **kwargs):
+        self.total_price = self.quantity * self.unit_price
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.description} x {self.quantity}"
+

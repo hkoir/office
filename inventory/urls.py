@@ -41,5 +41,9 @@ urlpatterns = [
  path('update_warehouse_reorder_level/<int:id>/', views.manage_warehouse_reorder_level, name='update_warehouse_reorder_level'),
   path('delete_warehouse_reorder_level/', views.delete_warehouse_reorder_level, name='delete_warehouse_reorder_level'),
   
+
+path("quick_inventory/report/", views.quick_inventory_report, name="quick_inventory_report"),
+path("quick_inventory/transactions/", views.quick_inventory_transaction_report, name="quick_inventory_transaction_report"),
+
   
 ]

@@ -107,6 +107,14 @@ class Inventory(models.Model):
         blank=True,
         related_name='location_inventory'
     )
+
+    shelf = models.ForeignKey(
+        Shelf,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='shelf_inventory'
+    )
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
@@ -119,6 +127,11 @@ class Inventory(models.Model):
     remarks = models.TextField(null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['warehouse', 'location', 'product'], name='unique_inventory_per_location')
+        ]
     
     def save(self, *args, **kwargs):
         if not self.inventory_id:
@@ -130,6 +143,8 @@ class Inventory(models.Model):
         return f"{self.warehouse}--{self.location}--{self.product.name}--{self.quantity}"
 
 
+from finance.models import DirectInvoice,DirectPurchaseInvoice
+
 
 class InventoryTransaction(models.Model):  
     inventory_transaction=models.ForeignKey(Inventory,on_delete=models.CASCADE,null=True, blank=True,related_name='inventory_transaction') 
@@ -140,6 +155,17 @@ class InventoryTransaction(models.Model):
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE,null=True, blank=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE,null=True, blank=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,null=True, blank=True)
+    product_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('raw_materials', 'raw_materials'),
+            ('finished_product', 'finished_product'),
+            ('component', 'component'),
+            ('BOM', 'BOM')
+        ],
+        null=True,
+        blank=True
+    )
     transaction_type = models.CharField(
     max_length=20,
     choices=[
@@ -154,7 +180,9 @@ class InventoryTransaction(models.Model):
         ('EXISTING_ITEM_IN', 'Existing items'),
         ('OPERATIONS_OUT', 'Operations out'),
         ('SCRAPPED_OUT', 'Scrapped out'),
-        ('SCRAPPED_IN','Scrapped in')
+        ('SCRAPPED_IN','Scrapped in'),
+        ('DIRECT_SALE_OUT', 'Direct invoice out'),
+        ('DIRECT_PURCHASE_IN', 'Direct Purchase IN'),
     ],
     null=True, blank=True
     )    
@@ -166,6 +194,8 @@ class InventoryTransaction(models.Model):
     existing_items_order = models.ForeignKey(ExistingOrder,related_name='Existing_items_inventory',null=True,blank=True, on_delete=models.CASCADE)
     operations_request_order = models.ForeignKey(OperationsRequestOrder,related_name='operations_request_order_inventory',null=True,blank=True, on_delete=models.CASCADE)
     scrapped_order = models.ForeignKey(ScrappedOrder,related_name='scrapped_order_inventory',null=True,blank=True, on_delete=models.CASCADE)
+    direct_sale_invoice = models.ForeignKey(DirectInvoice,related_name='direct_invoice',null=True,blank=True, on_delete=models.CASCADE)
+    direct_purchase_invoice = models.ForeignKey(DirectPurchaseInvoice,related_name='direct_purchase_invoice',null=True,blank=True, on_delete=models.CASCADE)
     remarks = models.TextField(null=True,blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

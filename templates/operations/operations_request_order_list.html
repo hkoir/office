@@ -55,7 +55,12 @@
                             </td>  
                             <td style="white-space: nowrap;">{{ order.user}}</td> 
                             <td>
-                             <a href="{% url 'operations:create_operations_items_delivery' order.id %}" class="btn btn-sm btn-primary">Create delivery</a></td>                    
+                                {% if not order.is_fully_delivered%}
+                             <a href="{% url 'operations:create_operations_items_delivery' order.id %}" class="btn btn-sm btn-primary">Create delivery</a>
+                             {% else %}
+                             <span class="badge bg-info">Delivered</span>
+                             {% endif %}
+                            </td>                    
                             
                         </tr>
                         {% empty %}

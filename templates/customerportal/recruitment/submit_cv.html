@@ -1,0 +1,62 @@
+{% extends "recruitment_portal.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow border-0 rounded-3 p-4">
+                <h3 class="text-center mb-3">Submit Your CV</h3>
+                <p class="text-center text-muted mb-4">Even if there are no current openings, we welcome your application.</p>
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+
+                    <div class="mb-3">
+                        {{ form.full_name.label_tag }}
+                        {{ form.full_name }}
+                        {{ form.full_name.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.email.label_tag }}
+                        {{ form.email }}
+                        {{ form.email.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.phone.label_tag }}
+                        {{ form.phone }}
+                        {{ form.phone.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.job_position.label_tag }}
+                        {{ form.job_position }}
+                        {{ form.job_position.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.cv.label_tag }}
+                        {{ form.cv }}
+                        {{ form.cv.errors }}
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.cover_letter.label_tag }}
+                        {{ form.cover_letter }}
+                        {{ form.cover_letter.errors }}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Submit CV</button>
+                </form>
+
+                <p class="text-center text-muted mt-3">
+                    We respect your privacy. Your CV will only be used for recruitment purposes.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

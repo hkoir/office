@@ -58,9 +58,9 @@ def create_location(request, id=None):
     form = AddLocationForm(request.POST or None, request.FILES or None, instance=instance)
 
     if request.method == 'POST' and form.is_valid():
-        form_intance=form.save(commit=False)
+        form_instance=form.save(commit=False)
         form_instance.user = request.user
-        form_intance.save()        
+        form_instance.save()        
         messages.success(request, message_text)
         return redirect('supplier:create_location')  
 

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+{% include 'finance/quick_access_link.html' %}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white text-center">
+            <h4>Inventory Stock Report</h4>
+        </div>
+
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Location</th>
+                        <th>Shelf</th>
+                        <th>Quantity</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for row in inventory_summary %}
+                        <tr>
+                            <td>{{ row.product__name }}</td>
+                            <td>{{ row.warehouse__name }}</td>
+                            <td>{{ row.location__name|default:"-" }}</td>
+                            <td>{{ row.shelf__name|default:"-" }}</td>
+                            <td><strong>{{ row.total_quantity }}</strong></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">No inventory found</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

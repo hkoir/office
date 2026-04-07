@@ -17,6 +17,11 @@
 <form method="post" class="mt-4">
     {% csrf_token %}
     <table class="table table-bordered">
+
+         <tr>
+            <th>Product Type</th>
+            <td>{{ form.product_type }}</td>
+        </tr>
         <tr>
             <th>Total Quantity</th>
             <td>{{ form.total_quantity.value }}</td>

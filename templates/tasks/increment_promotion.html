@@ -7,7 +7,7 @@
 {% block content %}
 
 
-<div class="container my-3">
+<div class="container my-2">
   <div class="card shadow-sm border-0 rounded-3">
     <div class="card-body text-center py-3">
       <a href="{% url 'tasks:tasks_dashboard' %}" 
@@ -24,7 +24,7 @@
      
         <h4 class="text-center" style="color: blue;font-weight: bold;">Appraisal automation (Promotion and Increment)</h4>
  
-      <div class="col-12 col-md-4 mb-4">      
+      <div class="col-12 mb-4">      
         <div class="card shadow-lg border-0 rounded-lg" style="width:100%">
           <!-- Card Header -->
           <div class="card-header bg-primary text-white text-center">
@@ -32,30 +32,58 @@
           </div>
           <div class="card-body">             
             <hr>      
-              <form method="post" enctype="multipart/form-data" action="{% url 'tasks:increment_promotion' %}" id="add_category">
-                  {% csrf_token %} 
-                 {% for field in form.visible_fields %}
-                    <div class="mb-3">
-                        {{ field.label_tag }}
-                        {{ field|add_class:"form-control" }}
-                        {% if field.help_text %}
+	   <form method="post" enctype="multipart/form-data" action="{% url 'tasks:increment_promotion' %}" id="add_category">
+                {% csrf_token %}
+                    <div class="row g-3">
+                        {% for field in form %}
+                            <div class="col-12 col-md-4 col-lg-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                {{ field.label }}
+                                {% if field.field.required %}
+                                    <span class="text-danger">*</span>
+                                {% endif %}
+                            </label>
+
+                            {% if field.field.widget.input_type == "checkbox" %}
+                            <div class="form-check form-switch">
+                                {{ field|add_class:'form-check-input' }}
+                                <label class="form-check-label small text-muted">{{ field.help_text }}</label>
+                            </div>
+                            {% elif field.field.widget.input_type == "textarea" %}
+                            {{ field|add_class:'form-control' }}
+                            {% elif field.field.widget.input_type == "select" %}
+                            {{ field|add_class:'form-select' }}
+                            {% else %}
+                            {{ field|add_class:'form-control' }}
+                            {% endif %}
+
+                            {% if field.help_text and field.field.widget.input_type != "checkbox" %}
                             <small class="form-text text-muted">{{ field.help_text }}</small>
-                        {% endif %}
-                        {% for error in field.errors %}
-                            <div class="text-danger">{{ error }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                            {% endfor %}
+                        </div>
                         {% endfor %}
                     </div>
-                {% endfor %}
-                  <div class="d-grid">
-                  <button type="submit" class="btn btn-primary btn-lg">Submit</button>
-                </div>
-              </form>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-success px-4 rounded-pill shadow-sm me-2">
+                            <i class="bi bi-save me-1"></i> Submit
+                        </button>                            
+                    </div>
+                </form>
           </div>
-          <a href="{% url 'tasks:increment_promotion_check' %}" class="btn btn-success text-center">Go for analysis</a>
-          <a href="{% url 'tasks:increment_promotion_final_data' %}" class="btn btn-success text-center mt-2">See final result</a>
+          <div class="d-flex justify-content-between g-3 mb-3">
+           <a href="{% url 'tasks:increment_promotion_check' %}" class="btn btn-sm btn-outline-primary text-center m-2">Go for analysis</a>
+          <a href="{% url 'tasks:increment_promotion_final_data' %}" class="btn btn-sm btn-outline-primary text-center m-2">See final result</a>
+          </div>
        </div>   
       </div>
-       <div class="col-12 col-md-8 table-responsive mt-4">
+
+       <div class="col-12 mt-4">
+       <div class="table-responsive">	
         <table class="table table-hover">
             <thead class="table-dark">
                
@@ -146,6 +174,7 @@
                 {% endfor %}
             </tbody>
         </table> 
+	</div>
         <!-- Pagination Controls -->
       <div class="pagination">
         <span class="step-links">

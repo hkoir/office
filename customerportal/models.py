@@ -3,6 +3,47 @@ import uuid
 from tasks.models import Ticket
 
 
+from django.utils import timezone
+
+class EmailSubscription(models.Model):  
+    email = models.EmailField(unique=True, verbose_name="Email Address")
+    first_name = models.CharField(max_length=50, blank=True, null=True)
+    last_name = models.CharField(max_length=50, blank=True, null=True)    
+    is_active = models.BooleanField(default=False, help_text="Set True once subscriber confirms email")
+    subscribed_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(blank=True, null=True)    
+    verification_token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    
+    class Meta:
+        ordering = ['-subscribed_at']
+        verbose_name = "Job Alert Subscriber"
+        verbose_name_plural = "Job Alert Subscribers"
+
+    def __str__(self):
+        return self.email
+
+
+
+
+def cv_upload_path(instance, filename):   
+    return f'cvs/{instance.email}_{filename}'
+
+class JobApplication(models.Model):
+    full_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    job_position = models.CharField(max_length=100, blank=True, null=True)
+    cv = models.FileField(upload_to=cv_upload_path)
+    cover_letter = models.TextField(blank=True, null=True)
+    submitted_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = "Job Application"
+        verbose_name_plural = "Job Applications"
+
+    def __str__(self):
+        return f"{self.full_name} - {self.email}"
 
 
 class TicketCustomerFeedback(models.Model):    

@@ -79,6 +79,79 @@ def job_landing_page(request):
 
 
 
+from django.core.mail import send_mail
+from .models import EmailSubscription
+from .forms import EmailSubscriptionForm,JobApplicationForm
+from django.conf import settings
+
+def subscribe_email(request):
+    if request.method == 'POST':
+        form = EmailSubscriptionForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            subscriber, created = EmailSubscription.objects.get_or_create(email=email)
+            if created or not subscriber.is_active:
+                subscriber.first_name = form.cleaned_data.get('first_name', '')
+                subscriber.last_name = form.cleaned_data.get('last_name', '')
+                subscriber.is_active = False
+                subscriber.save()
+                
+                # Send verification email
+                verification_link = request.build_absolute_uri(
+                    f"/customerportal/subscribe/verify/{subscriber.verification_token}/"
+                )
+                send_mail(
+                    subject="Confirm your subscription",
+                    message=f"Hi {subscriber.first_name},\n\nClick the link to confirm your subscription:\n{verification_link}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[subscriber.email],
+                    fail_silently=False
+                )
+                messages.success(request, "Check your email to confirm your subscription!")
+            else:
+                messages.info(request, "You are already subscribed.")
+        else:
+            messages.error(request, "Please provide a valid email.")
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+
+
+def verify_subscription(request, token):
+    subscriber = get_object_or_404(EmailSubscription, verification_token=token)
+    if not subscriber.is_active:
+        subscriber.is_active = True
+        subscriber.verified_at = timezone.now()
+        subscriber.save()
+        messages.success(request, "Subscription confirmed! You will now receive job alerts.")
+    else:
+        messages.info(request, "Subscription already confirmed.")
+    return redirect('customerportal:job_landing_page')  # or your careers page URL
+
+
+def submit_cv(request):
+    if request.method == 'POST':
+        form = JobApplicationForm(request.POST, request.FILES)
+        if form.is_valid():
+            application = form.save()           
+            try:
+                send_mail(
+                    subject=f"New Job Application: {application.full_name}",
+                    message=f"New application for {application.job_position or 'General CV'}\nEmail: {application.email}\nPhone: {application.phone}\nCover Letter: {application.cover_letter or 'N/A'}",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.DEFAULT_FROM_EMAIL], 
+                    fail_silently=True
+                )
+            except Exception:
+                pass  
+
+            messages.success(request, "Thank you! Your CV has been submitted successfully.")
+            return redirect('customerportal:job_landing_page')  
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = JobApplicationForm()    
+    return render(request, 'customerportal/recruitment/submit_cv.html', {'form': form})
+
 
 ################ Supplier/Purchase section #######################################################
 
@@ -662,6 +735,8 @@ def add_purchase_invoice_attachment(request, invoice_id):
     return render(request, 'customerportal/purchase/add_invoice_attachment.html', {'form': form, 'invoice': invoice})
 
 
+####################### Supplier generated invoice #####################################
+
 
 
 ############### Customer/sales section #############################################
@@ -1214,7 +1289,7 @@ def ticket_list(request):
             if start_date and end_date:
                 tickets =  tickets.filter(created_at__range=(start_date, end_date))  
             if ticket_number:           
-                tickets =  tickets.filter(ticket_id = ticket_number)    
+                tickets =  tickets.filter(ticket_code = ticket_number)    
         else:
             print(form.errors)
             form = FilterForm()

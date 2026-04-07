@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+
+{% include 'finance/quick_access_link.html' %}
+
+<div class="container-fluid mt-4">
+
+    <div class="card shadow mb-4">
+        <div class="card-header bg-success text-white text-center">
+            <h4>Inventory Transaction Report</h4>
+        </div>
+      
+        <form method="GET" class="p-3">
+            <div class="row g-2 table-responsive">
+                <div class="col">
+                    <label>Start Date</label>
+                    <input type="date" name="start_date" class="form-control" value="{{ request.GET.start_date }}">
+                </div>
+                <div class="col">
+                    <label>End Date</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ request.GET.end_date }}">
+                </div>
+                <div class="col">
+                    <label>Warehouse</label>
+                    <select name="warehouse" class="form-control">
+                        <option value="">All</option>
+                        {% for w in warehouses %}
+                            <option value="{{ w.warehouse__id }}" {% if request.GET.warehouse == w.warehouse__id|stringformat:"s" %}selected{% endif %}>
+                                {{ w.warehouse__name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Product</label>
+                    <select name="product" class="form-control">
+                        <option value="">All</option>
+                        {% for p in products %}
+                            <option value="{{ p.product__id }}" {% if request.GET.product == p.product__id|stringformat:"s" %}selected{% endif %}>
+                                {{ p.product__name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col">
+                    <label>Transaction Type</label>
+                    <select name="transaction_type" class="form-control">
+                    <option value="">All</option>
+                    {% for key,val in transaction_choices %}
+                        <option value="{{ key }}" {% if request.GET.transaction_type == key %}selected{% endif %}>
+                            {{ val }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                </div>
+                <div class="col d-flex align-items-end">
+                    <button class="btn btn-primary w-100">Filter</button>
+                </div>
+            </div>
+        </form>
+    
+</div>
+
+
+    <div class="card shadow">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>Date</th>
+                        <th>Warehouse</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th>Batch</th>
+                        <th>Qty</th>
+                        <th>User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tx in transactions %}
+                        <tr>
+                            <td>{{ tx.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>{{ tx.warehouse }}</td>
+                            <td>{{ tx.product }}</td>
+                            <td>
+                                <span class="badge bg-info text-dark">{{ tx.get_transaction_type_display }}</span>
+                            </td>
+                            <td>{{ tx.batch }}</td>
+                            <td><b>{{ tx.quantity }}</b></td>
+                            <td>{{ tx.user }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="7" class="text-center text-muted">No transactions found</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

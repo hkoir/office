@@ -31,16 +31,16 @@ class Product(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='product_user')
     name = models.CharField(max_length=255)
     product_id = models.CharField(max_length=150, unique=True, null=True, blank=True)  
-    sku = models.CharField(max_length=100, unique=True)
+    sku = models.CharField(max_length=100, unique=True,null=True,blank=True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')  # Updated related name
     product_type = models.CharField(max_length=50, 
         choices=[
         ('raw_materials', 'raw_materials'),
-        ('finished_product', 'finished_roduct'),
+        ('finished_product', 'finished_product'),
         ('component','component'),
         ('BOM','BOM')
         ], 
-        default='finished product')
+        null=True,blank=True)
     brand = models.CharField(max_length=255, blank=True, null=True)
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     UOM = models.CharField(max_length=15,null=True,blank=True)

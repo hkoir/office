@@ -1,15 +1,14 @@
 
+{% load static %}
+{% load custom_filters %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 
-{% load static %}
-{% load i18n %}
-{% load custom_filters %}
-
-<meta charset="UTF-8" name="color-scheme" content="light only">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pnova</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>DOPS SCM</title>
 
 
 <!-- Include jQuery -->
@@ -42,49 +41,21 @@
 <!-- Add JS for Select2 -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
+
 <link rel="stylesheet" href="{% static 'css/core.css' %}">
+
 <script src="{% static 'js/common.js' %}"></script>
-<script src="https://unpkg.com/htmx.org@1.9.2"></script>
 
-
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.css"/>
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick-theme.css"/>
-<script src="https://cdn.jsdelivr.net/npm/slick-carousel@1.8.1/slick/slick.min.js"></script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
 
 
 <style>
-    
-html, body {
-    background-color: white;
-    color: #333333;
-    padding-top: 125px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-
-
-#mainNav, #socialNav{
-    transition: transform 0.3s ease, top 0.3s ease;
-}
 
     
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&family=Roboto:wght@300;400;500&display=swap');
 
 /* Apply font to entire navbar, including dropdowns */
-
-
-#form-spinner {
-  width: 1rem;
-  height: 1rem;
-  vertical-align: middle;
-}
-
-
-
-
 .navbar, 
 .navbar .nav-item, 
 .navbar .nav-link, 
@@ -142,6 +113,12 @@ li a {
 
     
 
+/* Ensure the main dropdown opens on hover */
+.nav-item.dropdown:hover > .dropdown-menu {
+    display: block;
+    background-color: #2d2d2d; /* Darker gray */
+    color: #ffffff; 
+}
 
 
 /* Style for the main dropdown */
@@ -228,16 +205,7 @@ li a {
 }
 
 
-.nav-item {
-    margin-right: 0px; /* Reduce space between menu items */
-}
 
-
-.sidebar {
-    min-height: 100vh;
-    background-color: #f8f9fa;
-    padding-top: 60px; /* to push below navbar */
-}
 
 
 
@@ -351,165 +319,194 @@ li a {
 
 
 
-/* for websocket */
-.chat-notification-popup {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-  animation: pulse 1.5s infinite;
+html, body {
+    background-color: white;
+    color: #333333;
+    padding-top: 0px; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .main-nav {
+        background-color: #16213e;
+        color: white;
+        position: fixed;
+        top: 0px;
+        height:60px;
+        width: 100%;
+        z-index: 1031;
+        transition: top 0.3s ease-in-out;
+    }
+
+
+
+/* SUBMENU */
+.submenu {
+    display: none;
+    padding-left: 12px;
+    margin-bottom: 8px;
 }
-.chat-notification-popup .btn {
-  border-radius: 50px;
-  padding: 10px 20px;
-  font-weight: bold;
-  font-size: 1rem;
+
+.submenu a {
+    font-size: 14px;
 }
-@keyframes pulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,53,69, 0.5); }
-  70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(220,53,69, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220,53,69, 0); }
+
+/* OPENED SUBMENU */
+.submenu.open {
+    display: block;
 }
 
 
+/* Arrow rotate */
+.submenu-toggle .arrow {
+    float: right;
+    transition: transform 0.2s;
+}
+
+.submenu-toggle.active .arrow {
+    transform: rotate(90deg);
+}
 
 
 
 
 
-/* Small screen */
-@media (max-width: 768px) {
-  .basket-btn {
-    padding: 5px;
+
+/* fixed side bar ///////////////////////////////////// */
+
+.layout-wrapper {
+    display: flex;
+    width: 100%;
+    min-height: calc(100vh - 60px); 
+    margin-top: 60px;               
+}
+
+.sidebar-wrapper {
+    position: fixed;
+    top: 70px;
+    left: 0;
+    bottom: 0;
+
+    background: #0f172a;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.sidebar {   
+    top: 60px; 
+    height: calc(100vh - 60px);  
+    border-right: 1px solid #ddd;
+    padding: 15px 10px;
+ 
+    background: #0f172a;
+    border-right: 1px solid #1e293b;   
+      
+}
+
+.sidebar a,
+.sidebar button {
+    display: flex;              
+    align-items: center;        
+    justify-content: flex-start; 
+    padding: 10px 12px;
+    margin-bottom: 6px;  
+    border-radius: 6px;
+    text-decoration: none;
+    background: #1e293b;
+    color: #e2e8f0;
+    border: none;
+    width: 100%;
+    height: 35px;
     font-size: 12px;
-  }
+    cursor: pointer;
+    transition: background 0.2s;
 }
 
-/* Large screen */
-@media (min-width: 769px) {
-  .basket-btn {
-    padding: 10px;
-    font-size: 18px;
-  }
+
+.sidebar a:hover,
+.sidebar button:hover {
+    background: #2563eb;
+    color: #fff;
 }
 
-.basket-btn {
-  background-color: transparent;
-}
-.basket-btn:hover {
-  background-color: transparent;
-}
-
-.icon-format:hover {
-    fill: blue;
-}
-
-/* Large screen */
-@media (min-width: 769px) {
-    .icon-format{
-        width:30px;
-        height:30px;
+/* Desktop only */
+@media (min-width: 768px) {
+    .sidebar-wrapper {
+        display: block;   
     }
+}
+
+
+
+.content-area {  
+    padding: 5px;  
+    min-height: calc(100vh - 60px);      
+    margin-left: 25%;    
+    position: relative;
+}
+
+.content-area .container-fluid,
+.content-area .container {
+    padding-right: 0 !important;
+    padding-left: 10 !important;
+}
+
+
+.submenu a {
+    background: #1f2a40;
+    color: #e2e8f0;
+}
+
+
+.school-logo-fab {
+    position: fixed;
+    top: 60px;
+    left: 310px;
+    width: 55px;
+    height: 55px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background: white; /* or use theme color */
+    border-radius: 0%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+     z-index: 9999;
 }
 
 @media (max-width: 768px) {
-    .icon-format{
-        width:22px;
-        height:22px;
+    .school-logo-fab {
+        left: 10px; 
+        top: 70px;  
     }
 }
 
-
-.icon-format {
-    width:30px;
-    height:30px;
+.school-logo-fab img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
 }
 
-
+.school-logo-fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+}
 
 
 </style>
-
-
 
 
 </head>
 
 
 <body>
-<!-- 
-    
-{% if has_unread %}
-  {% if request.user.is_authenticated %}
-    {% if request.user.role == 'doctor' %}
-      <div class="chat-notification-popup">
-        <a href="{% url 'chat:doctor_notifications_view' %}" class="btn btn-danger btn-lg shadow">
-          🔔 You have unread messages
-        </a>
-      </div>
-    {% elif request.user.role == 'patient' %}
-      <div class="chat-notification-popup">
-        <a href="{% url 'chat:patient_notifications_view' %}" class="btn btn-danger btn-lg shadow">
-          🔔 You have unread messages
-        </a>
-      </div>
-    {% endif %}
-  {% endif %}
-{% endif %} -->
 
 
-
-<nav class="navbar navbar-dark social-nav" id="socialNav">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-        <!-- Left Section -->
-        <div class="d-flex align-items-center d-none d-md-block">
-            <span class="navbar-text ">
-                Social Links | Contact Us | Follow Us
-            </span>
-        </div>
-
-        <!-- Middle Section (Search Form) -->
-        <div class="flex-grow-1 d-none d-md-flex justify-content-center">
-            <form class="d-flex" method="GET" action="{% url 'accounts:search_all' %}">
-                <select id="id_search" class="form-control select2 me-2" name="q">
-                    <option value="">Search...</option>
-                </select>
-                <button class="btn btn-info" type="submit">Search</button>
-            </form>
-        </div>
-
-        <!-- Right Section (Language + Icons) -->
-        <div class="d-flex align-items-center">
-             <form action="" method="post" id="language-form" class="d-flex align-items-center gap-2">
-            {% csrf_token %}
-            <label for="language-select" class="fw-bold ms-3">🌐&nbsp;Language</label>
-            <select name="language" class="form-control" style="max-width:150px; width:100px" id="language-select">
-              
-                <option value="{{ lang.0 }}"{% if lang.0 == LANGUAGE_CODE %} selected{% endif %}>
-                    {{ lang.1 }}
-                </option>
-              
-            </select>
-        </form>
-
-            <div class="social-icons d-flex ms-3">
-                <a href="https://www.facebook.com" target="_blank" class="text-light me-2">
-                    <i class="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://www.twitter.com" target="_blank" class="text-light me-2">
-                    <i class="fab fa-twitter"></i>
-                </a>
-                <a href="https://www.linkedin.com" target="_blank" class="text-light me-2">
-                    <i class="fab fa-linkedin-in"></i>
-                </a>
-                <a href="mailto:contact@yourcompany.com" class="text-light">
-                    <i class="fas fa-envelope"></i> 
-                </a>
-            </div>
-        </div>
-    </div>
-</nav>
-
+<div class="row">
+    <div class="col-12">      
 
 <!-- Main Navbar -->
 <nav class="navbar navbar-expand-lg main-nav" id="mainNav">
@@ -900,14 +897,14 @@ li a {
                 <div class="user-info mb-3 ms-auto d-flex align-items-center">
                     {% if user_info %}
                         <a href="{% url 'accounts:update_profile_picture' %}">
-                            {% if request.user.photo_id %}
-                                <img class="profile-picture" src="{{ request.user.photo_id.url }}">
+                            {% if profile_picture_url %}
+                                <img class="profile-picture" src="{{ profile_picture_url }}">
                             {% else %}
                                 <i class="fas fa-user-circle user-icon"></i>
                             {% endif %}
                         </a>
                         <br>
-                        <span class="welcome-message"  style="font-size:14px;color:gray">&nbsp;Welcome {{ request.user.username }}</span>
+                        <span class="welcome-message"  style="font-size:14px;color:gray">&nbsp;Welcome {{ user_info }}</span>
                     {% else %}
                         <a href="#" class="guest-icon">
                             <i class="fas fa-user-circle text-info" style="font-size: 14px;"></i>
@@ -1064,19 +1061,30 @@ li a {
                 <li><a href="#" class="nav-link text-truncate"><i class="fs-5 bi-people"></i><span class="ms-1 text-primary">Upcoming</span> </a></li>
             </ul>
      </div>
- </div>
-
-
-
-
-   
-
-    <div class="container-fluid" style="margin-top:10px">    
-        {% block content %}
-        {% endblock %}
     </div>
+
+ </div>
+</div>
+   
+        <div class="layout-wrapper">   
+            <div class="d-none d-md-block col-md-3 sidebar-wrapper">
+            {% include 'fixed_sidebar.html' %}
+            </div>        
+            <!-- MAIN CONTENT -->
+            <div class="col-12 col-md-9 content-area">
+                <div class="school-logo-fab">
+                    {% if organization_name.logo %}
+                    <img src="{{ organization_name.logo.url }}" alt="School Logo">
+                    {% endif %}
+                </div>
+                {% block content %}
+                {% endblock %}
+                {% include 'footer.html' %}
+            </div>
+       </div>
+
     
-    {% include 'footer.html' %}
+ </div>
 
 
 
@@ -1106,98 +1114,59 @@ li a {
 
 
 <script>
-  function unlockAudio() {
-    const audio = document.getElementById('silenceAudio');
-
-    if (!audio) return;
-
-    audio.play().then(() => {
-      console.log('🔓 Audio unlocked with autoplay.');
-    }).catch(err => {
-      console.warn('🔒 Autoplay blocked. Will try on user gesture.', err);
-    });
-
-    if (typeof AudioContext !== 'undefined' || typeof webkitAudioContext !== 'undefined') {
-      const AudioCtx = AudioContext || webkitAudioContext;
-      const context = new AudioCtx();
-
-      if (context.state === 'suspended') {
-        const resume = () => {
-          context.resume().then(() => {
-            console.log('🔓 AudioContext resumed.');
-            document.removeEventListener('click', resume);
-            document.removeEventListener('touchstart', resume);
-            document.removeEventListener('keydown', resume);
-          });
-        };
-
-        document.addEventListener('click', resume, { once: true });
-        document.addEventListener('touchstart', resume, { once: true });
-        document.addEventListener('keydown', resume, { once: true });
-      }
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', unlockAudio);
+function toggleSubmenu(button) {
+    const submenu = button.nextElementSibling;
+    submenu.classList.toggle("open");
+    button.classList.toggle("active");
+}
 </script>
 
-
-
-
-
-
 <script>
-  document.getElementById('language-select').addEventListener('change', function() {
-    document.getElementById('language-form').submit();
-  });
-</script>
+document.addEventListener("DOMContentLoaded", function() {
+    let dropdowns = document.querySelectorAll('.dropdown-submenu');
 
+    dropdowns.forEach(function(dropdown) {
+        dropdown.addEventListener('mouseenter', function() {
+            let submenu = this.querySelector('.dropdown-menu');
+            if (submenu) {
+                submenu.style.display = 'block';
+            }
+        });
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    const dropdowns = document.querySelectorAll('.nav-item.dropdown');
-
-    dropdowns.forEach(function (dropdown) {
-        const toggle = dropdown.querySelector('.nav-link.dropdown-toggle');
-
-        toggle.addEventListener('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const isOpen = dropdown.classList.contains('show');
-
-            // Close all dropdowns first
-            dropdowns.forEach(d => {
-                d.classList.remove('show');
-                const menu = d.querySelector('.dropdown-menu');
-                if (menu) menu.classList.remove('show');
-            });
-
-            // If it wasn't already open, open this one
-            if (!isOpen) {
-                dropdown.classList.add('show');
-                const menu = dropdown.querySelector('.dropdown-menu');
-                if (menu) menu.classList.add('show');
+        dropdown.addEventListener('mouseleave', function() {
+            let submenu = this.querySelector('.dropdown-menu');
+            if (submenu) {
+                submenu.style.display = 'none';
             }
         });
     });
 
-    // ✅ Close dropdowns when clicking anywhere else
-    document.addEventListener('click', function () {
-        dropdowns.forEach(d => {
-            d.classList.remove('show');
-            const menu = d.querySelector('.dropdown-menu');
-            if (menu) menu.classList.remove('show');
-        });
+
+    document.querySelectorAll('.dropdown-submenu').forEach((submenu) => {
+    let timeout;
+    submenu.addEventListener('mouseenter', function () {
+        clearTimeout(timeout);
+        this.querySelector('.dropdown-menu').style.display = 'block';
+    });
+    submenu.addEventListener('mouseleave', function () {
+        timeout = setTimeout(() => {
+            this.querySelector('.dropdown-menu').style.display = 'none';
+        }, 300); // Delay in milliseconds
     });
 });
+
+
+
+
+});
+
+
+
 </script>
 
 
 
-
-
-  <script>
+<script>
     const socialNav = document.getElementById('socialNav');
     const mainNav = document.getElementById('mainNav');
     const socialNavHeight = socialNav.offsetHeight;
@@ -1205,13 +1174,14 @@ document.addEventListener('DOMContentLoaded', function () {
     window.addEventListener('scroll', function () {
         if (window.scrollY > socialNavHeight) {
             socialNav.style.top = `-${socialNavHeight}px`;
-            mainNav.classList.add('fixed-top');
+            mainNav.style.top = '0px'; // Move main-nav to the top
         } else {
             socialNav.style.top = '0';
-            mainNav.classList.remove('fixed-top');
+            mainNav.style.top = `${socialNavHeight}px`; // Push it below social-nav
         }
     });
 </script>
+
 
   <script>
   $('#id_search').select2({
@@ -1238,9 +1208,6 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
     </script>
-
-
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {   
         const messageModal = document.getElementById('messageModal');
@@ -1257,43 +1224,47 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
-
 <script>
-$(document).ready(function () {
-    // Function to mark a notification as read
-    $(".mark-as-read").click(function (e) {
-        e.preventDefault();  // Prevent default link behavior
-        var notificationId = $(this).data("id");  // Get notification ID
-
-        $.ajax({
-            url: "/messaging/notifications/mark-as-read/" + notificationId + "/",
-            type: "POST",
-            headers: {
-                "X-CSRFToken": "{{ csrf_token }}"  // Pass CSRF token
-            },
-            success: function (response) {
-                if (response.success) {
-                    // Hide the clicked notification or change its style
-                    $("a[data-id='" + notificationId + "']").closest(".notification").fadeOut();
-
-                    // Update the notification count badge
-                    var count = parseInt($(".badge.bg-danger").text()) || 0;
-                    if (count > 1) {
-                        $(".badge.bg-danger").text(count - 1);
-                    } else {
-                        $(".badge.bg-danger").remove();  // Remove badge if no more unread notifications
+    document.addEventListener('DOMContentLoaded', () => {
+        const notifications = document.querySelectorAll('.mark-as-read');
+        
+        notifications.forEach(notification => {
+            notification.addEventListener('click', (e) => {
+                e.preventDefault();
+                const notificationElement = e.target.closest('.notification');
+                const notificationId = notificationElement.querySelector('.mark-as-read').dataset.id;
+    
+                fetch(`/reporting/notification/read/${notificationId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/json'
                     }
-                }
-            },
-            error: function () {
-                alert("Error marking notification as read.");
-            }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        notificationElement.remove();
+                        const badge = document.querySelector('.nav-link .badge');
+                        if (badge) {
+                            let count = parseInt(badge.textContent, 10);
+                            count = Math.max(count - 1, 0);
+                            if (count === 0) {
+                                badge.remove();
+                            } else {
+                                badge.textContent = count;
+                            }
+                        }
+                    } else {
+                        console.error('Failed to mark notification as read');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
         });
     });
-});
+    
+    
 </script>
-
-
 
 
 </body>

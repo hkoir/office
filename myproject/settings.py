@@ -191,47 +191,53 @@ DATABASES = {
 
 
 
-
 import os
+from logging.handlers import RotatingFileHandler
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+            'format': '{levelname} {asctime} {name} {message}',
             'style': '{',
         },
         'simple': {
-            'format': '{levelname} {message}',
+            'format': '{levelname} {name} {message}',
             'style': '{',
         },
     },
+
     'handlers': {
         'file': {
-            'level': 'ERROR',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'error.log'),  # Save error logs to this file
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',  # ✅ Correct
+            'filename': os.path.join(BASE_DIR, 'error.log'),
+            'maxBytes': 1024 * 1024 * 1,  # 1 MB
+            'backupCount': 3,  # Keep last 3 files: error.log.1, error.log.2, etc.
             'formatter': 'verbose',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
     },
+
+    'root': {
+        'handlers': ['file', 'console'],
+        'level': 'INFO',
+    },
+
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],  # Logs errors to file and console
-            'level': 'ERROR',  # Log ERROR level and above
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',
             'propagate': True,
         },
-        'commonapp': {  # Replace 'inventory' with your app's name
-            'handlers': ['file', 'console'],  # Logs DEBUG and above for this app
-            'level': 'DEBUG',
-            'propagate': False,
-        },
-    },
+    }
 }
+
 
 MAX_PENALTY_CAP = 500.00
 
@@ -258,8 +264,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 LOGIN_REDIRECT_URL = '/clients/tenant_expire_check/'
 LOGIN_URL = 'accounts:login'
-
-
 
 
 

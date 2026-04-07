@@ -38,4 +38,8 @@ class AddProductForm(forms.ModelForm):
         model = Product
         exclude=['user','product_id']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['product_type'].required = True
+
 

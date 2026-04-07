@@ -50,6 +50,34 @@ from django.utils import timezone
 import uuid
 
 logger = logging.getLogger(__name__)
+
+
+
+from django.http import JsonResponse
+
+def dropdown_mappings_api(request):  
+    category_product_map = {}
+    for p in Product.objects.select_related('category').all():
+        category_product_map.setdefault(p.category_id, []).append({
+            'id': p.id,
+            'name': p.name
+        })
+
+    product_batch_map = {}
+    for b in Batch.objects.select_related('product').all():
+        product_batch_map.setdefault(b.product_id, []).append({
+            'id': b.id,
+            'batch_number': b.batch_number,
+            'remaining_quantity': b.remaining_quantity or 0
+        })
+
+    return JsonResponse({
+        'categories': category_product_map,
+        'batches': product_batch_map
+    })
+
+
+
 @login_required
 def create_customer_quotation(request):
     if request.method == "POST":
@@ -172,8 +200,7 @@ def convert_quotation_to_sale_request(request, pk):
                 vat_amount=Decimal(quotation.vat_amount or 0),
                 ait_amount=Decimal(quotation.ait_amount or 0),
                 net_due_amount=Decimal(quotation.net_due_amount or 0),
-                currency=quotation.currency,
-
+                currency=quotation.currency,               
                 remarks=f"Converted from Quotation #{quotation.quotation_number}",
             )
 
@@ -182,7 +209,9 @@ def convert_quotation_to_sale_request(request, pk):
                 SaleRequestItem.objects.create(
                     sale_request_order=sro,
                     user=request.user,
+                    category=quotation.category,
                     product=item.product,
+                    batch=quotation.batch,
                     quantity=item.quantity,
                     unit_selling_price=item.unit_price,
                     unit_price=item.unit_price,
@@ -272,7 +301,9 @@ def convert_sale_request_to_sale_order(request, request_order_id):
                     sale_order=sale_order,
                     sale_request_item=item,
                     user=request.user,
+                    category=quotation.category,
                     product=item.product,
+                    batch=quotation.batch,
                     quantity=item.quantity,
                     unit_selling_price=item.unit_selling_price,
                     unit_price=item.unit_price,

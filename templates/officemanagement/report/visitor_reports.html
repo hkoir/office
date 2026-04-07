@@ -83,7 +83,9 @@
                         <strong>Visitors Currently Inside:</strong> {{ current_visitors }}
                     </div>
                     <div class="col-6 col-md-auto">
-                        <strong>Overdue Visitors (Security Risk):</strong> {{ overdue_visitors }}
+			<strong>Overdue Visitors (Security Risk):</strong>
+			<span class="text-danger fw-bold">{{ overdue_visitors|length }}</span>
+
                     </div>
                 </div>
             </div>
@@ -114,9 +116,9 @@
             </thead>
                 {% for visitor in overdue_visitors %}
                     <tr>
-                        <td>{{ visitor.visitor__name }}</td>
-                        <td>{{ visitor.visitor__phone }}</td>
-                        <td>{{ visitor.check_in }}</td>
+                        <td>{{ visitor.name }}</td>
+                        <td>{{ visitor.phone }}</td>
+                        <td>{{ visitor.company__check_in }}</td>
                     </tr>
                 {% endfor %}
             </table>

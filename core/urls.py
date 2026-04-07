@@ -7,6 +7,7 @@ app_name = 'core'
 
 
 urlpatterns = [
+    path('css_grid/', views.css_grid, name='css_grid'),
     path('home/', views.home, name='home'),
     path('', views.dashboard, name='dashboard'),
     path('core_dashboard/', views.core_dashboard, name='core_dashboard'),

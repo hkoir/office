@@ -2,6 +2,10 @@ from django.contrib import admin
 
 from.models import PurchaseInvoice,PurchasePayment,SaleInvoice,SalePayment
 from.models import PurchaseInvoiceAttachment,PurchasePaymentAttachment,SaleInvoiceAttachment,SalePaymentAttachment
+from.models import DirectInvoice,DirectInvoiceItem,DirectPurchaseInvoice,DirectPurchaseInvoiceItem
+
+
+
 
 admin.site.register(PurchaseInvoice)
 admin.site.register(PurchasePayment)
@@ -12,3 +16,8 @@ admin.site.register(PurchaseInvoiceAttachment)
 admin.site.register(PurchasePaymentAttachment)
 admin.site.register(SaleInvoiceAttachment)
 admin.site.register(SalePaymentAttachment)
+
+admin.site.register(DirectPurchaseInvoice)
+admin.site.register(DirectPurchaseInvoiceItem)
+admin.site.register(DirectInvoice)
+admin.site.register(DirectInvoiceItem)

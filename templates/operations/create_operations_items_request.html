@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 {% load custom_filters %}
+
+{% load static %}
 {% block content %}
 
 {% include 'operations/quick_access_button.html' %}
+
+<script src="{% static 'js/cascading_dropdowns.js' %}"></script>
 
 
 <div class="container-fluid main-content">

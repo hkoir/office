@@ -264,16 +264,8 @@ footer.footer-full {
              <!-- this master Ul end  -->
          
              <div class="user-info ms-auto d-flex align-items-center mb-3">
-                    {% if user_info %}
-                        <a href="{% url 'accounts:update_profile_picture' %}">
-                            {% if profile_picture_url %}
-                                <img class="profile-picture" src="{{ profile_picture_url }}">
-                            {% else %}
-                                <i class="fas fa-user-circle user-icon"></i>
-                            {% endif %}
-                        </a>
-                        <br>
-                        <span class="welcome-message" style="color:gray;">Welcome {{ user_info }}</span>
+                    {% if request.user.is_authenticated %}                        
+                        <span class="welcome-message" style="color:gray;">Welcome {{ request.user.username }}</span>
                     {% else %}
                         <a href="#" class="guest-icon">
                             <i class="fas fa-user-circle"></i>

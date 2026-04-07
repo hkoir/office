@@ -1,0 +1,238 @@
+
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Grid layout - Navbar + Sidebar + Content</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+
+
+<style>
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; font-family: Inter, system-ui, sans-serif; background: #f8fafc; }
+
+/* GRID LAYOUT */
+.layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 64px 1fr;
+    height: 100vh;
+}
+
+/* NAVBAR */
+.navbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+     background: #1e293b; /* dark slate blue */
+    color: #f1f5f9;      /* light text */
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.navbar .brand { font-weight: 700; font-size: 18px; }
+.hamburger { cursor: pointer; font-size: 26px; display: none; }
+
+/* SIDEBAR */
+.sidebar {
+    grid-column: 1;
+    grid-row: 2;
+    background: #334155; /* modern professional dark gray-blue */
+    color: #e2e8f0;      /* light text for contrast */
+   
+    padding: 16px;
+    overflow-y: auto;
+    position: sticky;
+    top: 64px;
+    height: calc(100vh - 64px);
+    box-shadow: inset -2px 0 4px rgba(0,0,0,0.1);
+}
+.menu-title { margin: 12px 0 6px; font-size: 12px; opacity: 0.75; text-transform: uppercase; }
+
+.sidebar a, .submenu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-decoration: none;
+    color: #e5e7eb;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-bottom: 4px;
+    font-size: 15px;
+    background: none;
+    border: none;
+    width: 100%;
+    cursor: pointer;
+}
+.sidebar a i, .submenu-toggle i { margin-right: 10px; }
+.sidebar a:hover, .submenu-toggle:hover { background: rgba(255,255,255,0.05); }
+
+/* SUBMENU */
+.submenu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding-left: 16px;
+    margin-bottom: 8px;
+}
+.submenu a { padding: 8px 12px; font-size: 14px; }
+.submenu-toggle .arrow { transition: 0.3s; }
+
+.submenu.open { max-height: 500px; }
+.submenu-toggle.open .arrow { transform: rotate(90deg); }
+
+/* CONTENT */
+.content {
+    grid-column: 2;
+    grid-row: 2;
+    padding: 20px;
+    overflow-y: auto;
+    min-width: 0;
+    background: #f8fafc; /* match body for clean look */
+}
+.card {  background: #ffffff; /* bright cards for clarity */ border-radius:10px; padding:16px; box-shadow: 0 3px 8px rgba(0,0,0,0.05); }
+.page-footer { margin-top: 20px; padding: 12px; text-align:center; background: #fff; border-radius:8px; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: 64px 1fr; }
+    .hamburger { display: block; margin-right: 12px; }
+    
+    .sidebar {
+        position: fixed;
+        top: 64px;
+        left: -270px;
+        width: 260px;
+        height: calc(100vh - 64px);
+        overflow-y: auto;                  /* make scrollable */
+        -webkit-overflow-scrolling: touch; /* smooth scrolling for mobile */
+        z-index: 100;
+        transition: left 0.3s;
+    }
+    .sidebar.show { left: 0; }
+
+    .content {
+        grid-column: 1;
+        grid-row: 2;
+        width: 100%;
+        min-width: 0;
+        padding: 14px;
+    }
+
+    .overlay {
+        position: fixed;
+        top: 64px; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.4);
+        display: none;
+        z-index: 90;
+    }
+    .overlay.show { display: block; }
+}
+</style>
+
+
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- NAVBAR -->
+  <header class="navbar">
+    <span class="hamburger" onclick="toggleSidebar()">&#9776;</span>
+    <div class="brand">My School — Staff Dashboard</div>
+    <div style="margin-left:auto; display:flex; gap:12px;">
+      <div class="card" style="padding:6px 10px;">🔔</div>
+      <div class="card" style="padding:6px 10px;">👤</div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="menu-title">Main</div>
+    <a href="#"><i class="fas fa-home"></i> Dashboard</a>
+
+    <div class="menu-title">Attendance</div>
+    <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+      <span><i class="fas fa-user-check"></i> Attendance</span>
+      <i class="fas fa-chevron-right arrow"></i>
+    </button>
+    <div class="submenu">
+      <a href="#"><i class="fas fa-user-graduate"></i> Student Attendance</a>
+      <a href="#"><i class="fas fa-chalkboard-teacher"></i> Teacher Attendance</a>
+      <a href="#"><i class="fas fa-users"></i> Staff Attendance</a>
+    </div>
+
+    <div class="menu-title">Students</div>
+    <a href="#"><i class="fas fa-users"></i> All Students</a>
+    <a href="#"><i class="fas fa-id-card"></i> ID Cards</a>
+
+    <div class="menu-title">Fees</div>
+    <a href="#"><i class="fas fa-coins"></i> Collect Fees</a>
+    <a href="#"><i class="fas fa-money-bill"></i> Due Reports</a>
+
+
+  
+    <div class="menu-title">Attendance</div>
+    <button class="submenu-toggle" onclick="toggleSubmenu(this)">
+      <span><i class="fas fa-user-check"></i> Attendance</span>
+      <i class="fas fa-chevron-right arrow"></i>
+    </button>
+    <div class="submenu">
+      <a href="#"><i class="fas fa-user-graduate"></i> Student Attendance</a>
+      <a href="#"><i class="fas fa-chalkboard-teacher"></i> Teacher Attendance</a>
+      <a href="#"><i class="fas fa-users"></i> Staff Attendance</a>
+    </div>
+
+    <div class="menu-title">Students</div>
+    <a href="#"><i class="fas fa-users"></i> All Students</a>
+    <a href="#"><i class="fas fa-id-card"></i> ID Cards</a>
+
+    <div class="menu-title">Fees</div>
+    <a href="#"><i class="fas fa-coins"></i> Collect Fees</a>
+    <a href="#"><i class="fas fa-money-bill"></i> Due Reports</a>
+
+  </aside>
+
+  <!-- MOBILE OVERLAY -->
+  <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+  <!-- CONTENT -->
+  <main class="content">
+    <h2>Staff Dashboard</h2>
+
+    <div class="card" style="margin-bottom:16px;">
+      <h4>Quick Actions</h4>
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="card" style="border:none;">Mark Attendance</button>
+        <button class="card" style="border:none;">Collect Fees</button>
+        <button class="card" style="border:none;">Issue Book</button>
+      </div>
+    </div>
+
+    <div style="height:1000px;"></div>
+
+    <div class="page-footer">© 2025 Your School Management</div>
+  </main>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("show");
+    document.getElementById("overlay").classList.toggle("show");
+}
+
+function toggleSubmenu(btn) {
+    const submenu = btn.nextElementSibling;
+    submenu.classList.toggle("open");
+    btn.classList.toggle("open");
+}
+</script>
+</body>
+</html>

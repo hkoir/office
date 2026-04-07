@@ -262,6 +262,7 @@ def create_materials_delivery(request, request_id):
             if form.is_valid():
                 category = form.cleaned_data['category']
                 product_obj = form.cleaned_data['product']
+                product_type = form.cleaned_data['product_type']
                 quantity = form.cleaned_data['quantity']   
                 warehouse = form.cleaned_data['warehouse']
                 location = form.cleaned_data['location']    
@@ -315,7 +316,7 @@ def create_materials_delivery(request, request_id):
                         'item_request_id': item_request_id,
                         'id': product_obj.id,
                         'name': product_obj.name,
-                        'product_type': product_obj.product_type,
+                        'product_type': product_type,
                         'category': category.name,
                         'quantity': quantity,
                         'sku': product_obj.sku,
@@ -397,6 +398,7 @@ def confirm_materilas_delivery(request):
 
                     product = get_object_or_404(Product, id=item['id'])
                     quantity = item['quantity']
+                    product_type = item['product_type']
                     order_item = get_object_or_404(MaterialsRequestItem, id=item['item_request_id'])
 
                     # ✅ Fetch batch from basket or related order item
@@ -451,6 +453,7 @@ def confirm_materilas_delivery(request):
                         product=product,
                         batch=batch,
                         transaction_type='MANUFACTURE_OUT',
+                        product_type=product_type or 'raw_materials',
                         quantity=quantity,
                         manufacture_order=materials_request_order,
                     )
@@ -554,7 +557,9 @@ def submit_finished_goods(request, request_id):
                     warehouse=warehouse,
                     location=location,
                     product=product,
-                    transaction_type='PRODUCTION_IN',
+                    batch=batch,
+                    transaction_type='MANUFACTURE_IN',
+                    product_type = 'finished_product',
                     quantity=quantity,
                     manufacture_order=materials_request_order,
                     inventory_transaction=inventory
@@ -667,15 +672,22 @@ def direct_submit_finished_goods(request):
 
                     line_total_amount = quantity * (batch.purchase_price if batch and batch.purchase_price else 0)
                     total_amount += line_total_amount                  
-                   
+
                     inventory, created = Inventory.objects.get_or_create(
                         warehouse=warehouse,
                         location=location,
                         product=product,
-                        defaults={'quantity': 0, 'user': request.user}
+                        defaults={
+                            'quantity': 0,'user':request.user
+                        }
                     )
-                    inventory.quantity += quantity
-                    inventory.save()
+        
+                    if not created:
+                        inventory.quantity += quantity
+                        inventory.save()
+                        messages.success(request, "Inventory updated successfully.")
+                    else:
+                        messages.success(request, "Inventory created successfully.")
 
                     # Record transaction
                     InventoryTransaction.objects.create(
@@ -683,7 +695,9 @@ def direct_submit_finished_goods(request):
                         warehouse=warehouse,
                         location=location,
                         product=product,
-                        transaction_type='PRODUCTION_IN',
+                        batch=batch,
+                        transaction_type='MANUFACTURE_IN',
+                        product_type = finished_goods.product_type,
                         quantity=quantity,
                         manufacture_order=temp_order,
                         inventory_transaction=inventory
@@ -714,6 +728,24 @@ def direct_submit_finished_goods(request):
     })
 
 
+
+
+@login_required
+def submitted_finished_goods_detail(request, order_id):
+    order = get_object_or_404(MaterialsRequestOrder, id=order_id)
+    finished_goods = FinishedGoodsReadyFromProduction.objects.filter(
+        materials_request_order=order
+    ).select_related('product', 'batch')
+
+    return render(request, 'manufacture/submitted_finished_goods_detail.html', {
+        'order': order,
+        'finished_goods': finished_goods,
+    })
+
+
+
+
+
 @login_required
 def qc_dashboard(request, material_request_order_id=None):
     if material_request_order_id:
@@ -737,48 +769,62 @@ def qc_dashboard(request, material_request_order_id=None):
     })
 
 
+import logging
+import traceback
+
+logger = logging.getLogger(__name__)  # Django logger
+
+
 @login_required
 def qc_inspect_item(request, item_id):
     finish_goods_item = get_object_or_404(FinishedGoodsReadyFromProduction, id=item_id)
-    batch=finish_goods_item.batch
-   
+    batch = finish_goods_item.batch
 
-    if not finish_goods_item.status == 'SUBMITTED':
+    if finish_goods_item.status != 'SUBMITTED':
         messages.error(request, "Goods not arrived yet.")
         return redirect('manufacture:qc_dashboard')
 
     if request.method == 'POST':
         form = QualityControlForm(request.POST)
         if form.is_valid():
-            qc_entry = form.save(commit=False)
-            qc_entry.finish_goods_from_production = finish_goods_item
-            qc_entry.user = request.user
-            qc_entry.inspection_date = timezone.now()
-            qc_entry.batch = batch,
-            qc_entry.save()
+            try:
+                qc_entry = form.save(commit=False)
+                qc_entry.finish_goods_from_production = finish_goods_item
+                qc_entry.user = request.user
+                qc_entry.inspection_date = timezone.now()
 
-            good_quantity = qc_entry.good_quantity
-            if good_quantity > 0:
-                ReceiveFinishedGoods.objects.create(
-                    user=request.user,
-                    quality_control=qc_entry,
-                    product=finish_goods_item.product,                    
-                    quantity=good_quantity,
-                    batch=batch,
-                    status='DELIVERED',
-                    remarks=f"Received {good_quantity} after QC inspection.",
-                )
-                finish_goods_item.status = "DELIVERED"
-                finish_goods_item.save()
-              
-                messages.success(
-                    request, f"QC inspection recorded. {good_quantity} items received."
-                )
-            else:
-                messages.warning(request, "No good quantity to receive.")           
-            return redirect('manufacture:qc_dashboard')
+                if batch:
+                    qc_entry.batch = batch
+                qc_entry.save()
+
+                good_quantity = qc_entry.good_quantity or 0
+                if good_quantity > 0:
+                    ReceiveFinishedGoods.objects.create(
+                        user=request.user,
+                        quality_control=qc_entry,
+                        product=finish_goods_item.product,
+                        quantity=good_quantity,
+                        batch=batch,
+                        status='DELIVERED',
+                        remarks=f"Received {good_quantity} after QC inspection.",
+                    )
+                    finish_goods_item.status = "DELIVERED"
+                    finish_goods_item.save()
+
+                    messages.success(request, f"QC inspection recorded. {good_quantity} items received.")
+                else:
+                    messages.warning(request, "No good quantity to receive.")
+
+                return redirect('manufacture:qc_dashboard')
+
+            except Exception as e:
+                # Log the detailed error for debugging
+                logger.error("QC Inspection save failed: %s", traceback.format_exc())
+                messages.error(request, f"Unexpected error while saving QC inspection: {str(e)}")
         else:
-            messages.error(request, "Error saving QC inspection.")
+            # Log detailed form validation errors
+            logger.warning("QC form validation failed: %s", form.errors.as_json())
+            messages.error(request, f"Form validation failed: {form.errors}")
     else:
         form = QualityControlForm(initial={'total_quantity': finish_goods_item.quantity})
 
@@ -786,5 +832,4 @@ def qc_inspect_item(request, item_id):
         'form': form,
         'finish_goods_item': finish_goods_item,
     })
-
 

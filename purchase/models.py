@@ -33,7 +33,7 @@ from django.core.files.base import ContentFile
 class Batch(models.Model):
     NEW_PURCHASE = 'NEW'
     EXISTING_PRODUCT = 'EXISTING'
-    
+
     PRODUCT_TYPE_CHOICES = [
         (NEW_PURCHASE, 'New Purchase'),
         (EXISTING_PRODUCT, 'Existing Product'),
@@ -95,7 +95,7 @@ class Batch(models.Model):
 
         if not self.discounted_price:
             self.discounted_price = self.regular_price
-       
+
 
         is_new = not self.pk
         if is_new:           
@@ -106,17 +106,20 @@ class Batch(models.Model):
                 delta = self.quantity - old.quantity
                 if delta > 0:                   
                     self.remaining_quantity += delta             
-        
+
         super().save(*args, **kwargs)
-        
-
-
-
 
     def __str__(self):
         inventory = self.batch_inventory.first()  
         warehouse_name = inventory.warehouse.name if inventory else "No Warehouse"  
-        return f'{self.product}:Batch - {self.batch_number} - selling Price={self.discounted_price} - Available: {self.remaining_quantity}'
+        return f'{self.product}--purchase_price:{self.purchase_price}- selling Price={self.discounted_price} - Available: {self.remaining_quantity}'
+
+
+
+
+
+
+
 
 
 
@@ -215,7 +218,9 @@ class PurchaseRequestItem(models.Model):
     item_request_id = models.CharField(max_length=20,null=True,blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True, related_name='purchase_request_item_user')
     purchase_request_order=models.ForeignKey(PurchaseRequestOrder,related_name='purchase_request_order',on_delete=models.CASCADE)
+    category = models.ForeignKey('product.Category',related_name='purchase_request_categories', on_delete=models.CASCADE,null=True,blank=True)   
     product = models.ForeignKey('product.Product',related_name='purchase_request_item', on_delete=models.CASCADE)   
+    batch = models.ForeignKey('purchase.Batch',related_name='purchase_request_batch', on_delete=models.CASCADE,null=True,blank=True)   
     quantity = models.PositiveIntegerField() 
     priority = models.CharField(max_length=20, choices=[('LOW', 'Low'), ('MEDIUM', 'Medium'), ('HIGH', 'High')])
     unit_price = models.DecimalField(max_digits=15,decimal_places=2, null=True,blank=True)
@@ -223,7 +228,15 @@ class PurchaseRequestItem(models.Model):
     created_at = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, related_name='purchase_request_item_supplier',null=True,blank=True)
-   
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+
     unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
     required_delivery_date = models.DateField(blank=True, null=True)     
     currency = models.CharField(max_length=10, default="BDT")   
@@ -288,6 +301,14 @@ class RFQ(models.Model):
 class RFQItem(models.Model):
     rfq = models.ForeignKey(RFQ, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey('product.Product', on_delete=models.CASCADE)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quantity = models.PositiveIntegerField()
     unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
     required_delivery_date = models.DateField(blank=True, null=True)     
@@ -421,6 +442,7 @@ class SupplierQuotation(models.Model):
     def __str__(self):
         return f"Quotation {self.quotation_number} - {self.supplier}"
 
+from purchase.models import Batch
 
 class SupplierQuotationItem(models.Model):
     VAT_TYPE_CHOICES = [
@@ -430,6 +452,15 @@ class SupplierQuotationItem(models.Model):
 
     quotation = models.ForeignKey(SupplierQuotation, related_name="purchase_quotation_items", on_delete=models.CASCADE)
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+    batch = models.ForeignKey("purchase.Batch", on_delete=models.CASCADE,null=True,blank=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
@@ -693,6 +724,14 @@ class PurchaseOrder(models.Model):
 class PurchaseOrderItem(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, related_name='purchase_order_item', on_delete=models.CASCADE)
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE,blank=True, null=True, related_name='purchase_order_products')
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quantity = models.DecimalField(max_digits=10, decimal_places=2,blank=True, null=True)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2,blank=True, null=True)
     unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
@@ -781,6 +820,14 @@ class ReceiveGoods(models.Model):
     purchase_order = models.ForeignKey(PurchaseOrder, on_delete=models.CASCADE, related_name='received_goods')
     quality_control = models.ForeignKey(QualityControl, on_delete=models.CASCADE, related_name='qc_goods')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)  
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     warehouse = models.ForeignKey('inventory.warehouse', on_delete=models.CASCADE, related_name='received_goods_warehouse',null=True, blank=True)
     location = models.ForeignKey('inventory.location', on_delete=models.CASCADE, null=True, blank=True,related_name='received_goods_location')
     quantity_received = models.PositiveIntegerField(null=True, blank=True)

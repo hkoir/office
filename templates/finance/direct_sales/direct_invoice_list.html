@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+
+{% include 'finance/quick_access_link.html' %}
+
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">        
+            <table class="table table-hover align-middle table-bordered">
+                <h4 class="text-center">Sales (Stock out)</h4>
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Document No</th>
+			            <th>Documation type</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th>Total</th>
+                        <th>Discount</th>
+                        <th>Advance</th>
+                        <th>Final</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for invoice in page_obj %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><strong>{{ invoice.invoice_number }}</strong></td>
+			            <td>{{ invoice.document_type }}</td>
+
+                        <td>
+                            {% if invoice.customer_name %}
+                            {{ invoice.customer_name|default:"N/A" }}
+                            {% else %}
+                           {{invoice.user.username}} | {{invoice.user.user_department}} | {{invoice.user.user_position}}
+                            {% endif %}
+                        </td>
+
+                        <td>{{ invoice.created_at|date:"d M Y" }}</td>
+                        <td>{{ invoice.due_date|date:"d M Y" }}</td>
+                        <td class="text-end">{{ invoice.total_amount|floatformat:2|add_commas }}</td>
+                        <td class="text-end">{{ invoice.discount_amount|floatformat:2|add_commas }}</td>
+                        <td class="text-end">{{ invoice.advance_amount|floatformat:2|add_commas }}</td>
+                        <td class="text-end fw-bold text-success">{{ invoice.final_amount|floatformat:2|add_commas }}</td>
+                      <td class="text-center">
+                        <div class="d-flex justify-content-center align-items-center gap-2">
+                            <!-- View Invoice -->
+                            <a href="{% url 'finance:direct_invoice_detail' invoice.id %}" 
+                            class="btn btn-outline-primary btn-sm">View</a>
+                            {% if invoice.status != "PAID" %}
+                            <a href="{% url 'finance:update_direct_invoice' invoice.id %}" 
+                            class="btn btn-outline-primary btn-sm">Edit</a>
+                            {% endif %}
+
+                                {% if invoice.status == "DRAFT" or invoice.status == "UPDATED" %}
+                                    {% if invoice.document_type != "quotation" %}
+                                        <a href="{% url 'finance:confirm_direct_invoice' invoice.id %}" 
+                                        class="btn btn-success btn-sm"> Confirm & Update Stock</a>
+                                    {% endif %}
+
+                                {% elif invoice.status != "PAID" %}
+                                    <a href="{% url 'finance:mark_direct_invoice_paid' invoice.id %}" 
+                                    class="btn btn-primary btn-sm"> Mark as Paid</a>
+
+                                {% else %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% endif %}
+
+                        </div>
+                    </td>
+
+
+
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="9" class="text-center text-muted py-3">No invoices found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            </div>
+
+
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+
+
+
+        </div>
+    </div>
+</div>
+{% endblock %}

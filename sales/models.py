@@ -123,7 +123,17 @@ class CustomerQuotationItem(models.Model):
     ]
 
     quotation = models.ForeignKey(CustomerQuotation, related_name="sale_quotation_items", on_delete=models.CASCADE)
+    category = models.ForeignKey("product.Category", on_delete=models.CASCADE,null=True,blank=True)
     product = models.ForeignKey("product.Product", on_delete=models.CASCADE)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
+    batch = models.ForeignKey('purchase.Batch',on_delete=models.CASCADE,related_name='customer_quotation_batches',null=True,blank=True)
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     unit_price = models.DecimalField(max_digits=12, decimal_places=2)
     unit_of_measure = models.CharField(max_length=50, blank=True, null=True)
@@ -252,7 +262,16 @@ class SaleRequestItem(models.Model):
     request_id = models.CharField(max_length=20,null=True,blank=True)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     sale_request_order=models.ForeignKey(SaleRequestOrder,related_name='sale_request_order',on_delete=models.CASCADE,null=True, blank=True)
+    category=models.ForeignKey('product.Category',on_delete=models.CASCADE,null=True, blank=True)
     product = models.ForeignKey(Product,related_name='sale_request_item', on_delete=models.CASCADE,null=True, blank=True)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quantity = models.PositiveIntegerField(null=True, blank=True)   
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_sale_request_item',null=True, blank=True)
     unit_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -393,8 +412,17 @@ class SaleOrderItem(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, null=True, blank=True)
     sale_order = models.ForeignKey(SaleOrder, related_name='sale_order', on_delete=models.CASCADE)
     sale_request_item = models.ForeignKey(SaleRequestItem, related_name='sale_request_item', on_delete=models.CASCADE,null=True,blank=True)
+    category=models.ForeignKey('product.Category',on_delete=models.CASCADE,null=True, blank=True)
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_sale_order_item',null=True, blank=True)
     product = models.ForeignKey(Product, related_name='product_item', on_delete=models.CASCADE)
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quantity = models.PositiveIntegerField(null=True, blank=True)   
     total_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)  
     unit_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
@@ -484,6 +512,15 @@ class SaleQualityControl(models.Model):
         null=True,
         blank=True
     )
+
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
     quality_check_by = models.CharField(max_length=30,choices=[('BY-CUSTOMER','By Customer'),('BY-EMPLOYEE','By Employee')],null=True,blank=True)
     total_quantity = models.PositiveIntegerField(null=True, blank=True)
     good_quantity = models.PositiveIntegerField(null=True, blank=True)

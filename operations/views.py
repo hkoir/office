@@ -55,6 +55,7 @@ def add_existing_items(request):
 
                 category = form.cleaned_data['category']
                 product_obj = form.cleaned_data['product']
+                product_type = form.cleaned_data['product_type']
                 quantity = form.cleaned_data['quantity']
                 warehouse = form.cleaned_data['warehouse']
                 location = form.cleaned_data['location']
@@ -70,6 +71,7 @@ def add_existing_items(request):
                     basket.append({
                         'id': product_obj.id,
                         'name': product_obj.name,
+                        'product_type': product_type,
                         'category': category.name,
                         'quantity': quantity,
                         'warehouse_id': warehouse.id,
@@ -149,6 +151,7 @@ def confirm_add_existing_items(request):
                     warehouse_id = item.get('warehouse_id')
                     location_id = item.get('location_id')
                     batch_id = item.get('batch_id')
+                    product_type = item.get('product_type')
 
                     if not warehouse_id or not location_id or not batch_id:
                         raise ValueError("Warehouse, location, or batch data is missing.")
@@ -186,6 +189,7 @@ def confirm_add_existing_items(request):
                         product=product,
                         batch=batch,
                         transaction_type='EXISTING_ITEM_IN',
+                        product_type=product_type,
                         quantity=quantity,
                         existing_items_order=existing_order,
                         inventory_transaction=inventory
@@ -254,6 +258,7 @@ def create_operations_items_request(request):
 
                 category = form.cleaned_data['category']
                 product_obj = form.cleaned_data['product']
+                product_type = form.cleaned_data['product_type']
                 quantity = form.cleaned_data['quantity']    
                 
                         
@@ -267,7 +272,8 @@ def create_operations_items_request(request):
                 else:
                     basket.append({
                         'id': product_obj.id,
-                        'name': product_obj.name,                     
+                        'name': product_obj.name,    
+                        'product_type': product_type,                    
                         'category': category.name,
                         'category_id': category.id,
                         'quantity': quantity,
@@ -338,6 +344,7 @@ def confirm_operations_items_request(request):
                 operations_request_order.save()
                 for item in basket:
                     product = get_object_or_404(Product, id=item['id']) 
+                    product_type = item['product_type']
                             
                     operations_request_item = OperationsRequestItem(
                         operations_request_order=operations_request_order,
@@ -396,7 +403,7 @@ def operation_request_order_items(request,order_id):
     return render (request,'operations/operations_request_order_items.html',{'order':order})
 
 
-
+from product.models import Category
 @login_required
 def create_operations_items_delivery(request, request_id):
     request_instance = get_object_or_404(OperationsRequestOrder, id=request_id)
@@ -415,8 +422,10 @@ def create_operations_items_delivery(request, request_id):
     form = OperationsDeliveryForm(request.POST or None, request_instance=request_instance, initial=initial_data)  
     if request.method == 'POST':
         if 'add_to_basket' in request.POST:
-            if form.is_valid():             
+            if form.is_valid(): 
+                category = form.cleaned_data['category']           
                 product_obj = form.cleaned_data['product']
+                product_type = form.cleaned_data['product_type']               
                 quantity = form.cleaned_data['quantity']   
                 warehouse = form.cleaned_data['warehouse']
                 location = form.cleaned_data['location']     
@@ -468,7 +477,10 @@ def create_operations_items_delivery(request, request_id):
                     basket.append({
                         'item_request_id': item_request_id,
                         'id': product_obj.id,
-                        'name': product_obj.name,              
+                        'name': product_obj.name,     
+                        'category': category.name,    
+                        'category_id': category.id,    
+                        'product_type': product_type,            
                         'quantity': quantity,
                         'sku': product_obj.sku,
                         'unit_price': float(product_obj.unit_price),
@@ -540,7 +552,9 @@ def confirm_operations_items_delivery(request):
                 for item in basket:
                     logger.info(f"Basket item: {item}")                    
                     product = get_object_or_404(Product, id=item['id'])
+                    category = get_object_or_404(Category, id=item['category_id'])
                     quantity = item['quantity']
+                    product_type = item['product_type']                   
                     order_item = get_object_or_404(OperationsRequestItem, id=item['item_request_id'])
                 
                     warehouse = get_object_or_404(Warehouse, id=warehouse_id) 
@@ -549,6 +563,7 @@ def confirm_operations_items_delivery(request):
 
                     delivery_item = OperationsDeliveryItem(
                         operations_request_order=operations_request_order,
+                        category= category,
                         product=product,
                         quantity=quantity,
                         warehouse=warehouse,
@@ -569,7 +584,7 @@ def confirm_operations_items_delivery(request):
                         defaults={'quantity': 0}
                     )
 
-                    inventory.quantity += item['quantity']
+                    inventory.quantity -= item['quantity']
                     inventory.save()
                     messages.success(request, "Inventory updated successfully.")
 
@@ -580,6 +595,7 @@ def confirm_operations_items_delivery(request):
                         product=product,
                         batch=batch,
                         transaction_type='OPERATIONS_OUT',
+                        product_type = product_type,
                         quantity=item['quantity'],
                         operations_request_order=operations_request_order,
                         inventory_transaction=inventory

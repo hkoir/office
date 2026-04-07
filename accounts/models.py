@@ -118,21 +118,35 @@ class Address(models.Model):
 
 
 
+
+import random
+from django.utils import timezone
+from datetime import timedelta
+PURPOSE_CHOICES = [
+    ('registration', 'Registration'),
+    ('forgot_password', 'Forgot Password'),
+    ('change_password', 'Change Password'),
+]
+
 class PhoneOTP(models.Model):
-    phone_number = models.CharField(max_length=20, unique=True)
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='otps',null=True,blank=True)
     otp = models.CharField(max_length=6)
     valid_until = models.DateTimeField() 
     created_at = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
+    purpose = models.CharField(max_length=20, choices=PURPOSE_CHOICES, default='registration')
 
     def save(self, *args, **kwargs):     
         if not self.valid_until:
             self.valid_until = timezone.now() + timedelta(minutes=5)
         super().save(*args, **kwargs)
 
- 
     def generate_otp(self):
         self.otp = str(random.randint(100000, 999999))
         self.valid_until = timezone.now() + timedelta(minutes=5)
         self.save()
+
+    def is_valid(self):
+        return timezone.now() <= self.valid_until and not self.is_verified
+
 

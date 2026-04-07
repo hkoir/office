@@ -5,9 +5,6 @@ import ast
 import os
 
 
-import ast
-import os
-from decimal import Decimal
 
 
 @register.filter
@@ -48,10 +45,14 @@ def profit(item):
     return (item.unit_price - item.batch.purchase_price) * item.quantity
 
 @register.filter
-def dict_get(d, key):
-    return d.get(key, '')
+def dict_key(value, key):
+    return value.get(key, None)
 
-    
+@register.filter
+def dict_get(d, key):  
+    if isinstance(d, dict):
+        return d.get(key, 0)
+    return 0
 
 @register.filter(name='form_control')
 def form_control(field):

@@ -868,12 +868,10 @@ def job_list_candidate_view(request):
         for exam in exams:
             exam_start_time = localtime(exam.start_time).isoformat()
             exam_end_time = localtime(exam.end_time).isoformat()   
-            
-    if not exam.is_exam_active:
-        messages.warning(request, 'The exam time has expired.')
-        
-    if exam.start_time > current_time:
-        messages.info(request, 'The exam has not started yet')              
+            if not exam.is_exam_active:
+                messages.warning(request, 'The exam time has expired.')
+            if exam.start_time > current_time:
+                messages.info(request, 'The exam has not started yet')              
 
    
 

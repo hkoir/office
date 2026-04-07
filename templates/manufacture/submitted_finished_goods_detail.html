@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h4 class="mb-3">Finished Goods Submission Details</h4>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <p><strong>Order ID:</strong> {{ order.id }}</p>
+            <p><strong>Status:</strong> {{ order.status }}</p>
+            <p><strong>Created By:</strong> {{ order.user.get_full_name|default:order.user.username }}</p>
+            <p><strong>Remarks:</strong> {{ order.remarks|default:"-" }}</p>
+        </div>
+    </div>
+
+    {% if finished_goods %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Goods ID</th>
+                    <th>Product</th>
+                    <th>Batch</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Remarks</th>
+                    <th>Submitted On</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in finished_goods %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.goods_id }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td>{{ item.batch.batch_number|default:"-" }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        {% if item.status == "SUBMITTED" %}
+                            <span class="badge bg-warning text-dark">{{ item.get_status_display }}</span>
+                        {% elif item.status == "DELIVERED" %}
+                            <span class="badge bg-info">{{ item.get_status_display }}</span>
+                        {% elif item.status == "RECEIVED" %}
+                            <span class="badge bg-success">{{ item.get_status_display }}</span>
+                        {% elif item.status == "CANCELLED" %}
+                            <span class="badge bg-danger">{{ item.get_status_display }}</span>
+                        {% else %}
+                            {{ item.get_status_display }}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.remarks|default:"-" }}</td>
+                    <td>{{ item.created_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="alert alert-info">No finished goods recorded for this submission.</div>
+    {% endif %}
+
+    <a href="{% url 'manufacture:materials_request_order_list' %}" class="btn btn-secondary mt-3">← Back to Submissions</a>
+</div>
+{% endblock %}

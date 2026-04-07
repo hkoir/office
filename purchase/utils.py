@@ -137,7 +137,7 @@ def create_purchase_order_from_quotation(quotation_id, user):
             VAT_type=q_item.VAT_type,
             vat_amount=q_item.vat_amount,
             supplier=quotation.supplier,
-            batch = None,
+            batch = q_item.batch,
           
         )
 

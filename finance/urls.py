@@ -30,4 +30,23 @@ urlpatterns = [
    path('add_sale_invoice_attachement/<int:invoice_id>/', views.add_sale_invoice_attachment, name='add_sale_invoice_attachment'),
    path('add_sale_payment_attachement/<int:invoice_id>/', views.add_sale_payment_attachment, name='add_sale_payment_attachment'),
 
+
+    path('create_direct_invoice/', views.create_direct_invoice, name='create_direct_invoice'),
+    path('update_direct_invoice/<int:pk>/', views.create_direct_invoice, name='update_direct_invoice'),
+    path('confirm_direct_invoice/<int:invoice_id>/', views.confirm_or_update_direct_invoice, name='confirm_direct_invoice'),
+    path('direct_invoices/', views.direct_invoice_list, name='direct_invoice_list'),
+    path('direct_invoices/<int:pk>/', views.direct_invoice_detail, name='direct_invoice_detail'),
+    path('direct_invoice/<int:pk>/mark_paid/', views.mark_invoice_paid, name='mark_direct_invoice_paid'),
+         
+
+    path("create_direct_purchase_invoice/", views.create_direct_purchase_invoice, name="create_direct_purchase_invoice"),
+    path("update_direct_purchase_invoice/<int:pk>/", views.create_direct_purchase_invoice, name="update_direct_purchase_invoice"),
+    path('confirm_purchase_direct_invoice/<int:invoice_id>/', views.confirm_or_update_direct_purchase_invoice, name='confirm_direct_purchase_invoice'),
+    path('direct_purchase_invoices/', views.direct_purchase_invoice_list, name='direct_purchase_invoice_list'),
+    path('direct_purchase_invoices/<int:pk>/', views.direct_purchase_invoice_detail, name='direct_purchase_invoice_detail'),
+    path('direct_purchase_invoice/<int:pk>/mark_paid/', views.mark_direct_purchase_invoice_paid, name='mark_direct_purchase_invoice_paid'),
+
+ 
+
+
 ]

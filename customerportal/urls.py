@@ -10,7 +10,11 @@ urlpatterns = [
     path('', views.partner_landing_page, name='partner_landing_page'),  
     path('public_landing_page/', views.public_landing_page, name='public_landing_page'),
     path('job_landing_page/', views.job_landing_page, name='job_landing_page'),        
-   
+
+    path('subscribe/', views.subscribe_email, name='subscribe'),
+    path('subscribe/verify/<uuid:token>/', views.verify_subscription, name='verify_subscription'),     
+    path('submit_cv/', views.submit_cv, name='submit_cv'),
+
     path('create_ticket/',views.create_ticket, name='create_ticket'),
     path('ticket_list/',views.ticket_list, name='ticket_list'),
     path('update_ticket/<int:ticket_id>/',views.update_ticket, name='update_ticket'),

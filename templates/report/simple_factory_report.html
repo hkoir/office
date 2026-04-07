@@ -1,0 +1,106 @@
+
+
+{% extends "base.html" %}
+{% block content %}
+
+ {% include 'finance/quick_access_link.html' %}
+
+
+<div class="container mt-3">
+    <h4>Factory Production Report</h4>
+
+    <form method="get" class="mb-3">
+        <div class="row">
+            <div class="col-md-3">
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control" placeholder="Start Date">
+            </div>
+            <div class="col-md-3">
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control" placeholder="End Date">
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary">Filter</button>
+            </div>
+        </div>
+    </form>
+
+    <h5 class="mt-4">Raw Materials & Finished Goods Consumed</h5>
+     <div class="col-12 table-responsive">
+    <table class="table table-sm table-bordered">
+        <thead class="table-secondary">
+            <tr>
+                <th>Date</th>
+                <th>Warehouse</th>
+                <th>Product</th>
+                <th>Product Type</th>
+                <th>Consumed Qty</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in consumed_page %}
+            <tr>
+                <td>{{ item.date }}</td>
+                <td>{{ item.warehouse }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.product_type|title }}</td>
+                <td>{{ item.consumed }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No consumption data found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+    {% if consumed_page.has_other_pages %}
+    <div class="pagination">
+        {% if consumed_page.has_previous %}
+        <a href="?consumed_page={{ consumed_page.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span>Page {{ consumed_page.number }} of {{ consumed_page.paginator.num_pages }}</span>
+        {% if consumed_page.has_next %}
+        <a href="?consumed_page={{ consumed_page.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <h5 class="mt-5">Finished Goods Produced</h5>
+     <div class="col-12 table-responsive">
+    <table class="table table-sm table-bordered">
+        <thead class="table-secondary">
+            <tr>
+                 <th>Date</th>
+                <th>Warehouse</th>
+                <th>Product</th>
+                <th>Product Type</th>
+                <th>Produced Qty</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in produced_page %}
+            <tr>
+                 <td>{{ item.date }}</td>
+                <td>{{ item.warehouse }}</td>
+                <td>{{ item.product }}</td>
+                <td>{{ item.product_type|title }}</td>
+                <td>{{ item.produced }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No production data found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+    {% if produced_page.has_other_pages %}
+    <div class="pagination">
+        {% if produced_page.has_previous %}
+        <a href="?produced_page={{ produced_page.previous_page_number }}">Previous</a>
+        {% endif %}
+        <span>Page {{ produced_page.number }} of {{ produced_page.paginator.num_pages }}</span>
+        {% if produced_page.has_next %}
+        <a href="?produced_page={{ produced_page.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

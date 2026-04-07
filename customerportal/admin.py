@@ -1,3 +1,7 @@
 from django.contrib import admin
 
-# Register your models here.
+from.models import JobApplication,EmailSubscription,TicketCustomerFeedback
+
+admin.site.register(JobApplication)
+admin.site.register(EmailSubscription)
+admin.site.register(TicketCustomerFeedback)

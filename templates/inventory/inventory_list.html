@@ -101,6 +101,9 @@
                     <th class="total_sold">Total Sold</th>
                     <th class="total_available">Total Available</th>
 
+                      <th class="manufacture_in">Total direct purchase in</th>
+                    <th class="manufacture_out">Total direct sold out</th>
+
                     <th class="manufacture_in">Total Manufacture in</th>
                     <th class="manufacture_out">Total Manufacture out</th>
                     <th class="total_existing_in">Total Existing</th>                                  
@@ -127,6 +130,9 @@
                     <td class="total_purchase">{{ product.total_purchase|default:"0" }}</td>
                     <td class="total_sold">{{ product.total_sold|default:"0" }}</td>
                     <td class="total_available">{{ product.total_available|default:"0" }}</td>
+
+                     <td class="manufacture_in">{{ product.total_direct_purchase_in|default:"0" }}</td>
+                    <td class="manufacture_out">{{ product.total_direct_sale_out|default:"0" }}</td>
 
                     <td class="manufacture_in">{{ product.total_manufacture_in|default:"0" }}</td>
                     <td class="manufacture_out">{{ product.total_manufacture_out|default:"0" }}</td>

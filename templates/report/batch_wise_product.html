@@ -156,6 +156,9 @@
                         <th class="outbound">Sold Qty</th>
                         <th class="manufacture_in">Manufacture In</th>
                         <th class="manufacture_out">Manufacture Out</th>
+                        
+                        <th class="direct_purchase_in">Direct Purchase</th>
+                        <th class="direct_sale_out">Direct sold</th>                       
                         <th class="replacement_in">Replacement In</th>
                         <th class="replacement_out">Replacement Out</th>
                         <th class="operations_out">Operations Out</th>
@@ -181,6 +184,10 @@
                         <td class="outbound">{{ batch.outbound }}</td>
                         <td class="manufacture_in">{{ batch.manufacture_in }}</td>
                         <td class="manufacture_out">{{ batch.manufacture_out }}</td>
+
+                        <td class="manufacture_in">{{ batch.direct_purchase_in }}</td>
+                        <td class="manufacture_out">{{ batch.direct_sale_out }}</td>
+                        
                         <td class="replacement_in">{{ batch.replacement_in }}</td>
                         <td class="replacement_out">{{ batch.replacement_out }}</td>
                         <td class="operations_out">{{ batch.operations_out }}</td>

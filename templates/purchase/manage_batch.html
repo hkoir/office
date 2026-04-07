@@ -5,6 +5,16 @@
 {% block content %}
 
 
+{% include 'finance/quick_access_link.html' %}
+
+<div class="container-fluid main-content py-4 d-flex justify-content-center gap-2 flex-wrap">
+    <a href="{% url 'product:create_category' %}" class="btn btn-sm btn-success">Create Category</a>
+    <a href="{% url 'product:create_product' %}" class="btn btn-sm btn-success">Create Product</a>
+   <a href="{% url 'purchase:create_batch' %}" class="btn btn-sm btn-success">Create Batch</a>
+</div>
+
+
+
 <div class="container-fluid main-content">
     <div class="row">
         <div class="col-12">

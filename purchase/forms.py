@@ -128,6 +128,24 @@ class PurchaseRequestForm(forms.ModelForm):
         label="Notes"
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        product = cleaned_data.get("product")
+        batch = cleaned_data.get("batch")
+        if category and product:
+            if product.category_id != category.id:
+                raise forms.ValidationError(
+                    f"Selected product does not belong to '{category.name}' category."
+                )
+        if batch and product:
+            if batch.product_id != product.id:
+                raise forms.ValidationError(
+                    f"Batch '{batch.batch_number}' does not belong to selected product '{product.name}'."
+                )
+        return cleaned_data
+
+
 
 
 class PurchaseOrderForm(forms.ModelForm):
@@ -232,7 +250,7 @@ class PurchaseRequestOrderForm(forms.ModelForm):
 class PurchaseRequestItemForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequestItem
-        fields = ['product', 'quantity', 'priority', 'supplier','unit_price', 'total_price']
+        fields = ['product','product_type', 'quantity', 'priority', 'supplier','unit_price', 'total_price']
         widgets = {
             'product': forms.Select(attrs={'class': 'form-select'}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control quantity-field'}),
@@ -282,7 +300,7 @@ class RFQForm(forms.ModelForm):
 class RFQItemForm(forms.ModelForm):
     class Meta:
         model = RFQItem
-        fields = ["product", "quantity",'unit_of_measure','unit_price','currency','specification','required_delivery_date', "notes"]
+        fields = ["product","product_type", "quantity",'unit_of_measure','unit_price','currency','specification','required_delivery_date', "notes"]
         widgets={
             'notes':forms.Textarea(attrs={
                 'style':'height:50px;width:200px'
@@ -314,7 +332,7 @@ class SupplierQuotationForm(forms.ModelForm):
 class SupplierQuotationItemForm(forms.ModelForm):
     class Meta:
         model = SupplierQuotationItem
-        fields = ["product", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
+        fields = ["product","product_type", "quantity", "unit_price",'unit_of_measure','currency','specification','quoted_delivery_date', "VAT_rate","VAT_type","notes"]
 
         widgets={
             'specification':forms.Textarea(attrs={

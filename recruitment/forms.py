@@ -404,6 +404,7 @@ class BQQuestionrPaperForm(forms.ModelForm):
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_time': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'description': forms.TextInput(attrs={'class': 'form-control', 'style':'height:80px'}),
         }
 
 
@@ -413,6 +414,8 @@ class BQQuestionForm(forms.ModelForm):
         exclude=['user']
         widgets = {
             'answer': forms.Textarea(attrs={'rows': 4, 'cols': 50}),
+            'text': forms.Textarea(attrs={'style':'height:100px'}),
+            'correct_answer': forms.Textarea(attrs={'style':'height:100px'}),
         }
 
 

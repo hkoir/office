@@ -136,14 +136,8 @@ class MaterialsDeliveryForm(forms.ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    def __init__(self, *args, request_instance=None, item_instance=None, **kwargs):
-        """
-        request_instance -> MaterialsRequestOrder object
-        item_instance -> MaterialsRequestItem object (optional)
-        """
+    def __init__(self, *args, request_instance=None, item_instance=None, **kwargs):    
         super().__init__(*args, **kwargs)
-
-        # Narrow down order queryset
         if request_instance:
             self.fields['materials_request_order'].queryset = MaterialsRequestOrder.objects.filter(id=request_instance.id)
             self.fields['materials_request_item'].queryset = MaterialsRequestItem.objects.filter(material_request_order=request_instance)
@@ -190,7 +184,7 @@ class QualityControlForm(forms.ModelForm):
     )
     class Meta:
         model = ManufactureQualityControl
-        fields = ['total_quantity','good_quantity', 'bad_quantity','inspection_date', 'comments']
+        fields = ['product_type','total_quantity','good_quantity', 'bad_quantity','inspection_date', 'comments']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -210,7 +204,7 @@ class QualityControlForm(forms.ModelForm):
 class FinishedGoodsForm(forms.ModelForm):
     class Meta:
         model = FinishedGoodsReadyFromProduction
-        fields = ['warehouse', 'location', 'product', 'quantity', 'batch', 'remarks']
+        fields = ['warehouse', 'location', 'product','product_type', 'quantity', 'batch', 'remarks']
         widgets = {           
             'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
@@ -220,6 +214,18 @@ class FinishedGoodsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        product = cleaned_data.get("product")
+        selected_type = cleaned_data.get("product_type")
+        if product and selected_type:
+            if product.product_type != selected_type:
+                raise forms.ValidationError(
+                    f"Product '{product}' is of type '{product.product_type}', "
+                    f"you cannot select '{selected_type}'."
+                )
+        return cleaned_data
 
 
 from django.forms import inlineformset_factory

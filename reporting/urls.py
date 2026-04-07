@@ -31,5 +31,7 @@ urlpatterns = [
 
   path('calculate_product_wise_revenue/', views.calculate_product_wise_revenue, name='calculate_product_wise_revenue'),
 
+  path('factory_production_report/', views.factory_production_report, name='factory_production_report'),
+  path('simple_factory_report/', views.simple_factory_report, name='simple_factory_report'),
 
 ]

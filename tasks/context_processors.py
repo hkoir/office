@@ -21,6 +21,42 @@ def tenant_schema(request):
 
 
 
+
+
+
+from product.models import Product
+from purchase.models import Batch
+import json
+from django.core.serializers.json import DjangoJSONEncoder
+
+def dropdown_mappings(request):
+    products = Product.objects.select_related('category').all()
+    category_product_map = {}
+    for p in products:
+        category_product_map.setdefault(p.category_id, []).append({
+            'id': p.id,
+            'name': p.name
+        })
+
+    # Product -> Batches
+    batches = Batch.objects.select_related('product').all()
+    product_batch_map = {}
+    for b in batches:
+        product_batch_map.setdefault(b.product_id, []).append({
+            'id': b.id,
+            'batch_number': b.batch_number,
+            'remaining_quantity': b.remaining_quantity or 0
+        })
+
+    return {
+        'category_product_map_json': json.dumps(category_product_map, cls=DjangoJSONEncoder),
+        'product_batch_map_json': json.dumps(product_batch_map, cls=DjangoJSONEncoder)
+    }
+
+
+
+
+
 # def unread_messages(request):
 #     unread_msgs_by_task = {}
 #     if request.user.is_authenticated:

@@ -109,7 +109,16 @@ class PurchaseDispatchItem(models.Model):
     )
     dispatch_item = models.ForeignKey(PurchaseOrderItem,on_delete=models.CASCADE,
         related_name='order_dispatch_item',null=True, blank=True
-    )    
+    )  
+
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')  
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE, null=True, blank=True,related_name='purchase_dispatch_item_batch') 
     dispatch_quantity = models.PositiveIntegerField(null=True, blank=True)
     dispatch_date = models.DateField(null=True, blank=True) 
@@ -253,6 +262,15 @@ class SaleDispatchItem(models.Model):
     )
     dispatch_item = models.ForeignKey(SaleOrderItem,on_delete=models.CASCADE,
         related_name='sale_dispatch_item',null=True, blank=True)    
+
+    product_type = models.CharField(max_length=50, 
+        choices=[
+        ('raw_materials', 'raw_materials'),
+        ('finished_product', 'finished_roduct'),
+        ('component','component'),
+        ('BOM','BOM')
+        ], 
+        default='finished product')
 
     batch = models.ForeignKey(Batch,on_delete=models.CASCADE,related_name='batch_sale_dispatch',null=True, blank=True)  
     unit_selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

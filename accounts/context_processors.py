@@ -1,20 +1,22 @@
 
 from .models import UserProfile
 from tasks.models import TaskMessage
-
+from core.models import Company
+organization_name = Company.objects.first()
 
 def user_info(request):
 
     profile_picture_url = None
-    
     if request.user.is_authenticated:
         user_profile = UserProfile.objects.filter(user=request.user).first()  # Get the UserProfile for the logged-in user
         if user_profile and user_profile.profile_picture:  
             profile_picture_url = user_profile.profile_picture.url
-            
+
     return {
         'user_info': request.user.username if request.user.is_authenticated else None,  # Adjust to show username or desired field
-        'profile_picture_url': profile_picture_url
+        'profile_picture_url': profile_picture_url,
+        'organization_name': organization_name,
+
     }
 
 
@@ -22,6 +24,10 @@ def user_info(request):
 def tenant_schema(request):
     schema_name = getattr(request.tenant, 'schema_name', 'public')
     return {'schema_name': schema_name}
+
+
+
+
 
 
 

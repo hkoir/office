@@ -43,6 +43,11 @@ import base64
 from django.urls import reverse
 
 @login_required
+def css_grid(request):
+    return render(request,'core/css_grid.html')
+
+
+@login_required
 def dashboard(request):
     plans = SubscriptionPlan.objects.all().order_by('duration')
     for plan in plans:
@@ -1076,7 +1081,7 @@ def generate_salary_certificate_pdf(employee):
         prefix, prefix2 = '', ''
 
     # Company details and header
-    logo_path = 'D:/SCM/dscm/media/logo.png'
+    logo_path = os.path.join(settings.STATIC_ROOT, 'images/Logo.png')
     pdf_canvas.drawImage(logo_path, 50, 750, width=60, height=60)
 
     y_space = 700
@@ -1211,8 +1216,7 @@ def generate_experience_certificate_pdf(employee):
             prefix2 =''
             prefix3 =''
 
-    logo_path = 'D:/SCM/dscm/media/logo.png'  
-        
+    logo_path = os.path.join(settings.STATIC_ROOT, 'images/Logo.png')
     logo_width = 60 
     logo_height = 60  
     pdf_canvas.drawImage(logo_path, 50, 750, width=logo_width, height=logo_height) 

@@ -112,3 +112,137 @@ class SalePaymentAttachmentForm(forms.ModelForm):
     class Meta:
         model = SalePaymentAttachment
         fields = ['file']
+
+
+
+
+
+
+
+
+
+from django.forms import inlineformset_factory
+
+
+
+
+from django.forms import inlineformset_factory
+from .models import DirectInvoice, DirectInvoiceItem,DirectPurchaseInvoice,DirectPurchaseInvoiceItem
+
+class DirectInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = DirectInvoice
+        fields = ["document_type","created_at", "due_date", "customer_name","advance_amount", "discount_amount", "notes","terms_and_conditions"]
+        widgets = {
+            "created_at": forms.DateInput(attrs={"type": "date"}),
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "style": "height:80px;"}),
+            "terms_and_conditions": forms.Textarea(attrs={"rows": 2, "style": "height:100px;"}),
+        }
+
+class DirectInvoiceItemForm(forms.ModelForm):
+    class Meta:
+        model = DirectInvoiceItem
+        fields = ["product","description","batch","usage_purpose","warehouse","location", "quantity", "unit_price", "total_price"]
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"step": "any", "class": "form-control quantity-input"}),
+            "unit_price": forms.NumberInput(attrs={"step": "any", "class": "form-control unit-price-input"}),
+            "total_price": forms.NumberInput(attrs={
+                "step": "any", 
+                "readonly": "readonly",  # 👈 ensure it's visible but not editable
+                "class": "form-control total-price-input"
+            }),
+             "description": forms.Textarea(attrs={"rows": 2, "style": "height:60px;"}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        product = cleaned_data.get("product")
+        batch = cleaned_data.get("batch")
+        if category and product:
+            if product.category_id != category.id:
+                raise forms.ValidationError(
+                    f"Selected product does not belong to '{category.name}' category."
+                )
+        if batch and product:
+            if batch.product_id != product.id:
+                raise forms.ValidationError(
+                    f"Batch '{batch.batch_number}' does not belong to selected product '{product.name}'."
+                )
+        return cleaned_data
+
+DirectInvoiceItemFormSet = inlineformset_factory(
+    DirectInvoice,
+    DirectInvoiceItem,
+    form=DirectInvoiceItemForm,
+    extra=1,
+    can_delete=True
+)
+
+
+
+DirectInvoiceItemUpdateFormSet = inlineformset_factory(
+    DirectInvoice,
+    DirectInvoiceItem,
+    form=DirectInvoiceItemForm,
+    extra=0,
+    can_delete=True
+)
+
+
+
+
+
+class DirectPurchaseInvoiceForm(forms.ModelForm):
+    class Meta:
+        model = DirectPurchaseInvoice
+        fields = ["created_at", "due_date", "supplier_name", "advance_amount", "discount_amount", "notes","terms_and_conditions"]
+        widgets = {
+            "created_at": forms.DateInput(attrs={"type": "date"}),
+            "due_date": forms.DateInput(attrs={"type": "date"}),
+            "notes": forms.Textarea(attrs={"rows": 2, "style": "height:80px;"}),
+            "terms_and_conditions": forms.Textarea(attrs={"rows": 2, "style": "height:80px;"}),
+        }
+
+
+class DirectPurchaseInvoiceItemForm(forms.ModelForm):
+    class Meta:
+        model = DirectPurchaseInvoiceItem
+        fields = ["product","description", "batch", "warehouse", "location", "quantity", "unit_price", "total_price"]
+        widgets = {
+            "quantity": forms.NumberInput(attrs={"step": "any", "class": "form-control quantity-input"}),
+            "unit_price": forms.NumberInput(attrs={"step": "any", "class": "form-control unit-price-input"}),
+            "total_price": forms.NumberInput(attrs={
+                "step": "any",
+                "readonly": "readonly",
+                "class": "form-control total-price-input",
+            }),
+            "description": forms.Textarea(attrs={"rows": 2, "style": "height:60px;"}),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        category = cleaned_data.get("category")
+        product = cleaned_data.get("product")
+        batch = cleaned_data.get("batch")
+        if category and product:
+            if product.category_id != category.id:
+                raise forms.ValidationError(
+                    f"Selected product does not belong to '{category.name}' category."
+                )
+        if batch and product:
+            if batch.product_id != product.id:
+                raise forms.ValidationError(
+                    f"Batch '{batch.batch_number}' does not belong to selected product '{product.name}'."
+                )
+        return cleaned_data
+
+
+DirectPurchaseInvoiceItemFormSet = inlineformset_factory(
+    DirectPurchaseInvoice,
+    DirectPurchaseInvoiceItem,
+    form=DirectPurchaseInvoiceItemForm,
+    extra=1,
+    can_delete=True
+)
