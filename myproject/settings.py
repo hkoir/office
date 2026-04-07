@@ -131,6 +131,7 @@ MIDDLEWARE = [
 
 
 ROOT_URLCONF = 'myproject.urls'
+PUBLIC_SCHEMA_URLCONF = "myproject.public_urls"
 
 TEMPLATES = [
     {
