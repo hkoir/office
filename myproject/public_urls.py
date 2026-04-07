@@ -13,11 +13,14 @@ def home(request):
 
 
 urlpatterns = [
-    path("",home),
+    path("home/",home),
     path("public-home/", public_home),
     path("clients/", include('clients.urls', namespace='clients')),
-    path("accounts/", include('accounts.urls', namespace='accounts')),
+    path("", include('accounts.urls', namespace='accounts')),
     path("core/", include('core.urls', namespace='core')),
+    path("tasks/", include('tasks.urls', namespace='tasks')),
+    path("transport/", include('transport.urls', namespace='transport')),
+    path("officemanagement/", include('officemanagement.urls', namespace='officemanagement')),
 ]
 
 
