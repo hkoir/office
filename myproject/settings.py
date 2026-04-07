@@ -2,14 +2,18 @@
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv 
+
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 SECRET_KEY = 'django-insecure-wzlf*t+-g32z73ia4=qdcbq*-2wkw_elwd_^%m3iodhllt9t!1'
 
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ['178.128.95.232','*','dopstech.pro','www.dopstech.pro','localhost']
+ALLOWED_HOSTS = ['178.128.95.232','*','dopstech.pro','www.dopstech.pro','localhost',"*"]
 
 
 
@@ -154,11 +158,11 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django_tenants.postgresql_backend',
-        'NAME': 'myproject',  # your PostgreSQL database name
-        'USER': 'arafat',      # the user you created for PostgreSQL
-        'PASSWORD': 'Arafat_123',  # the password for your PostgreSQL user
-        'HOST': 'localhost',    # default for local database
-        'PORT': '5432',         # default PostgreSQL port
+         'NAME': os.getenv('DB_NAME'),
+        'USER': os.getenv('DB_USER'),
+        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'HOST': os.getenv('DB_HOST'),
+        'PORT': os.getenv('DB_PORT'),
     }
 }
 

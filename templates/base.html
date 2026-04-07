@@ -370,84 +370,182 @@ html, body {
 
 
 
-
-/* fixed side bar ///////////////////////////////////// */
-
+/* ===== LAYOUT ===== */
 .layout-wrapper {
-    display: flex;
-    width: 100%;
-    min-height: calc(100vh - 60px); 
-    margin-top: 60px;               
+    margin-top: 60px;
 }
 
-.sidebar-wrapper {
+/* ===== TOGGLE BUTTON ===== */
+.toggle-btn {
     position: fixed;
     top: 70px;
+    left: 10px;
+    z-index: 2000;
+
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+
+
+
+/* ===== SIDEBAR ===== */
+.sidebar-wrapper {
+    position: fixed;
+    top: 60px;
     left: 0;
     bottom: 0;
 
+    width: 250px;
     background: #0f172a;
+
     overflow-y: auto;
+    transition: all 0.3s ease;
     z-index: 1000;
 }
 
-.sidebar {   
-    top: 60px; 
-    height: calc(100vh - 60px);  
-    border-right: 1px solid #ddd;
-    padding: 15px 10px;
- 
+/* DEFAULT: hidden */
+.sidebar-wrapper {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    bottom: 0;
+
+    width: 250px;
     background: #0f172a;
-    border-right: 1px solid #1e293b;   
-      
+
+    transform: translateX(-100%);   /* FULLY HIDDEN */
+    transition: transform 0.3s ease;
+
+    z-index: 1000;
 }
 
+/* WHEN OPEN */
+.sidebar-open .sidebar-wrapper {
+    transform: translateX(0);
+}
+
+
+
+/* ===== SIDEBAR CONTENT ===== */
+.sidebar {
+    padding: 15px 10px;
+}
+
+/* LINKS */
 .sidebar a,
 .sidebar button {
-    display: flex;              
-    align-items: center;        
-    justify-content: flex-start; 
-    padding: 10px 12px;
-    margin-bottom: 6px;  
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px;
+    margin-bottom: 6px;
+
     border-radius: 6px;
-    text-decoration: none;
     background: #1e293b;
     color: #e2e8f0;
+
+    text-decoration: none;
     border: none;
-    width: 100%;
-    height: 35px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background 0.2s;
+    font-size: 13px;
+
+    transition: 0.2s;
 }
 
-
-.sidebar a:hover,
-.sidebar button:hover {
+.sidebar a:hover {
     background: #2563eb;
     color: #fff;
 }
 
-/* Desktop only */
-@media (min-width: 768px) {
+/* HIDE TEXT WHEN COLLAPSED */
+.sidebar-collapsed .sidebar a span {
+    display: none;
+}
+
+/* CENTER ICON */
+.sidebar-collapsed .sidebar a {
+    justify-content: center;
+}
+
+/* ===== CONTENT ===== */
+.content-area {
+    margin-left: 0px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+/* COLLAPSED CONTENT */
+.sidebar-collapsed .content-area {
+    margin-left: 0px;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
     .sidebar-wrapper {
-        display: block;   
+        transform: translateX(-100%);
+    }
+
+    .sidebar-open .sidebar-wrapper {
+        transform: translateX(0);
+    }
+
+    .content-area {
+        margin-left: 0;
     }
 }
 
 
-
-.content-area {  
-    padding: 5px;  
-    min-height: calc(100vh - 60px);      
-    margin-left: 25%;    
-    position: relative;
+.sidebar {
+    display: flex;
+    flex-direction: column;
 }
 
-.content-area .container-fluid,
-.content-area .container {
-    padding-right: 0 !important;
-    padding-left: 10 !important;
+/* FORCE equal width */
+.sidebar a,
+.sidebar button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    width: 100%;              /* IMPORTANT */
+    height: 40px;             /* fixed height */
+    padding: 0 12px;
+
+    margin-bottom: 6px;
+    border-radius: 6px;
+
+    background: #1e293b;
+    color: #e2e8f0;
+    text-decoration: none;
+
+    box-sizing: border-box;   /* prevents overflow */
+}
+
+/* ICON fixed size */
+.sidebar a i {
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* TEXT takes remaining space */
+.sidebar a span {
+    flex-grow: 1;
+}
+
+/* COLLAPSED → center everything */
+.sidebar-collapsed .sidebar a {
+    justify-content: center;
+}
+
+/* REMOVE span space when hidden */
+.sidebar-collapsed .sidebar a span {
+    display: none;
 }
 
 
@@ -513,14 +611,19 @@ html, body {
     <div class="container-fluid">
 
 	 <!-- Custom Hamburger Button for side bar -->
-        <button class="btn float-end border border-primary text-primary rounded m-2"
+        <!-- <button class="btn float-end border border-primary text-primary rounded m-2"
                 style="background-color: white;"
                 data-bs-toggle="offcanvas"
                 data-bs-target="#offcanvas"
                 role="button"
                 aria-label="Toggle Sidebar">
-            &#9776; <!-- Unicode hamburger icon -->
-        </button>
+            &#9776;
+        </button> -->
+
+           <button id="toggleSidebar" class="btn float-end border border-primary text-primary rounded m-2"
+                style="background-color: white;">
+                    ☰
+            </button>
 
        <a class="navbar-brand d-flex align-items-center" href="{% url 'core:dashboard' %}">
        
@@ -1066,22 +1169,19 @@ html, body {
  </div>
 </div>
    
-        <div class="layout-wrapper">   
-            <div class="d-none d-md-block col-md-3 sidebar-wrapper">
-            {% include 'fixed_sidebar.html' %}
-            </div>        
-            <!-- MAIN CONTENT -->
-            <div class="col-12 col-md-9 content-area">
-                <div class="school-logo-fab">
-                    {% if organization_name.logo %}
-                    <img src="{{ organization_name.logo.url }}" alt="School Logo">
-                    {% endif %}
-                </div>
-                {% block content %}
-                {% endblock %}
-                {% include 'footer.html' %}
+        <div class="layout-wrapper">                
+            <!-- SIDEBAR -->
+            <div class="sidebar-wrapper">
+                {% include 'fixed_sidebar.html' %}
             </div>
-       </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="content-area">
+                {% block content %}
+                {% endblock %}               
+            </div>
+            {% include 'footer.html' %}
+        </div>
 
     
  </div>
@@ -1111,6 +1211,26 @@ html, body {
 </div>
 
 
+
+
+<script>
+
+const btn = document.getElementById("toggleSidebar");
+const sidebar = document.querySelector(".sidebar-wrapper");
+
+btn.addEventListener("click", function (e) {
+    e.stopPropagation(); // prevent immediate close
+    document.body.classList.toggle("sidebar-open");
+});
+
+sidebar.addEventListener("click", function (e) {
+    e.stopPropagation(); // clicks inside sidebar should NOT close
+});
+
+document.addEventListener("click", function () {
+    document.body.classList.remove("sidebar-open");
+});
+</script>
 
 
 <script>

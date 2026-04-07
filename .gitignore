@@ -16,6 +16,11 @@ staticfiles/
 # Environment
 .env
 .env.*
+.venv/
+venv/
+env/
+myenv/
+.python-version  # pyenv
 
 # VS Code
 .vscode/

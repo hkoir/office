@@ -14,6 +14,8 @@ from.forms import PwdResetConfirmForm,PwdResetForm
 app_name = 'accounts'
 
 urlpatterns = [
+    path("allow-cert", views.allow_cert),
+    path("allow-cert/", views.allow_cert),
     path('test-email/', views.test_email, name='test_email'),
     path('', tenant_expire_check, name='tenant_expire_check'),
     path('home/', views.home, name='home'),

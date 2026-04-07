@@ -1,24 +1,28 @@
+from django.db import connection
+from django_tenants.utils import get_public_schema_name
 
 from .models import UserProfile
 from tasks.models import TaskMessage
 from core.models import Company
-organization_name = Company.objects.first()
+
 
 def user_info(request):
-
     profile_picture_url = None
-    if request.user.is_authenticated:
-        user_profile = UserProfile.objects.filter(user=request.user).first()  # Get the UserProfile for the logged-in user
-        if user_profile and user_profile.profile_picture:  
+    organization_name = None 
+  
+    if connection.schema_name != get_public_schema_name():
+        organization_name = Company.objects.first()
+
+    if request.user.is_authenticated: 
+        user_profile = UserProfile.objects.filter(user=request.user).first()
+        if user_profile and user_profile.profile_picture:
             profile_picture_url = user_profile.profile_picture.url
 
     return {
-        'user_info': request.user.username if request.user.is_authenticated else None,  # Adjust to show username or desired field
+        'user_info': request.user.username if request.user.is_authenticated else None,
         'profile_picture_url': profile_picture_url,
         'organization_name': organization_name,
-
     }
-
 
 
 def tenant_schema(request):
@@ -29,13 +33,3 @@ def tenant_schema(request):
 
 
 
-
-
-# def unread_messages(request):
-#     unread_msgs_by_task = {}
-#     if request.user.is_authenticated:
-#         unread_msgs = TaskMessage.objects.filter(sender=request.user, read=False)
-#         for message in unread_msgs:
-#             unread_msgs_by_task[message.task_id] = True
-
-#     return {'unread_messages': unread_msgs_by_task}
