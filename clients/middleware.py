@@ -24,6 +24,22 @@ from accounts.models import UserProfile
 User = get_user_model() 
 
 from accounts.models import ActivityLog
+from django.http import HttpResponse
+
+
+class BypassTenantMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+
+        # ONLY for TLS
+        if request.path.startswith("/allow-cert"):
+            return HttpResponse("OK")
+
+        return self.get_response(request)
+
+
 
 
 class CustomTenantAuthMiddleware(MiddlewareMixin):

@@ -113,6 +113,7 @@ REST_FRAMEWORK = {
 
 
 MIDDLEWARE = [
+    'clients.middleware.BypassTenantMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
